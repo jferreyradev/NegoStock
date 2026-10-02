@@ -4,6 +4,7 @@ import InventoryView from '@/views/InventoryView.vue';
 import SalesHistoryView from '@/views/SalesHistoryView.vue';
 import MassPriceUpdateView from '@/views/MassPriceUpdateView.vue';
 import AnomaliesView from '@/views/AnomaliesView.vue';
+import UsersView from '@/views/UsersView.vue';
 
 const routes = [
   {
@@ -35,6 +36,12 @@ const routes = [
     name: 'anomalies',
     component: AnomaliesView,
     meta: { title: 'Auditoría de Planilla' }
+  },
+  {
+    path: '/usuarios',
+    name: 'users',
+    component: UsersView,
+    meta: { title: 'Gestión de Personal y Permisos' }
   }
 ];
 

@@ -2,7 +2,7 @@
   <v-container fluid class="pa-4">
     <!-- METRICAS DE CABECERA -->
     <v-row class="mb-2">
-      <v-col cols="12" sm="6" md="3">
+      <v-col cols="12" sm="6" :md="authStore.canViewCosts ? 3 : 4">
         <v-card elevation="2" class="pa-3">
           <div class="d-flex align-center justify-space-between">
             <div>
@@ -16,7 +16,7 @@
         </v-card>
       </v-col>
 
-      <v-col cols="12" sm="6" md="3">
+      <v-col cols="12" sm="6" :md="authStore.canViewCosts ? 3 : 4">
         <v-card elevation="2" class="pa-3" :class="{ 'bg-red-lighten-5': productStore.lowStockCount > 0 }">
           <div class="d-flex align-center justify-space-between">
             <div>
@@ -30,7 +30,8 @@
         </v-card>
       </v-col>
 
-      <v-col cols="12" sm="6" md="3">
+      <!-- Solo visible si tiene permiso para ver costos (Admin / Encargado) -->
+      <v-col v-if="authStore.canViewCosts" cols="12" sm="6" md="3">
         <v-card elevation="2" class="pa-3">
           <div class="d-flex align-center justify-space-between">
             <div>
@@ -46,7 +47,7 @@
         </v-card>
       </v-col>
 
-      <v-col cols="12" sm="6" md="3">
+      <v-col cols="12" sm="6" :md="authStore.canViewCosts ? 3 : 4">
         <v-card elevation="2" class="pa-3">
           <div class="d-flex align-center justify-space-between">
             <div>
@@ -110,12 +111,12 @@
             <th class="font-weight-bold">Descripción</th>
             <th class="font-weight-bold">Rubro</th>
             <th class="font-weight-bold">Marca</th>
-            <th class="font-weight-bold text-right">P. Costo</th>
+            <th v-if="authStore.canViewCosts" class="font-weight-bold text-right">P. Costo</th>
             <th class="font-weight-bold text-right">P. Venta</th>
             <th class="font-weight-bold text-right">P. Mayoreo</th>
             <th class="font-weight-bold text-center">Stock Actual</th>
             <th class="font-weight-bold text-center">Mínimo</th>
-            <th class="font-weight-bold text-center">Acciones</th>
+            <th v-if="authStore.canAdjustStock" class="font-weight-bold text-center">Acciones</th>
           </tr>
         </thead>
         <tbody>
@@ -138,7 +139,8 @@
             <td>
               <span class="text-caption text-grey-darken-2">{{ prod.brand }}</span>
             </td>
-            <td class="text-right text-caption font-weight-medium">
+            <!-- Columna de Costo Ocultable -->
+            <td v-if="authStore.canViewCosts" class="text-right text-caption font-weight-medium">
               ${{ formatMoney(prod.costPrice) }}
             </td>
             <td class="text-right font-weight-bold text-primary">
@@ -160,7 +162,7 @@
             <td class="text-center text-caption text-grey">
               {{ prod.minStock }}
             </td>
-            <td class="text-center">
+            <td v-if="authStore.canAdjustStock" class="text-center">
               <v-btn
                 icon="mdi-pencil-outline"
                 size="x-small"
@@ -239,8 +241,10 @@
 <script setup>
 import { ref, computed } from 'vue';
 import { useProductStore } from '@/stores/productStore';
+import { useAuthStore } from '@/stores/authStore';
 
 const productStore = useProductStore();
+const authStore = useAuthStore();
 
 const page = ref(1);
 const perPage = ref(20);

@@ -524,3 +524,101 @@ BEGIN
     );
 END;
 $$;
+
+
+-- ==============================================================================
+-- 17. SUPABASE ROW LEVEL SECURITY (RLS) & PERMISOS RBAC
+-- ==============================================================================
+
+-- Funciones auxiliares para RLS
+CREATE OR REPLACE FUNCTION get_auth_tenant_id()
+RETURNS UUID
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+AS $$
+    SELECT tenant_id FROM profiles WHERE id = auth.uid() LIMIT 1;
+$$;
+
+CREATE OR REPLACE FUNCTION get_auth_role()
+RETURNS TEXT
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+AS $$
+    SELECT role FROM profiles WHERE id = auth.uid() LIMIT 1;
+$$;
+
+-- Activar RLS en todas las tablas
+ALTER TABLE tenants ENABLE ROW LEVEL SECURITY;
+ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE products ENABLE ROW LEVEL SECURITY;
+ALTER TABLE categories ENABLE ROW LEVEL SECURITY;
+ALTER TABLE brands ENABLE ROW LEVEL SECURITY;
+ALTER TABLE units_of_measure ENABLE ROW LEVEL SECURITY;
+ALTER TABLE customers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE suppliers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE sales ENABLE ROW LEVEL SECURITY;
+ALTER TABLE sale_items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE stock_movements ENABLE ROW LEVEL SECURITY;
+ALTER TABLE pending_orders ENABLE ROW LEVEL SECURITY;
+ALTER TABLE pending_order_items ENABLE ROW LEVEL SECURITY;
+
+-- POLÍTICAS: AISLAMIENTO POR TENANT (Inquilino)
+-- 1. Profiles
+CREATE POLICY "tenant_profiles_select" ON profiles
+    FOR SELECT USING (tenant_id = get_auth_tenant_id() OR auth.uid() = id);
+
+CREATE POLICY "admin_profiles_all" ON profiles
+    FOR ALL USING (tenant_id = get_auth_tenant_id() AND get_auth_role() = 'ADMIN');
+
+-- 2. Productos
+CREATE POLICY "tenant_products_select" ON products
+    FOR SELECT USING (tenant_id = get_auth_tenant_id());
+
+CREATE POLICY "manager_products_modify" ON products
+    FOR ALL USING (tenant_id = get_auth_tenant_id() AND get_auth_role() IN ('ADMIN', 'MANAGER'));
+
+-- 3. Ventas y Comprobantes
+CREATE POLICY "tenant_sales_select" ON sales
+    FOR SELECT USING (tenant_id = get_auth_tenant_id());
+
+CREATE POLICY "cashier_sales_insert" ON sales
+    FOR INSERT WITH CHECK (tenant_id = get_auth_tenant_id() AND get_auth_role() IN ('ADMIN', 'MANAGER', 'CASHIER'));
+
+-- 4. Preventa / Pedidos Pendientes (Cualquier empleado puede crearlos)
+CREATE POLICY "tenant_pending_orders_all" ON pending_orders
+    FOR ALL USING (tenant_id = get_auth_tenant_id());
+
+CREATE POLICY "tenant_pending_order_items_all" ON pending_order_items
+    FOR ALL USING (
+        EXISTS (
+            SELECT 1 FROM pending_orders po 
+            WHERE po.id = pending_order_items.order_id 
+              AND po.tenant_id = get_auth_tenant_id()
+        )
+    );
+
+-- 5. Kardex / Movimientos de Stock
+CREATE POLICY "tenant_stock_movements_select" ON stock_movements
+    FOR SELECT USING (tenant_id = get_auth_tenant_id());
+
+-- TRIGGER: Auto-crear perfil al registrar un nuevo usuario en Supabase Auth
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER AS $$
+BEGIN
+    INSERT INTO public.profiles (id, tenant_id, full_name, role)
+    VALUES (
+        NEW.id,
+        COALESCE((NEW.raw_user_meta_data->>'tenant_id')::uuid, '00000000-0000-0000-0000-000000000001'::uuid),
+        COALESCE(NEW.raw_user_meta_data->>'full_name', NEW.email),
+        COALESCE(NEW.raw_user_meta_data->>'role', 'SELLER')
+    )
+    ON CONFLICT (id) DO NOTHING;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE OR REPLACE TRIGGER on_auth_user_created
+    AFTER INSERT ON auth.users
+    FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
