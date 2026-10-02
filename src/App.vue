@@ -81,7 +81,7 @@
           to="/"
           prepend-icon="mdi-point-of-sale"
           title="Punto de Venta"
-          subtitle="Cobro con atajos F2, F4, F8"
+          subtitle="Cobro y Preventa [F6]"
           color="primary"
         />
 
@@ -98,6 +98,14 @@
             </v-chip>
           </template>
         </v-list-item>
+
+        <v-list-item
+          to="/actualizar-precios"
+          prepend-icon="mdi-percent-box-outline"
+          title="Aumento Masivo Precios"
+          subtitle="Ajuste por Rubro o Marca"
+          color="primary"
+        />
 
         <v-list-item
           to="/ventas"
@@ -122,9 +130,9 @@
 
       <template #append>
         <div class="pa-3 border-t bg-grey-lighten-4 text-caption text-grey">
-          <div class="font-weight-bold text-grey-darken-2">NegoStock SaaS v1.1</div>
-          <div>Transacciones ACID + Offline Queue</div>
-          <div>Supabase / PostgreSQL</div>
+          <div class="font-weight-bold text-grey-darken-2">NegoStock SaaS v1.2</div>
+          <div>Preventa + Actualizador Masivo</div>
+          <div>Audio Feedback + ACID RPC</div>
         </div>
       </template>
     </v-navigation-drawer>

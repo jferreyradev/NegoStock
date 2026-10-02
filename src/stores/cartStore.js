@@ -17,7 +17,9 @@ export const useCartStore = defineStore('cart', {
       taxCondition: 'CONSUMIDOR_FINAL'
     },
     salesHistory: [],
-    nextVoucherSeq: 1
+    pendingOrders: [], // Pedidos de Preventa en espera
+    nextVoucherSeq: 1,
+    nextOrderSeq: 1
   }),
 
   getters: {
@@ -41,6 +43,10 @@ export const useCartStore = defineStore('cart', {
 
     itemCount: (state) => {
       return state.items.reduce((sum, item) => sum + item.quantity, 0);
+    },
+
+    pendingOrdersCount: (state) => {
+      return state.pendingOrders.length;
     }
   },
 
@@ -89,6 +95,78 @@ export const useCartStore = defineStore('cart', {
         docNumber: '',
         taxCondition: 'CONSUMIDOR_FINAL'
       };
+    },
+
+    /**
+     * PREVENTA: Guardar como Pedido Pendiente para cobrar en Caja
+     */
+    saveAsPendingOrder(notes = '') {
+      if (this.items.length === 0) return null;
+
+      const orderNumber = `PED-${String(this.nextOrderSeq).padStart(3, '0')}`;
+      this.nextOrderSeq++;
+
+      const pendingOrder = {
+        id: 'ord-' + Date.now(),
+        orderNumber,
+        createdAt: new Date().toISOString(),
+        customer: { ...this.customer },
+        items: JSON.parse(JSON.stringify(this.items)),
+        subtotal: this.subtotal,
+        discount: this.discountAmount,
+        total: this.total,
+        priceMode: this.priceMode,
+        notes: notes || 'Preventa de mostrador'
+      };
+
+      this.pendingOrders.unshift(pendingOrder);
+      this.savePendingOrders();
+      this.clearCart();
+
+      return pendingOrder;
+    },
+
+    loadPendingOrder(orderId) {
+      const idx = this.pendingOrders.findIndex(o => o.id === orderId);
+      if (idx === -1) return false;
+
+      const order = this.pendingOrders[idx];
+      this.items = JSON.parse(JSON.stringify(order.items));
+      this.customer = { ...order.customer };
+      this.priceMode = order.priceMode || 'selling';
+      this.discountPercent = order.discount > 0 && order.subtotal > 0 
+        ? Math.round((order.discount / order.subtotal) * 100) 
+        : 0;
+
+      // Quitar de pendientes al cargarlo al mostrador
+      this.pendingOrders.splice(idx, 1);
+      this.savePendingOrders();
+      return true;
+    },
+
+    deletePendingOrder(orderId) {
+      this.pendingOrders = this.pendingOrders.filter(o => o.id !== orderId);
+      this.savePendingOrders();
+    },
+
+    savePendingOrders() {
+      localStorage.setItem('negostock_pending_orders', JSON.stringify(this.pendingOrders));
+      localStorage.setItem('negostock_next_order_seq', String(this.nextOrderSeq));
+    },
+
+    loadPendingOrders() {
+      const saved = localStorage.getItem('negostock_pending_orders');
+      if (saved) {
+        try {
+          this.pendingOrders = JSON.parse(saved);
+        } catch {
+          this.pendingOrders = [];
+        }
+      }
+      const seq = localStorage.getItem('negostock_next_order_seq');
+      if (seq) {
+        this.nextOrderSeq = parseInt(seq, 10) || 1;
+      }
     },
 
     async checkout() {
@@ -153,7 +231,6 @@ export const useCartStore = defineStore('cart', {
           enqueueOfflineSale(localSaleRecord);
         }
       } else if (isSupabaseConfigured) {
-        // Estaba configurado pero sin internet: a la cola
         enqueueOfflineSale(localSaleRecord);
       }
 
@@ -171,6 +248,7 @@ export const useCartStore = defineStore('cart', {
         this.salesHistory = JSON.parse(saved);
         this.nextVoucherSeq = this.salesHistory.length + 1;
       }
+      this.loadPendingOrders();
     }
   }
 });

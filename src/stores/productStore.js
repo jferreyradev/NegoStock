@@ -27,11 +27,12 @@ export const useProductStore = defineStore('products', {
         list = list.filter(p => Number(p.stock) <= Number(p.minStock));
       }
 
-      if (state.searchQuery.trim()) {
+      if (state.searchQuery && state.searchQuery.trim()) {
         const query = state.searchQuery.toLowerCase().trim();
         list = list.filter(p => 
           (p.name && p.name.toLowerCase().includes(query)) ||
           (p.sku && p.sku.toLowerCase().includes(query)) ||
+          (p.barcode && p.barcode.toLowerCase().includes(query)) ||
           (p.brand && p.brand.toLowerCase().includes(query))
         );
       }
@@ -99,7 +100,7 @@ export const useProductStore = defineStore('products', {
             this.saveToLocal();
           }
           this.categories = ['TODOS', ...initialSeed.categories];
-          this.brands = initialSeed.brands;
+          this.brands = ['TODAS', ...initialSeed.brands];
         }
       } catch (err) {
         console.error('Error cargando productos:', err);
@@ -165,6 +166,67 @@ export const useProductStore = defineStore('products', {
           }
         }
       }
+    },
+
+    /**
+     * ACTUALIZADOR MASIVO DE PRECIOS POR INFLACIÓN
+     */
+    async applyMassPriceUpdate({ category, brand, percentage, target = 'selling', rounding = 0 }) {
+      const factor = 1 + (percentage / 100);
+      let updatedCount = 0;
+      const roundValue = (val) => {
+        if (!rounding || rounding <= 0) return Math.round(val * 100) / 100;
+        return Math.ceil(val / rounding) * rounding;
+      };
+
+      const updatedIds = [];
+
+      for (const prod of this.products) {
+        const matchesCategory = !category || category === 'TODOS' || prod.dept === category;
+        const matchesBrand = !brand || brand === 'TODAS' || prod.brand === brand;
+
+        if (matchesCategory && matchesBrand) {
+          updatedCount++;
+          updatedIds.push(prod.id);
+
+          if (target === 'cost_and_selling') {
+            const oldCost = prod.costPrice;
+            prod.costPrice = roundValue(prod.costPrice * factor);
+            const margin = oldCost > 0 ? (prod.sellingPrice / oldCost) : 2;
+            prod.sellingPrice = roundValue(prod.costPrice * margin);
+            if (prod.wholesalePrice > 0) {
+              prod.wholesalePrice = roundValue(prod.wholesalePrice * factor);
+            }
+          } else if (target === 'selling') {
+            prod.sellingPrice = roundValue(prod.sellingPrice * factor);
+            if (prod.wholesalePrice > 0) {
+              prod.wholesalePrice = roundValue(prod.wholesalePrice * factor);
+            }
+          } else if (target === 'cost_only') {
+            prod.costPrice = roundValue(prod.costPrice * factor);
+          }
+        }
+      }
+
+      this.saveToLocal();
+
+      // Si Supabase está conectado, actualizar en lote
+      if (isSupabaseConfigured && supabase && updatedCount > 0) {
+        try {
+          await supabase.rpc('actualizar_precios_masivo', {
+            p_tenant_id: '00000000-0000-0000-0000-000000000001',
+            p_category_name: category === 'TODOS' ? null : category,
+            p_brand_name: brand === 'TODAS' ? null : brand,
+            p_percentage: percentage,
+            p_target: target,
+            p_rounding: rounding
+          });
+        } catch (e) {
+          console.error('Error aplicando actualización masiva en Supabase:', e);
+        }
+      }
+
+      return { updatedCount };
     }
   }
 });

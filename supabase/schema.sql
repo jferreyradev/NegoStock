@@ -387,3 +387,140 @@ BEGIN
     );
 END;
 $$;
+
+
+-- ==============================================================================
+-- 15. PREVENTA: PEDIDOS PENDIENTES (Mostrador -> Caja -> Despacho)
+-- ==============================================================================
+
+CREATE TABLE IF NOT EXISTS pending_orders (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    order_number TEXT NOT NULL,                     -- Ej: PED-001
+    customer_id UUID REFERENCES customers(id),
+    price_mode TEXT DEFAULT 'selling',
+    subtotal NUMERIC(14, 2) NOT NULL DEFAULT 0.00,
+    discount NUMERIC(14, 2) NOT NULL DEFAULT 0.00,
+    total NUMERIC(14, 2) NOT NULL DEFAULT 0.00,
+    status TEXT DEFAULT 'PENDIENTE' CHECK (status IN ('PENDIENTE', 'COBRADO', 'CANCELADO')),
+    notes TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS pending_order_items (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    order_id UUID NOT NULL REFERENCES pending_orders(id) ON DELETE CASCADE,
+    product_id UUID NOT NULL REFERENCES products(id) ON DELETE RESTRICT,
+    quantity NUMERIC(12, 4) NOT NULL,
+    unit_price NUMERIC(14, 2) NOT NULL,
+    subtotal NUMERIC(14, 2) NOT NULL
+);
+
+-- ==============================================================================
+-- 16. AUDITORÍA: HISTORIAL DE ACTUALIZACIONES MASIVAS DE PRECIOS
+-- ==============================================================================
+
+CREATE TABLE IF NOT EXISTS price_change_logs (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    category_name TEXT,
+    brand_name TEXT,
+    percentage NUMERIC(6, 2) NOT NULL,
+    target TEXT NOT NULL,
+    affected_products_count INTEGER NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- RPC: ACTUALIZACIÓN MASIVA DE PRECIOS POR INFLACIÓN
+CREATE OR REPLACE FUNCTION actualizar_precios_masivo(
+    p_tenant_id UUID,
+    p_category_name TEXT DEFAULT NULL,
+    p_brand_name TEXT DEFAULT NULL,
+    p_percentage NUMERIC DEFAULT 0.00,
+    p_target TEXT DEFAULT 'selling',
+    p_rounding NUMERIC DEFAULT 0.00
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+    v_factor NUMERIC;
+    v_count INTEGER := 0;
+BEGIN
+    v_factor := 1.0 + (p_percentage / 100.0);
+
+    IF p_target = 'cost_and_selling' THEN
+        UPDATE products p
+        SET cost_price = CASE 
+                WHEN p_rounding > 0 THEN CEIL((cost_price * v_factor) / p_rounding) * p_rounding
+                ELSE ROUND(cost_price * v_factor, 2)
+            END,
+            selling_price = CASE
+                WHEN p_rounding > 0 THEN CEIL((selling_price * v_factor) / p_rounding) * p_rounding
+                ELSE ROUND(selling_price * v_factor, 2)
+            END,
+            wholesale_price = CASE
+                WHEN wholesale_price > 0 AND p_rounding > 0 THEN CEIL((wholesale_price * v_factor) / p_rounding) * p_rounding
+                WHEN wholesale_price > 0 THEN ROUND(wholesale_price * v_factor, 2)
+                ELSE wholesale_price
+            END,
+            updated_at = NOW()
+        FROM categories c, brands b
+        WHERE p.tenant_id = p_tenant_id
+          AND p.category_id = c.id
+          AND p.brand_id = b.id
+          AND (p_category_name IS NULL OR c.name = p_category_name)
+          AND (p_brand_name IS NULL OR b.name = p_brand_name);
+
+    ELSIF p_target = 'selling' THEN
+        UPDATE products p
+        SET selling_price = CASE
+                WHEN p_rounding > 0 THEN CEIL((selling_price * v_factor) / p_rounding) * p_rounding
+                ELSE ROUND(selling_price * v_factor, 2)
+            END,
+            wholesale_price = CASE
+                WHEN wholesale_price > 0 AND p_rounding > 0 THEN CEIL((wholesale_price * v_factor) / p_rounding) * p_rounding
+                WHEN wholesale_price > 0 THEN ROUND(wholesale_price * v_factor, 2)
+                ELSE wholesale_price
+            END,
+            updated_at = NOW()
+        FROM categories c, brands b
+        WHERE p.tenant_id = p_tenant_id
+          AND p.category_id = c.id
+          AND p.brand_id = b.id
+          AND (p_category_name IS NULL OR c.name = p_category_name)
+          AND (p_brand_name IS NULL OR b.name = p_brand_name);
+
+    ELSIF p_target = 'cost_only' THEN
+        UPDATE products p
+        SET cost_price = CASE
+                WHEN p_rounding > 0 THEN CEIL((cost_price * v_factor) / p_rounding) * p_rounding
+                ELSE ROUND(cost_price * v_factor, 2)
+            END,
+            updated_at = NOW()
+        FROM categories c, brands b
+        WHERE p.tenant_id = p_tenant_id
+          AND p.category_id = c.id
+          AND p.brand_id = b.id
+          AND (p_category_name IS NULL OR c.name = p_category_name)
+          AND (p_brand_name IS NULL OR b.name = p_brand_name);
+    END IF;
+
+    GET DIAGNOSTICS v_count = ROW_COUNT;
+
+    -- Registrar log de auditoría
+    INSERT INTO price_change_logs (
+        tenant_id, category_name, brand_name, percentage, target, affected_products_count
+    ) VALUES (
+        p_tenant_id, p_category_name, p_brand_name, p_percentage, p_target, v_count
+    );
+
+    RETURN jsonb_build_object(
+        'success', true,
+        'affected_count', v_count,
+        'percentage', p_percentage
+    );
+END;
+$$;

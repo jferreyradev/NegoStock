@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router';
 import PosView from '@/views/PosView.vue';
 import InventoryView from '@/views/InventoryView.vue';
 import SalesHistoryView from '@/views/SalesHistoryView.vue';
+import MassPriceUpdateView from '@/views/MassPriceUpdateView.vue';
 import AnomaliesView from '@/views/AnomaliesView.vue';
 
 const routes = [
@@ -16,6 +17,12 @@ const routes = [
     name: 'inventory',
     component: InventoryView,
     meta: { title: 'Control de Stock e Inventario' }
+  },
+  {
+    path: '/actualizar-precios',
+    name: 'mass-price-update',
+    component: MassPriceUpdateView,
+    meta: { title: 'Actualizador Masivo de Precios' }
   },
   {
     path: '/ventas',

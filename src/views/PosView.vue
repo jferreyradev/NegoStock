@@ -1,17 +1,33 @@
 <template>
   <v-container fluid class="pa-4">
-    <!-- BARRA DE ATAJOS RÁPIDOS DE TECLADO -->
+    <!-- BARRA DE ATAJOS RÁPIDOS DE TECLADO Y PEDIDOS PENDIENTES -->
     <v-card elevation="1" class="mb-3 px-3 py-1 bg-grey-lighten-4 d-flex align-center justify-space-between flex-wrap text-caption">
       <div class="d-flex align-center gap-3">
         <span class="font-weight-bold text-grey-darken-3">Atajos Mostrador:</span>
         <span><kbd class="kbd-badge">F2</kbd> Cobrar</span>
-        <span><kbd class="kbd-badge">F4</kbd> Limpiar Carrito</span>
-        <span><kbd class="kbd-badge">F8</kbd> Alternar Minorista/Mayorista</span>
-        <span><kbd class="kbd-badge">Enter</kbd> Pistola / Buscar y Agregar</span>
-        <span><kbd class="kbd-badge">ESC</kbd> Cerrar Ventanas</span>
+        <span><kbd class="kbd-badge">F4</kbd> Limpiar</span>
+        <span><kbd class="kbd-badge">F6</kbd> Guardar Preventa</span>
+        <span><kbd class="kbd-badge">F7</kbd> Ver Preventas ({{ cartStore.pendingOrdersCount }})</span>
+        <span><kbd class="kbd-badge">F8</kbd> Minorista/Mayorista</span>
+        <span><kbd class="kbd-badge">Enter</kbd> Pistola / Buscar</span>
       </div>
-      <div class="text-grey-darken-1 font-weight-medium">
-        Modo actual: <strong class="text-primary">{{ cartStore.priceMode === 'wholesale' ? 'MAYOREO' : 'MOSTRADOR' }}</strong>
+
+      <div class="d-flex align-center gap-2">
+        <!-- Botón rápido de Pedidos Pendientes (Preventa) -->
+        <v-btn
+          size="small"
+          :color="cartStore.pendingOrdersCount > 0 ? 'secondary' : 'grey'"
+          :variant="cartStore.pendingOrdersCount > 0 ? 'flat' : 'outlined'"
+          class="font-weight-bold mr-2"
+          @click="pendingOrdersDialog = true"
+        >
+          <v-icon icon="mdi-clipboard-clock-outline" class="mr-1" />
+          Preventas Pendientes ({{ cartStore.pendingOrdersCount }}) [F7]
+        </v-btn>
+
+        <span class="text-grey-darken-1 font-weight-medium">
+          Lista: <strong class="text-primary">{{ cartStore.priceMode === 'wholesale' ? 'MAYOREO' : 'MOSTRADOR' }}</strong>
+        </span>
       </div>
     </v-card>
 
@@ -283,22 +299,37 @@
             />
           </v-card-text>
 
-          <!-- Botones de Acción con Hotkeys -->
-          <v-card-actions class="pa-3 bg-grey-lighten-5">
+          <!-- Botones de Acción con Hotkeys y Preventa -->
+          <v-card-actions class="pa-3 bg-grey-lighten-5 d-flex flex-wrap gap-2">
             <v-btn
               color="grey"
               variant="outlined"
+              size="small"
               :disabled="cartStore.items.length === 0"
               @click="cartStore.clearCart()"
             >
               [F4] Cancelar
             </v-btn>
+
+            <v-btn
+              color="secondary"
+              variant="flat"
+              size="small"
+              class="font-weight-bold"
+              :disabled="cartStore.items.length === 0"
+              @click="handleSavePendingOrder"
+            >
+              <v-icon icon="mdi-clock-outline" class="mr-1" />
+              [F6] Preventa
+            </v-btn>
+
             <v-spacer />
+
             <v-btn
               color="accent"
               size="large"
               variant="flat"
-              class="px-6 font-weight-bold"
+              class="px-5 font-weight-black"
               :disabled="cartStore.items.length === 0"
               @click="processCheckout"
             >
@@ -309,6 +340,74 @@
         </v-card>
       </v-col>
     </v-row>
+
+    <!-- MODAL DE PEDIDOS PENDIENTES / PREVENTAS EN ESPERA -->
+    <v-dialog v-model="pendingOrdersDialog" max-width="640">
+      <v-card>
+        <v-card-title class="bg-secondary text-white d-flex align-center justify-space-between">
+          <div class="d-flex align-center">
+            <v-icon icon="mdi-clipboard-clock-outline" class="mr-2" />
+            Preventas y Pedidos en Espera
+          </div>
+          <v-chip size="small" color="white" variant="flat" class="text-secondary font-weight-black">
+            {{ cartStore.pendingOrdersCount }} Activos
+          </v-chip>
+        </v-card-title>
+
+        <v-card-text class="pa-4">
+          <div v-if="cartStore.pendingOrders.length === 0" class="text-center py-8 text-grey">
+            <v-icon icon="mdi-check-all" size="48" class="mb-2" />
+            <div>No hay pedidos de preventa en espera.</div>
+            <div class="text-caption">Los pedidos guardados con [F6] aparecerán aquí para cobrarlos en caja.</div>
+          </div>
+
+          <v-table v-else density="comfortable" hover>
+            <thead>
+              <tr class="bg-grey-lighten-4">
+                <th>N° Pedido</th>
+                <th>Hora</th>
+                <th>Cliente / Nota</th>
+                <th class="text-center">Artículos</th>
+                <th class="text-right">Total</th>
+                <th class="text-center">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="ord in cartStore.pendingOrders" :key="ord.id">
+                <td class="font-weight-black text-primary">{{ ord.orderNumber }}</td>
+                <td class="text-caption">{{ formatTime(ord.createdAt) }}</td>
+                <td>{{ ord.notes || ord.customer.name }}</td>
+                <td class="text-center font-weight-bold">{{ ord.items.length }}</td>
+                <td class="text-right font-weight-black text-primary">${{ formatMoney(ord.total) }}</td>
+                <td class="text-center">
+                  <v-btn
+                    color="primary"
+                    size="small"
+                    variant="flat"
+                    class="font-weight-bold mr-1"
+                    @click="resumePendingOrder(ord.id)"
+                  >
+                    Cargar a Caja
+                  </v-btn>
+                  <v-btn
+                    icon="mdi-delete-outline"
+                    size="small"
+                    color="error"
+                    variant="text"
+                    @click="cartStore.deletePendingOrder(ord.id)"
+                  />
+                </td>
+              </tr>
+            </tbody>
+          </v-table>
+        </v-card-text>
+
+        <v-card-actions class="pa-3 bg-grey-lighten-4">
+          <v-spacer />
+          <v-btn color="grey" variant="text" @click="pendingOrdersDialog = false">Cerrar [ESC]</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
 
     <!-- DIÁLOGO DE TICKET / COMPROBANTE EMITIDO -->
     <v-dialog v-model="ticketDialog" max-width="420" @keydown.esc="closeTicketDialog">
@@ -386,12 +485,14 @@
 import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue';
 import { useProductStore } from '@/stores/productStore';
 import { useCartStore } from '@/stores/cartStore';
+import { playSuccessBeep, playErrorBeep } from '@/utils/audioFeedback';
 
 const productStore = useProductStore();
 const cartStore = useCartStore();
 
 const searchInputRef = ref(null);
 const ticketDialog = ref(false);
+const pendingOrdersDialog = ref(false);
 const lastSale = ref(null);
 
 const quickCategories = [
@@ -419,7 +520,6 @@ const paymentMethods = [
   { title: 'Cuenta Corriente', value: 'CTA_CTE' }
 ];
 
-// Focus helper
 function focusSearch() {
   nextTick(() => {
     if (searchInputRef.value?.$el?.querySelector('input')) {
@@ -428,36 +528,32 @@ function focusSearch() {
   });
 }
 
-// Global Keyboard Shortcuts handler
 function handleGlobalKeydown(e) {
-  // F2: Checkout
   if (e.key === 'F2') {
     e.preventDefault();
-    if (cartStore.items.length > 0) {
-      processCheckout();
-    }
-  }
-  // F4: Clear cart
-  else if (e.key === 'F4') {
+    if (cartStore.items.length > 0) processCheckout();
+  } else if (e.key === 'F4') {
     e.preventDefault();
     cartStore.clearCart();
     focusSearch();
-  }
-  // F8: Toggle price mode
-  else if (e.key === 'F8') {
+  } else if (e.key === 'F6') {
+    e.preventDefault();
+    handleSavePendingOrder();
+  } else if (e.key === 'F7') {
+    e.preventDefault();
+    pendingOrdersDialog.value = !pendingOrdersDialog.value;
+  } else if (e.key === 'F8') {
     e.preventDefault();
     cartStore.togglePriceMode();
-  }
-  // ESC: Close dialog
-  else if (e.key === 'Escape') {
-    if (ticketDialog.value) {
-      closeTicketDialog();
-    }
+  } else if (e.key === 'Escape') {
+    if (ticketDialog.value) closeTicketDialog();
+    if (pendingOrdersDialog.value) pendingOrdersDialog.value = false;
   }
 }
 
 onMounted(() => {
   window.addEventListener('keydown', handleGlobalKeydown);
+  cartStore.loadPendingOrders();
   focusSearch();
 });
 
@@ -489,6 +585,7 @@ function getItemSubtotal(item) {
 
 function addToCart(product) {
   cartStore.addItem(product, 1);
+  playSuccessBeep();
   focusSearch();
 }
 
@@ -496,7 +593,6 @@ function handleEnterSearch() {
   const query = (productStore.searchQuery || '').trim();
   if (!query) return;
 
-  // 1. Coincidencia exacta por SKU o Barcode
   const exactMatch = productStore.products.find(
     p => p.sku.toLowerCase() === query.toLowerCase() || (p.barcode && p.barcode === query)
   );
@@ -507,13 +603,31 @@ function handleEnterSearch() {
     return;
   }
 
-  // 2. Si solo queda un resultado filtrado en la lista
   const matches = productStore.filteredProducts;
   if (matches.length === 1) {
     addToCart(matches[0]);
     productStore.searchQuery = '';
     return;
   }
+
+  // Not found
+  playErrorBeep();
+}
+
+function handleSavePendingOrder() {
+  if (cartStore.items.length === 0) return;
+  const order = cartStore.saveAsPendingOrder();
+  if (order) {
+    playSuccessBeep();
+    focusSearch();
+  }
+}
+
+function resumePendingOrder(orderId) {
+  cartStore.loadPendingOrder(orderId);
+  pendingOrdersDialog.value = false;
+  playSuccessBeep();
+  focusSearch();
 }
 
 async function processCheckout() {
@@ -521,6 +635,7 @@ async function processCheckout() {
   if (result) {
     lastSale.value = result;
     ticketDialog.value = true;
+    playSuccessBeep();
   }
 }
 
@@ -544,6 +659,11 @@ function formatMoney(val) {
 function formatDate(isoStr) {
   const d = new Date(isoStr);
   return d.toLocaleDateString('es-AR') + ' ' + d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
+}
+
+function formatTime(isoStr) {
+  const d = new Date(isoStr);
+  return d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
 }
 </script>
 
