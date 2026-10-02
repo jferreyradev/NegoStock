@@ -622,3 +622,63 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 CREATE OR REPLACE TRIGGER on_auth_user_created
     AFTER INSERT ON auth.users
     FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
+
+-- ==============================================================================
+-- 18. AUDITORÍA HISTÓRICA DE PRECIOS (Price History Tracking)
+-- Registra automáticamente cada cambio en costo, venta o mayoreo
+-- ==============================================================================
+
+CREATE TABLE IF NOT EXISTS price_histories (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    product_id UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+    old_cost_price NUMERIC(14, 2) NOT NULL DEFAULT 0.00,
+    new_cost_price NUMERIC(14, 2) NOT NULL DEFAULT 0.00,
+    old_selling_price NUMERIC(14, 2) NOT NULL DEFAULT 0.00,
+    new_selling_price NUMERIC(14, 2) NOT NULL DEFAULT 0.00,
+    old_wholesale_price NUMERIC(14, 2) NOT NULL DEFAULT 0.00,
+    new_wholesale_price NUMERIC(14, 2) NOT NULL DEFAULT 0.00,
+    change_reason TEXT NOT NULL DEFAULT 'MANUAL' CHECK (change_reason IN ('MANUAL', 'AUMENTO_MASIVO', 'IMPORTACION_EXCEL', 'RECEPCION_COMPRA')),
+    user_name TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_price_histories_prod ON price_histories(product_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_price_histories_tenant ON price_histories(tenant_id, created_at DESC);
+
+-- Trigger: Registro automático de historial al actualizar precios en productos
+CREATE OR REPLACE FUNCTION trg_log_price_history()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF (OLD.cost_price IS DISTINCT FROM NEW.cost_price OR
+        OLD.selling_price IS DISTINCT FROM NEW.selling_price OR
+        OLD.wholesale_price IS DISTINCT FROM NEW.wholesale_price) THEN
+        
+        INSERT INTO price_histories (
+            tenant_id, product_id,
+            old_cost_price, new_cost_price,
+            old_selling_price, new_selling_price,
+            old_wholesale_price, new_wholesale_price,
+            change_reason, user_name, created_at
+        ) VALUES (
+            NEW.tenant_id, NEW.id,
+            COALESCE(OLD.cost_price, 0.00), COALESCE(NEW.cost_price, 0.00),
+            COALESCE(OLD.selling_price, 0.00), COALESCE(NEW.selling_price, 0.00),
+            COALESCE(OLD.wholesale_price, 0.00), COALESCE(NEW.wholesale_price, 0.00),
+            'MANUAL', current_user, NOW()
+        );
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE OR REPLACE TRIGGER trg_after_product_price_change
+AFTER UPDATE ON products
+FOR EACH ROW EXECUTE FUNCTION trg_log_price_history();
+
+-- Política RLS para Historial de Precios
+ALTER TABLE price_histories ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "tenant_price_histories_select" ON price_histories
+    FOR SELECT USING (tenant_id = get_auth_tenant_id());
