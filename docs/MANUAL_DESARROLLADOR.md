@@ -20,25 +20,27 @@ Este documento detalla la arquitectura de software, el diseño de base de datos 
 ### 2. Arquitectura de Datos y Multi-Inquilino (SaaS)
 
 El sistema implementa **Multi-tenancy compartido con discriminador entero**:
-* Cada tabla de negocio incluye la columna `tenant_id INT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE`.
-* **Tenant por defecto (Ferretería Central):** `tenant_id = 1`.
+* Cada tabla de negocio incluye la columna `comercio_id INT NOT NULL REFERENCES comercios(id) ON DELETE CASCADE`.
+* **Comercio por defecto (Ferretería Central):** `comercio_id = 1`.
 * Para dar de alta un nuevo comercio cliente en el SaaS:
   ```sql
-  INSERT INTO tenants (name, business_name, cuit) VALUES ('Ferretería San Martín', 'San Martín S.A.', '30-76543210-9');
+  INSERT INTO comercios (nombre, razon_social, cuit) VALUES ('Ferretería San Martín', 'San Martín S.A.', '30-76543210-9');
   -- Retorna id = 2
   ```
 
 #### Tablas Principales (`supabase/schema.sql`):
-1. **`tenants`**: Inquilinos del SaaS con ID entero (`id SERIAL`).
-2. **`profiles`**: Enlaza usuarios de `auth.users` con su rol (`ADMIN`, `MANAGER`, `CASHIER`, `SELLER`), PIN y `tenant_id`.
-3. **`categories`** & **`brands`**: Rubros y marcas únicas por inquilino.
-4. **`units_of_measure`**: Unidades con bandera `allows_decimals` (crucial para fracciones en metros/kg).
-5. **`products`**: Catálogo general con SKU único por inquilino (`UNIQUE(tenant_id, sku)`), costo, venta, mayoreo y stock consolidado.
-6. **`voucher_sequences`**: Manejador de numeración correlativa atómica (`last_number`) para prevenir condiciones de carrera.
-7. **`sales`** & **`sale_items`**: Cabecera y detalle de ventas. Congela el `cost_price` histórico de cada ítem al momento de la transacción para auditoría exacta de margen.
-8. **`stock_movements` (Kardex)**: Registro inmutable de cada entrada/salida de stock.
-9. **`pending_orders`** & **`pending_order_items`**: Pedidos de preventa en espera.
-10. **`price_histories`**: Auditoría de cada variación de costo y venta.
+1. **`comercios`**: Inquilinos del SaaS con ID entero (`id SERIAL`).
+2. **`usuarios`**: Enlaza usuarios de `auth.users` con su rol (`ADMIN`, `MANAGER`, `CASHIER`, `SELLER`), PIN y `comercio_id`.
+3. **`categorias`** y **`marcas`**: Rubros y marcas únicas por comercio.
+4. **`unidades_medida`**: Unidades con bandera `permite_decimales` (crucial para fracciones en metros/kg).
+5. **`productos`**: Catálogo general con SKU único por comercio (`UNIQUE(comercio_id, codigo_sku)`), costo, venta, mayoreo y stock consolidado.
+6. **`comprobantes_secuencias`**: Manejador de numeración correlativa atómica (`ultimo_numero`) para prevenir condiciones de carrera.
+7. **`ventas`** y **`ventas_detalles`**: Cabecera y detalle de ventas. Congela el `precio_costo` histórico de cada ítem al momento de la transacción para auditoría exacta de margen.
+8. **`stock_movimientos` (Kardex)**: Registro inmutable de cada entrada/salida de stock.
+9. **`pedidos_preventa`** y **`pedidos_preventa_detalles`**: Pedidos de preventa en espera.
+10. **`precios_historial`**: Auditoría de cada variación de costo y venta.
+
+*(Para el detalle completo de cada columna y tipos, consultar [`docs/DICCIONARIO_BASE_DE_DATOS.md`](file:///Users/jferreyradev/projects/ag/NegoStock/docs/DICCIONARIO_BASE_DE_DATOS.md)).*
 
 ---
 

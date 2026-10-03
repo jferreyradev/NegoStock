@@ -15,21 +15,24 @@ Sistema modular y multi-inquilino (*multi-tenant*) desarrollado para control de 
 
 ## 🗄️ Esquema de Base de Datos (`supabase/schema.sql`)
 
-El diseño relacional incluye:
+El diseño relacional está estandarizado **100% en Español** con discriminador multi-inquilino simple (`comercio_id = 1, 2, 3...`):
 
-1. **`tenants`**: Inquilinos del SaaS (Razón social, CUIT, teléfono, dirección).
-2. **`categories`** & **`brands`**: Rubros (Herramientas, Electricidad, Bulonería, Pinturería, etc.) y marcas comerciales.
-3. **`units_of_measure`**: Soporte de unidades (unidad, metro, kilo, litro, rollo, bolsa) con bandera de decimales.
-4. **`products`**:
-   - Código interno (`sku`), código de barras (`barcode`), descripción.
+1. **`comercios`**: Inquilinos del SaaS (Razón social, CUIT, teléfono, dirección).
+2. **`categorias`** y **`marcas`**: Rubros (Herramientas, Electricidad, Bulonería, etc.) y marcas comerciales.
+3. **`unidades_medida`**: Soporte de unidades (unidad, metro, kilo, litro, rollo, bolsa) con bandera de decimales.
+4. **`productos`**:
+   - Código interno (`codigo_sku`), código de barras (`codigo_barras`), descripción.
    - Precio de Costo, Precio de Venta (Minorista) y **Precio Mayoreo (Gremio/Obra)**.
    - Stock actual y alertas de stock mínimo.
-5. **`stock_movements` (Kardex)**:
+5. **`stock_movimientos` (Kardex)**:
    - Registro inmutable de cada movimiento: VENTA, COMPRA, AJUSTE_POSITIVO, AJUSTE_NEGATIVO, ROTURA.
    - Trigger automático en PostgreSQL que actualiza el stock consolidado.
-6. **`customers`** & **`suppliers`**: Cuentas corrientes, límites de crédito, condición tributaria.
-7. **`sales`** & **`sale_items`**: Ventas en mostrador, cálculo de rentabilidad neta por ítem congelando el costo al momento de venta, numeración correlativa (`0001-XXXXXXXX`).
-8. **`cash_shifts`**: Arqueo y control de caja por turno.
+6. **`clientes`** y **`proveedores`**: Cuentas corrientes, límites de crédito, condición tributaria.
+7. **`ventas`** y **`ventas_detalles`**: Ventas en mostrador, cálculo de rentabilidad neta congelando el costo al momento de venta, numeración correlativa (`0001-XXXXXXXX`).
+8. **`precios_historial`**: Auditoría de cada variación de costo y venta.
+9. **`pedidos_preventa`**: Flujo de preventa Mostrador $\rightarrow$ Caja.
+
+📘 *Consultar el documento completo: [`docs/DICCIONARIO_BASE_DE_DATOS.md`](file:///Users/jferreyradev/projects/ag/NegoStock/docs/DICCIONARIO_BASE_DE_DATOS.md).*
 
 ---
 

@@ -61,31 +61,31 @@ export const useProductStore = defineStore('products', {
       try {
         if (isSupabaseConfigured && supabase) {
           const { data, error } = await supabase
-            .from('products')
+            .from('productos')
             .select(`
-              id, sku, barcode, name, cost_price, selling_price, wholesale_price,
-              current_stock, min_stock,
-              categories ( name ),
-              brands ( name ),
-              units_of_measure ( abbreviation )
+              id, codigo_sku, codigo_barras, nombre, precio_costo, precio_venta, precio_mayoreo,
+              stock_actual, stock_minimo,
+              categorias ( nombre ),
+              marcas ( nombre ),
+              unidades_medida ( abreviatura )
             `)
-            .order('name');
+            .order('nombre');
 
           if (error) throw error;
 
           this.products = data.map(p => ({
             id: p.id,
-            sku: p.sku,
-            barcode: p.barcode,
-            name: p.name,
-            costPrice: Number(p.cost_price),
-            sellingPrice: Number(p.selling_price),
-            wholesalePrice: Number(p.wholesale_price),
-            stock: Number(p.current_stock),
-            minStock: Number(p.min_stock),
-            dept: p.categories?.name || 'GENERAL',
-            brand: p.brands?.name || 'GENÉRICO',
-            unit: p.units_of_measure?.abbreviation || 'u'
+            sku: p.codigo_sku,
+            barcode: p.codigo_barras,
+            name: p.nombre,
+            costPrice: Number(p.precio_costo),
+            sellingPrice: Number(p.precio_venta),
+            wholesalePrice: Number(p.precio_mayoreo),
+            stock: Number(p.stock_actual),
+            minStock: Number(p.stock_minimo),
+            dept: p.categorias?.nombre || 'GENERAL',
+            brand: p.marcas?.nombre || 'GENÉRICO',
+            unit: p.unidades_medida?.abreviatura || 'u'
           }));
         } else {
           // LocalStorage fallback / Demo mode
@@ -126,18 +126,19 @@ export const useProductStore = defineStore('products', {
 
       if (isSupabaseConfigured && supabase) {
         await supabase
-          .from('products')
-          .update({ current_stock: newStock })
+          .from('productos')
+          .update({ stock_actual: newStock })
           .eq('id', productId);
 
         await supabase
-          .from('stock_movements')
+          .from('stock_movimientos')
           .insert({
-            product_id: productId,
-            movement_type: diff > 0 ? 'AJUSTE_POSITIVO' : 'AJUSTE_NEGATIVO',
-            quantity: diff,
-            balance_after: newStock,
-            notes: `Ajuste manual desde la aplicación (${movementType})`
+            comercio_id: 1,
+            producto_id: productId,
+            tipo_movimiento: diff > 0 ? 'AJUSTE_POSITIVO' : 'AJUSTE_NEGATIVO',
+            cantidad: diff,
+            saldo_posterior: newStock,
+            notas: `Ajuste manual desde la aplicación (${movementType})`
           });
       }
     },
@@ -155,13 +156,14 @@ export const useProductStore = defineStore('products', {
         for (const item of items) {
           const prod = this.products.find(p => p.id === item.id || p.sku === item.sku);
           if (prod) {
-            await supabase.from('stock_movements').insert({
-              product_id: prod.id,
-              movement_type: 'VENTA',
-              quantity: -item.quantity,
-              balance_after: prod.stock,
-              reference_id: saleId,
-              notes: `Venta comprobante #${saleId || 'local'}`
+            await supabase.from('stock_movimientos').insert({
+              comercio_id: 1,
+              producto_id: prod.id,
+              tipo_movimiento: 'VENTA',
+              cantidad: -item.quantity,
+              saldo_posterior: prod.stock,
+              referencia_id: saleId,
+              notas: `Venta comprobante #${saleId || 'local'}`
             });
           }
         }
@@ -214,12 +216,12 @@ export const useProductStore = defineStore('products', {
       if (isSupabaseConfigured && supabase && updatedCount > 0) {
         try {
           await supabase.rpc('actualizar_precios_masivo', {
-            p_tenant_id: 1,
-            p_category_name: category === 'TODOS' ? null : category,
-            p_brand_name: brand === 'TODAS' ? null : brand,
-            p_percentage: percentage,
-            p_target: target,
-            p_rounding: rounding
+            p_comercio_id: 1,
+            p_categoria_nombre: category === 'TODOS' ? null : category,
+            p_marca_nombre: brand === 'TODAS' ? null : brand,
+            p_porcentaje: percentage,
+            p_criterio: target,
+            p_redondeo: rounding
           });
         } catch (e) {
           console.error('Error aplicando actualización masiva en Supabase:', e);

@@ -1,11 +1,11 @@
--- SEED DATA GENERADO AUTOMÁTICAMENTE PARA NEGOTOCK (tenant_id = 1)
--- Tenant por defecto: Ferretería Central
-INSERT INTO tenants (id, name, business_name, cuit)
+-- SEED DATA GENERADO AUTOMÁTICAMENTE PARA NEGOTOCK (100% EN ESPAÑOL)
+-- Comercio por defecto: Ferretería Central (comercio_id = 1)
+INSERT INTO comercios (id, nombre, razon_social, cuit)
 VALUES (1, 'Ferretería Central', 'Ferretería Central S.R.L.', '30-71234567-9')
 ON CONFLICT (id) DO NOTHING;
 
 -- Unidades de Medida
-INSERT INTO units_of_measure (tenant_id, name, abbreviation, allows_decimals) VALUES
+INSERT INTO unidades_medida (comercio_id, nombre, abreviatura, permite_decimales) VALUES
 (1, 'Unidad', 'u', false),
 (1, 'Metro', 'm', true),
 (1, 'Rollo', 'rollo', false),
@@ -15,38 +15,38 @@ INSERT INTO units_of_measure (tenant_id, name, abbreviation, allows_decimals) VA
 ON CONFLICT DO NOTHING;
 
 -- Categorías
-INSERT INTO categories (tenant_id, name) VALUES (1, 'HERRAMIENTAS') ON CONFLICT DO NOTHING;
-INSERT INTO categories (tenant_id, name) VALUES (1, 'SEGURIDAD') ON CONFLICT DO NOTHING;
-INSERT INTO categories (tenant_id, name) VALUES (1, 'BULONERIA') ON CONFLICT DO NOTHING;
-INSERT INTO categories (tenant_id, name) VALUES (1, 'GENERAL') ON CONFLICT DO NOTHING;
-INSERT INTO categories (tenant_id, name) VALUES (1, 'PINTURERIA') ON CONFLICT DO NOTHING;
-INSERT INTO categories (tenant_id, name) VALUES (1, 'ELECTRICIDAD') ON CONFLICT DO NOTHING;
-INSERT INTO categories (tenant_id, name) VALUES (1, 'ALBAÑIL') ON CONFLICT DO NOTHING;
-INSERT INTO categories (tenant_id, name) VALUES (1, 'MANGUERAS') ON CONFLICT DO NOTHING;
+INSERT INTO categorias (comercio_id, nombre) VALUES (1, 'HERRAMIENTAS') ON CONFLICT DO NOTHING;
+INSERT INTO categorias (comercio_id, nombre) VALUES (1, 'SEGURIDAD') ON CONFLICT DO NOTHING;
+INSERT INTO categorias (comercio_id, nombre) VALUES (1, 'BULONERIA') ON CONFLICT DO NOTHING;
+INSERT INTO categorias (comercio_id, nombre) VALUES (1, 'GENERAL') ON CONFLICT DO NOTHING;
+INSERT INTO categorias (comercio_id, nombre) VALUES (1, 'PINTURERIA') ON CONFLICT DO NOTHING;
+INSERT INTO categorias (comercio_id, nombre) VALUES (1, 'ELECTRICIDAD') ON CONFLICT DO NOTHING;
+INSERT INTO categorias (comercio_id, nombre) VALUES (1, 'ALBAÑIL') ON CONFLICT DO NOTHING;
+INSERT INTO categorias (comercio_id, nombre) VALUES (1, 'MANGUERAS') ON CONFLICT DO NOTHING;
 
 -- Marcas detectadas
-INSERT INTO brands (tenant_id, name) VALUES (1, 'UCU') ON CONFLICT DO NOTHING;
-INSERT INTO brands (tenant_id, name) VALUES (1, 'RAPTOR') ON CONFLICT DO NOTHING;
-INSERT INTO brands (tenant_id, name) VALUES (1, 'PIM') ON CONFLICT DO NOTHING;
-INSERT INTO brands (tenant_id, name) VALUES (1, 'AWE') ON CONFLICT DO NOTHING;
-INSERT INTO brands (tenant_id, name) VALUES (1, 'SAYLENS') ON CONFLICT DO NOTHING;
-INSERT INTO brands (tenant_id, name) VALUES (1, 'TACSA') ON CONFLICT DO NOTHING;
-INSERT INTO brands (tenant_id, name) VALUES (1, 'MOTA') ON CONFLICT DO NOTHING;
-INSERT INTO brands (tenant_id, name) VALUES (1, 'CANOR') ON CONFLICT DO NOTHING;
-INSERT INTO brands (tenant_id, name) VALUES (1, 'SICA') ON CONFLICT DO NOTHING;
-INSERT INTO brands (tenant_id, name) VALUES (1, 'GORYL') ON CONFLICT DO NOTHING;
-INSERT INTO brands (tenant_id, name) VALUES (1, 'GKA') ON CONFLICT DO NOTHING;
-INSERT INTO brands (tenant_id, name) VALUES (1, 'GKS') ON CONFLICT DO NOTHING;
-INSERT INTO brands (tenant_id, name) VALUES (1, 'GENÉRICO') ON CONFLICT DO NOTHING;
+INSERT INTO marcas (comercio_id, nombre) VALUES (1, 'UCU') ON CONFLICT DO NOTHING;
+INSERT INTO marcas (comercio_id, nombre) VALUES (1, 'RAPTOR') ON CONFLICT DO NOTHING;
+INSERT INTO marcas (comercio_id, nombre) VALUES (1, 'PIM') ON CONFLICT DO NOTHING;
+INSERT INTO marcas (comercio_id, nombre) VALUES (1, 'AWE') ON CONFLICT DO NOTHING;
+INSERT INTO marcas (comercio_id, nombre) VALUES (1, 'SAYLENS') ON CONFLICT DO NOTHING;
+INSERT INTO marcas (comercio_id, nombre) VALUES (1, 'TACSA') ON CONFLICT DO NOTHING;
+INSERT INTO marcas (comercio_id, nombre) VALUES (1, 'MOTA') ON CONFLICT DO NOTHING;
+INSERT INTO marcas (comercio_id, nombre) VALUES (1, 'CANOR') ON CONFLICT DO NOTHING;
+INSERT INTO marcas (comercio_id, nombre) VALUES (1, 'SICA') ON CONFLICT DO NOTHING;
+INSERT INTO marcas (comercio_id, nombre) VALUES (1, 'GORYL') ON CONFLICT DO NOTHING;
+INSERT INTO marcas (comercio_id, nombre) VALUES (1, 'GKA') ON CONFLICT DO NOTHING;
+INSERT INTO marcas (comercio_id, nombre) VALUES (1, 'GKS') ON CONFLICT DO NOTHING;
+INSERT INTO marcas (comercio_id, nombre) VALUES (1, 'GENÉRICO') ON CONFLICT DO NOTHING;
 
 -- Clientes iniciales para mostrador y gremio
-INSERT INTO customers (tenant_id, name, doc_type, doc_number, tax_condition) VALUES
+INSERT INTO clientes (comercio_id, nombre, tipo_documento, numero_documento, condicion_iva) VALUES
 (1, 'Consumidor Final', 'CF', '0', 'CONSUMIDOR_FINAL'),
 (1, 'Constructora del Valle', 'CUIT', '30-65432109-8', 'RESPONSABLE_INSCRIPTO')
 ON CONFLICT DO NOTHING;
 
 -- Inserción de Productos
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '2030',
@@ -56,14 +56,14 @@ SELECT
     0.00,
     1.0000,
     0.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'HERRAMIENTAS' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'HERRAMIENTAS' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '2013',
@@ -73,14 +73,14 @@ SELECT
     0.00,
     3.0000,
     1.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'HERRAMIENTAS' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'HERRAMIENTAS' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '2014',
@@ -90,14 +90,14 @@ SELECT
     0.00,
     3.0000,
     1.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'HERRAMIENTAS' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'HERRAMIENTAS' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '12004',
@@ -107,14 +107,14 @@ SELECT
     0.00,
     72.0000,
     20.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'SEGURIDAD' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'UCU' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'SEGURIDAD' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'UCU' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '8034',
@@ -124,14 +124,14 @@ SELECT
     0.00,
     185.0000,
     80.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'BULONERIA' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'BULONERIA' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '8007',
@@ -141,14 +141,14 @@ SELECT
     0.00,
     112.0000,
     30.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'BULONERIA' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'BULONERIA' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '8006',
@@ -158,14 +158,14 @@ SELECT
     0.00,
     93.0000,
     20.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'BULONERIA' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'BULONERIA' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '6',
@@ -175,14 +175,14 @@ SELECT
     0.00,
     2.0000,
     1.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'GENERAL' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'GENERAL' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '8028',
@@ -192,14 +192,14 @@ SELECT
     0.00,
     200.0000,
     50.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'BULONERIA' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'RAPTOR' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'BULONERIA' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'RAPTOR' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '8027',
@@ -209,14 +209,14 @@ SELECT
     0.00,
     2000.0000,
     500.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'BULONERIA' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'BULONERIA' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '8026',
@@ -226,14 +226,14 @@ SELECT
     0.00,
     2885.0000,
     500.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'BULONERIA' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'BULONERIA' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '8025',
@@ -243,14 +243,14 @@ SELECT
     0.00,
     3000.0000,
     500.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'BULONERIA' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'BULONERIA' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '2015',
@@ -260,14 +260,14 @@ SELECT
     0.00,
     1.0000,
     0.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'HERRAMIENTAS' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'HERRAMIENTAS' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '2016',
@@ -277,14 +277,14 @@ SELECT
     0.00,
     3.0000,
     1.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'HERRAMIENTAS' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'HERRAMIENTAS' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '10019',
@@ -294,14 +294,14 @@ SELECT
     0.00,
     3.0000,
     1.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'PINTURERIA' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'PINTURERIA' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '12000',
@@ -311,14 +311,14 @@ SELECT
     0.00,
     60.0000,
     10.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'SEGURIDAD' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'SEGURIDAD' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '30',
@@ -328,14 +328,14 @@ SELECT
     0.00,
     1.0000,
     0.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'GENERAL' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'GENERAL' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '27',
@@ -345,14 +345,14 @@ SELECT
     0.00,
     3.0000,
     1.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'GENERAL' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'RAPTOR' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'GENERAL' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'RAPTOR' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '25',
@@ -362,14 +362,14 @@ SELECT
     0.00,
     3.0000,
     1.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'GENERAL' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'RAPTOR' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'GENERAL' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'RAPTOR' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '14015',
@@ -379,14 +379,14 @@ SELECT
     0.00,
     300.0000,
     70.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'ELECTRICIDAD' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'PIM' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'METRO%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'ELECTRICIDAD' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'PIM' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'METRO%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '14007',
@@ -396,14 +396,14 @@ SELECT
     0.00,
     200.0000,
     50.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'ELECTRICIDAD' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'METRO%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'ELECTRICIDAD' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'METRO%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '14008',
@@ -413,14 +413,14 @@ SELECT
     0.00,
     100.0000,
     40.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'ELECTRICIDAD' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'AWE' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'METRO%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'ELECTRICIDAD' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'AWE' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'METRO%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '14009',
@@ -430,14 +430,14 @@ SELECT
     0.00,
     100.0000,
     40.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'ELECTRICIDAD' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'AWE' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'METRO%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'ELECTRICIDAD' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'AWE' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'METRO%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '14000',
@@ -447,14 +447,14 @@ SELECT
     0.00,
     200.0000,
     30.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'ELECTRICIDAD' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'AWE' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'METRO%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'ELECTRICIDAD' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'AWE' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'METRO%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '14011',
@@ -464,14 +464,14 @@ SELECT
     0.00,
     200.0000,
     40.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'ELECTRICIDAD' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'AWE' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'METRO%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'ELECTRICIDAD' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'AWE' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'METRO%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '14010',
@@ -481,14 +481,14 @@ SELECT
     0.00,
     200.0000,
     50.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'ELECTRICIDAD' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'AWE' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'METRO%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'ELECTRICIDAD' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'AWE' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'METRO%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '14012',
@@ -498,14 +498,14 @@ SELECT
     0.00,
     200.0000,
     40.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'ELECTRICIDAD' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'AWE' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'METRO%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'ELECTRICIDAD' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'AWE' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'METRO%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '14013',
@@ -515,14 +515,14 @@ SELECT
     0.00,
     100.0000,
     40.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'ELECTRICIDAD' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'AWE' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'METRO%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'ELECTRICIDAD' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'AWE' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'METRO%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '14014',
@@ -532,14 +532,14 @@ SELECT
     0.00,
     100.0000,
     40.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'ELECTRICIDAD' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'METRO%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'ELECTRICIDAD' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'METRO%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '12013',
@@ -549,14 +549,14 @@ SELECT
     0.00,
     10.0000,
     4.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'SEGURIDAD' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'SAYLENS' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'SEGURIDAD' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'SAYLENS' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '8',
@@ -566,14 +566,14 @@ SELECT
     0.00,
     2.0000,
     1.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'GENERAL' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'GENERAL' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '12002',
@@ -583,14 +583,14 @@ SELECT
     0.00,
     20.0000,
     5.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'SEGURIDAD' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'SEGURIDAD' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '14016',
@@ -600,14 +600,14 @@ SELECT
     0.00,
     100.0000,
     40.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'ELECTRICIDAD' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'TACSA' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'METRO%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'ELECTRICIDAD' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'TACSA' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'METRO%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '48',
@@ -617,14 +617,14 @@ SELECT
     0.00,
     24.0000,
     5.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'GENERAL' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'MOTA' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'GENERAL' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'MOTA' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '49',
@@ -634,14 +634,14 @@ SELECT
     0.00,
     24.0000,
     3.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'GENERAL' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'MOTA' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'GENERAL' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'MOTA' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '12001',
@@ -651,14 +651,14 @@ SELECT
     0.00,
     6.0000,
     3.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'SEGURIDAD' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'METRO%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'SEGURIDAD' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'METRO%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '40002',
@@ -668,14 +668,14 @@ SELECT
     0.00,
     5.0000,
     1.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'ALBAÑIL' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'ALBAÑIL' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '11',
@@ -685,14 +685,14 @@ SELECT
     0.00,
     6.0000,
     1.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'GENERAL' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'GENERAL' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '12010',
@@ -702,14 +702,14 @@ SELECT
     0.00,
     3.0000,
     2.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'SEGURIDAD' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'SEGURIDAD' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '2017',
@@ -719,14 +719,14 @@ SELECT
     0.00,
     1.0000,
     0.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'HERRAMIENTAS' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'HERRAMIENTAS' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '2018',
@@ -736,14 +736,14 @@ SELECT
     0.00,
     5.0000,
     1.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'HERRAMIENTAS' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'HERRAMIENTAS' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '2019',
@@ -753,14 +753,14 @@ SELECT
     0.00,
     3.0000,
     1.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'HERRAMIENTAS' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'HERRAMIENTAS' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '2020',
@@ -770,14 +770,14 @@ SELECT
     0.00,
     2.0000,
     1.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'HERRAMIENTAS' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'HERRAMIENTAS' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '22',
@@ -787,14 +787,14 @@ SELECT
     0.00,
     2.0000,
     1.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'GENERAL' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'RAPTOR' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'GENERAL' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'RAPTOR' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '23',
@@ -804,14 +804,14 @@ SELECT
     0.00,
     50.0000,
     5.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'GENERAL' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'RAPTOR' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'GENERAL' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'RAPTOR' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '20',
@@ -821,14 +821,14 @@ SELECT
     0.00,
     10.0000,
     2.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'GENERAL' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'RAPTOR' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'GENERAL' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'RAPTOR' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '19',
@@ -838,14 +838,14 @@ SELECT
     0.00,
     5.0000,
     1.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'GENERAL' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'GENERAL' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '18',
@@ -855,14 +855,14 @@ SELECT
     0.00,
     6.0000,
     1.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'GENERAL' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'GENERAL' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '21',
@@ -872,14 +872,14 @@ SELECT
     9000.00,
     4.0000,
     1.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'GENERAL' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'RAPTOR' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'GENERAL' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'RAPTOR' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '2029',
@@ -889,14 +889,14 @@ SELECT
     0.00,
     2.0000,
     1.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'HERRAMIENTAS' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'MOTA' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'HERRAMIENTAS' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'MOTA' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '60',
@@ -906,14 +906,14 @@ SELECT
     0.00,
     3.0000,
     1.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'GENERAL' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'GENERAL' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '10000',
@@ -923,14 +923,14 @@ SELECT
     0.00,
     4.0000,
     2.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'PINTURERIA' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'PINTURERIA' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '64',
@@ -940,14 +940,14 @@ SELECT
     0.00,
     5.0000,
     2.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'GENERAL' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'GENERAL' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '8011',
@@ -957,14 +957,14 @@ SELECT
     0.00,
     200.0000,
     100.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'BULONERIA' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'BULONERIA' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '8012',
@@ -974,14 +974,14 @@ SELECT
     0.00,
     100.0000,
     50.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'BULONERIA' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'BULONERIA' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '29',
@@ -991,14 +991,14 @@ SELECT
     0.00,
     10.0000,
     3.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'GENERAL' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'MOTA' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'GENERAL' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'MOTA' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '36',
@@ -1008,14 +1008,14 @@ SELECT
     0.00,
     7.0000,
     2.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'GENERAL' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'GENERAL' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '37',
@@ -1025,14 +1025,14 @@ SELECT
     9500.00,
     22.0000,
     5.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'GENERAL' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'GENERAL' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '12007',
@@ -1042,14 +1042,14 @@ SELECT
     0.00,
     108.0000,
     40.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'SEGURIDAD' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'SEGURIDAD' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '12008',
@@ -1059,14 +1059,14 @@ SELECT
     0.00,
     5.0000,
     3.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'SEGURIDAD' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'SEGURIDAD' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '12009',
@@ -1076,14 +1076,14 @@ SELECT
     0.00,
     30.0000,
     10.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'SEGURIDAD' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'CANOR' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'SEGURIDAD' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'CANOR' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '12003',
@@ -1093,14 +1093,14 @@ SELECT
     0.00,
     100.0000,
     30.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'SEGURIDAD' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'SEGURIDAD' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '12011',
@@ -1110,14 +1110,14 @@ SELECT
     0.00,
     100.0000,
     40.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'SEGURIDAD' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'SEGURIDAD' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '62',
@@ -1127,14 +1127,14 @@ SELECT
     0.00,
     1.0000,
     0.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'GENERAL' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'GENERAL' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '63',
@@ -1144,14 +1144,14 @@ SELECT
     0.00,
     1.0000,
     0.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'GENERAL' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'MOTA' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'GENERAL' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'MOTA' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '7',
@@ -1161,14 +1161,14 @@ SELECT
     0.00,
     1.0000,
     0.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'GENERAL' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'GENERAL' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '14005',
@@ -1178,14 +1178,14 @@ SELECT
     0.00,
     3.0000,
     2.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'ELECTRICIDAD' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'SICA' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'ELECTRICIDAD' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'SICA' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '14006',
@@ -1195,14 +1195,14 @@ SELECT
     0.00,
     3.0000,
     2.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'ELECTRICIDAD' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'SICA' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'ELECTRICIDAD' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'SICA' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '14001',
@@ -1212,14 +1212,14 @@ SELECT
     0.00,
     5.0000,
     3.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'ELECTRICIDAD' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'SICA' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'ELECTRICIDAD' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'SICA' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '14002',
@@ -1229,14 +1229,14 @@ SELECT
     0.00,
     5.0000,
     2.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'ELECTRICIDAD' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'SICA' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'ELECTRICIDAD' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'SICA' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '14003',
@@ -1246,14 +1246,14 @@ SELECT
     0.00,
     5.0000,
     3.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'ELECTRICIDAD' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'SICA' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'ELECTRICIDAD' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'SICA' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '14004',
@@ -1263,14 +1263,14 @@ SELECT
     0.00,
     5.0000,
     3.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'ELECTRICIDAD' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'SICA' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'ELECTRICIDAD' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'SICA' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '2021',
@@ -1280,14 +1280,14 @@ SELECT
     0.00,
     3.0000,
     1.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'HERRAMIENTAS' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'HERRAMIENTAS' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '24',
@@ -1297,14 +1297,14 @@ SELECT
     0.00,
     3.0000,
     1.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'GENERAL' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'GENERAL' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '2022',
@@ -1314,14 +1314,14 @@ SELECT
     0.00,
     3.0000,
     1.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'HERRAMIENTAS' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'HERRAMIENTAS' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '51',
@@ -1331,14 +1331,14 @@ SELECT
     0.00,
     50.0000,
     5.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'GENERAL' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'MOTA' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'GENERAL' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'MOTA' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '55',
@@ -1348,14 +1348,14 @@ SELECT
     1350.00,
     100.0000,
     20.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'GENERAL' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'GENERAL' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '56',
@@ -1365,14 +1365,14 @@ SELECT
     1350.00,
     75.0000,
     20.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'GENERAL' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'GENERAL' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '44',
@@ -1382,14 +1382,14 @@ SELECT
     0.00,
     50.0000,
     5.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'GENERAL' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'GENERAL' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '45',
@@ -1399,14 +1399,14 @@ SELECT
     0.00,
     50.0000,
     10.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'GENERAL' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'GENERAL' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '46',
@@ -1416,14 +1416,14 @@ SELECT
     0.00,
     50.0000,
     5.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'GENERAL' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'GENERAL' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '47',
@@ -1433,14 +1433,14 @@ SELECT
     0.00,
     100.0000,
     10.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'GENERAL' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'GENERAL' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '52',
@@ -1450,14 +1450,14 @@ SELECT
     0.00,
     12.0000,
     2.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'GENERAL' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'GENERAL' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '41',
@@ -1467,14 +1467,14 @@ SELECT
     0.00,
     3.0000,
     1.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'GENERAL' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'MOTA' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'GENERAL' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'MOTA' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '42',
@@ -1484,14 +1484,14 @@ SELECT
     0.00,
     3.0000,
     1.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'GENERAL' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'MOTA' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'GENERAL' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'MOTA' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '2028',
@@ -1501,14 +1501,14 @@ SELECT
     0.00,
     3.0000,
     1.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'HERRAMIENTAS' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'HERRAMIENTAS' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '2027',
@@ -1518,14 +1518,14 @@ SELECT
     0.00,
     5.0000,
     2.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'HERRAMIENTAS' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'HERRAMIENTAS' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '2000',
@@ -1535,14 +1535,14 @@ SELECT
     0.00,
     1.0000,
     0.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'HERRAMIENTAS' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'HERRAMIENTAS' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '2001',
@@ -1552,14 +1552,14 @@ SELECT
     0.00,
     3.0000,
     1.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'HERRAMIENTAS' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'HERRAMIENTAS' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '2002',
@@ -1569,14 +1569,14 @@ SELECT
     0.00,
     3.0000,
     1.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'HERRAMIENTAS' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'HERRAMIENTAS' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '2003',
@@ -1586,14 +1586,14 @@ SELECT
     0.00,
     1.0000,
     0.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'HERRAMIENTAS' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'HERRAMIENTAS' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '2004',
@@ -1603,14 +1603,14 @@ SELECT
     0.00,
     3.0000,
     1.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'HERRAMIENTAS' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'HERRAMIENTAS' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '2005',
@@ -1620,14 +1620,14 @@ SELECT
     0.00,
     3.0000,
     1.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'HERRAMIENTAS' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'HERRAMIENTAS' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '2006',
@@ -1637,14 +1637,14 @@ SELECT
     0.00,
     3.0000,
     1.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'HERRAMIENTAS' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'HERRAMIENTAS' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '2007',
@@ -1654,14 +1654,14 @@ SELECT
     0.00,
     3.0000,
     1.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'HERRAMIENTAS' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'HERRAMIENTAS' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '2008',
@@ -1671,14 +1671,14 @@ SELECT
     0.00,
     2.0000,
     1.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'HERRAMIENTAS' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'HERRAMIENTAS' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '2009',
@@ -1688,14 +1688,14 @@ SELECT
     0.00,
     3.0000,
     1.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'HERRAMIENTAS' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'HERRAMIENTAS' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '2010',
@@ -1705,14 +1705,14 @@ SELECT
     0.00,
     3.0000,
     1.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'HERRAMIENTAS' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'HERRAMIENTAS' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '2011',
@@ -1722,14 +1722,14 @@ SELECT
     0.00,
     3.0000,
     1.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'HERRAMIENTAS' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'HERRAMIENTAS' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '2012',
@@ -1739,14 +1739,14 @@ SELECT
     0.00,
     5.0000,
     2.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'HERRAMIENTAS' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'HERRAMIENTAS' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '12014',
@@ -1756,14 +1756,14 @@ SELECT
     0.00,
     15.0000,
     5.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'SEGURIDAD' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'SEGURIDAD' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '6000',
@@ -1773,14 +1773,14 @@ SELECT
     0.00,
     75.0000,
     10.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'MANGUERAS' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'METRO%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'MANGUERAS' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'METRO%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '6001',
@@ -1790,14 +1790,14 @@ SELECT
     0.00,
     2.0000,
     1.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'MANGUERAS' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'MANGUERAS' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '2024',
@@ -1807,14 +1807,14 @@ SELECT
     0.00,
     3.0000,
     1.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'HERRAMIENTAS' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'HERRAMIENTAS' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '2026',
@@ -1824,14 +1824,14 @@ SELECT
     0.00,
     2.0000,
     1.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'HERRAMIENTAS' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'HERRAMIENTAS' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '2025',
@@ -1841,14 +1841,14 @@ SELECT
     0.00,
     1.0000,
     0.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'HERRAMIENTAS' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'HERRAMIENTAS' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '26',
@@ -1858,14 +1858,14 @@ SELECT
     0.00,
     15.0000,
     3.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'GENERAL' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'GENERAL' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '28',
@@ -1875,14 +1875,14 @@ SELECT
     0.00,
     15.0000,
     5.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'GENERAL' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'GENERAL' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '2031',
@@ -1892,14 +1892,14 @@ SELECT
     0.00,
     1.0000,
     0.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'HERRAMIENTAS' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'HERRAMIENTAS' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '57',
@@ -1909,14 +1909,14 @@ SELECT
     0.00,
     75.0000,
     20.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'GENERAL' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'GENERAL' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '59',
@@ -1926,14 +1926,14 @@ SELECT
     970.00,
     75.0000,
     20.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'GENERAL' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'GENERAL' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '58',
@@ -1943,14 +1943,14 @@ SELECT
     880.00,
     75.0000,
     20.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'GENERAL' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'GENERAL' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '10002',
@@ -1960,14 +1960,14 @@ SELECT
     0.00,
     36.0000,
     10.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'PINTURERIA' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GORYL' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'PINTURERIA' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GORYL' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '10004',
@@ -1977,14 +1977,14 @@ SELECT
     0.00,
     30.0000,
     5.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'PINTURERIA' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GORYL' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'PINTURERIA' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GORYL' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '10003',
@@ -1994,14 +1994,14 @@ SELECT
     0.00,
     30.0000,
     5.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'PINTURERIA' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GORYL' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'PINTURERIA' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GORYL' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '10005',
@@ -2011,14 +2011,14 @@ SELECT
     0.00,
     24.0000,
     5.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'PINTURERIA' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GORYL' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'PINTURERIA' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GORYL' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '10006',
@@ -2028,14 +2028,14 @@ SELECT
     0.00,
     19.0000,
     5.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'PINTURERIA' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GORYL' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'PINTURERIA' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GORYL' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '10001',
@@ -2045,14 +2045,14 @@ SELECT
     0.00,
     24.0000,
     10.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'PINTURERIA' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GORYL' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'PINTURERIA' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GORYL' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '10007',
@@ -2062,14 +2062,14 @@ SELECT
     0.00,
     24.0000,
     5.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'PINTURERIA' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'PINTURERIA' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '10008',
@@ -2079,14 +2079,14 @@ SELECT
     0.00,
     18.0000,
     5.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'PINTURERIA' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'PINTURERIA' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '10009',
@@ -2096,14 +2096,14 @@ SELECT
     0.00,
     12.0000,
     5.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'PINTURERIA' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'PINTURERIA' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '10010',
@@ -2113,14 +2113,14 @@ SELECT
     0.00,
     12.0000,
     5.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'PINTURERIA' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'PINTURERIA' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '10011',
@@ -2130,14 +2130,14 @@ SELECT
     0.00,
     13.0000,
     5.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'PINTURERIA' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'PINTURERIA' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '10012',
@@ -2147,14 +2147,14 @@ SELECT
     0.00,
     12.0000,
     5.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'PINTURERIA' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'PINTURERIA' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '39',
@@ -2164,14 +2164,14 @@ SELECT
     0.00,
     2.0000,
     1.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'GENERAL' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'GENERAL' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '50',
@@ -2181,14 +2181,14 @@ SELECT
     170.00,
     300.0000,
     100.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'GENERAL' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'GENERAL' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '53',
@@ -2198,14 +2198,14 @@ SELECT
     120.00,
     600.0000,
     100.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'GENERAL' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'GENERAL' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '54',
@@ -2215,14 +2215,14 @@ SELECT
     140.00,
     600.0000,
     100.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'GENERAL' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'GENERAL' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '12005',
@@ -2232,14 +2232,14 @@ SELECT
     0.00,
     100.0000,
     40.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'SEGURIDAD' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'SEGURIDAD' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '12006',
@@ -2249,14 +2249,14 @@ SELECT
     0.00,
     10.0000,
     4.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'SEGURIDAD' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'SEGURIDAD' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '8013',
@@ -2266,14 +2266,14 @@ SELECT
     0.00,
     1000.0000,
     100.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'BULONERIA' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'BULONERIA' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '10013',
@@ -2283,14 +2283,14 @@ SELECT
     0.00,
     24.0000,
     5.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'PINTURERIA' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'PINTURERIA' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '10014',
@@ -2300,14 +2300,14 @@ SELECT
     0.00,
     24.0000,
     5.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'PINTURERIA' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'PINTURERIA' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '10015',
@@ -2317,14 +2317,14 @@ SELECT
     0.00,
     23.0000,
     5.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'PINTURERIA' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'PINTURERIA' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '10016',
@@ -2334,14 +2334,14 @@ SELECT
     0.00,
     30.0000,
     5.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'PINTURERIA' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'PINTURERIA' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '10017',
@@ -2351,14 +2351,14 @@ SELECT
     0.00,
     8.0000,
     4.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'PINTURERIA' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'PINTURERIA' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '10018',
@@ -2368,14 +2368,14 @@ SELECT
     0.00,
     44.0000,
     10.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'PINTURERIA' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'PINTURERIA' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '9',
@@ -2385,14 +2385,14 @@ SELECT
     0.00,
     4.0000,
     1.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'GENERAL' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'GENERAL' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '4',
@@ -2402,14 +2402,14 @@ SELECT
     0.00,
     6.0000,
     1.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'GENERAL' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'GENERAL' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '32',
@@ -2419,14 +2419,14 @@ SELECT
     0.00,
     5.0000,
     2.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'GENERAL' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'GENERAL' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '4000',
@@ -2436,14 +2436,14 @@ SELECT
     0.00,
     5.0000,
     2.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'ALBAÑIL' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'BOLSA%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'ALBAÑIL' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'BOLSA%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '4001',
@@ -2453,14 +2453,14 @@ SELECT
     0.00,
     2.0000,
     1.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'ALBAÑIL' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'BOLSA%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'ALBAÑIL' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'BOLSA%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '35',
@@ -2470,14 +2470,14 @@ SELECT
     0.00,
     6.0000,
     2.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'GENERAL' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'GENERAL' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '33',
@@ -2487,14 +2487,14 @@ SELECT
     0.00,
     5.0000,
     2.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'GENERAL' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'GENERAL' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '8030',
@@ -2504,14 +2504,14 @@ SELECT
     0.00,
     250.0000,
     70.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'BULONERIA' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GKA' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'BULONERIA' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GKA' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '8029',
@@ -2521,14 +2521,14 @@ SELECT
     0.00,
     250.0000,
     70.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'BULONERIA' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GKS' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'BULONERIA' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GKS' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '43',
@@ -2538,14 +2538,14 @@ SELECT
     0.00,
     3.0000,
     1.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'GENERAL' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'GENERAL' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '8005',
@@ -2555,14 +2555,14 @@ SELECT
     0.00,
     200.0000,
     70.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'BULONERIA' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'BULONERIA' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '8032',
@@ -2572,14 +2572,14 @@ SELECT
     0.00,
     100.0000,
     30.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'BULONERIA' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'BULONERIA' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '8033',
@@ -2589,14 +2589,14 @@ SELECT
     0.00,
     200.0000,
     70.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'BULONERIA' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'BULONERIA' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '8031',
@@ -2606,14 +2606,14 @@ SELECT
     0.00,
     200.0000,
     70.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'BULONERIA' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'BULONERIA' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '8004',
@@ -2623,14 +2623,14 @@ SELECT
     0.00,
     500.0000,
     200.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'BULONERIA' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'BULONERIA' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '8003',
@@ -2640,14 +2640,14 @@ SELECT
     0.00,
     500.0000,
     100.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'BULONERIA' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'BULONERIA' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '8002',
@@ -2657,14 +2657,14 @@ SELECT
     0.00,
     3000.0000,
     300.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'BULONERIA' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'BULONERIA' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '8000',
@@ -2674,14 +2674,14 @@ SELECT
     0.00,
     3000.0000,
     300.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'BULONERIA' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'BULONERIA' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '8001',
@@ -2691,14 +2691,14 @@ SELECT
     0.00,
     1500.0000,
     500.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'BULONERIA' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'BULONERIA' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '2023',
@@ -2708,14 +2708,14 @@ SELECT
     0.00,
     3.0000,
     1.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'HERRAMIENTAS' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'HERRAMIENTAS' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '8010',
@@ -2725,14 +2725,14 @@ SELECT
     0.00,
     300.0000,
     100.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'BULONERIA' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'BULONERIA' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '8008',
@@ -2742,14 +2742,14 @@ SELECT
     0.00,
     300.0000,
     100.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'BULONERIA' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'BULONERIA' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '8009',
@@ -2759,14 +2759,14 @@ SELECT
     0.00,
     300.0000,
     100.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'BULONERIA' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'BULONERIA' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '8018',
@@ -2776,14 +2776,14 @@ SELECT
     0.00,
     10.0000,
     5.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'BULONERIA' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'BULONERIA' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '8014',
@@ -2793,14 +2793,14 @@ SELECT
     0.00,
     30.0000,
     5.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'BULONERIA' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'BULONERIA' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '8015',
@@ -2810,14 +2810,14 @@ SELECT
     0.00,
     20.0000,
     3.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'BULONERIA' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'BULONERIA' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '8016',
@@ -2827,14 +2827,14 @@ SELECT
     0.00,
     20.0000,
     5.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'BULONERIA' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'BULONERIA' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '8019',
@@ -2844,14 +2844,14 @@ SELECT
     0.00,
     15.0000,
     5.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'BULONERIA' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'BULONERIA' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '8017',
@@ -2861,14 +2861,14 @@ SELECT
     0.00,
     15.0000,
     5.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'BULONERIA' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'BULONERIA' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '8024',
@@ -2878,14 +2878,14 @@ SELECT
     0.00,
     10.0000,
     4.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'BULONERIA' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'BULONERIA' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '8022',
@@ -2895,14 +2895,14 @@ SELECT
     0.00,
     10.0000,
     3.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'BULONERIA' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'BULONERIA' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '8021',
@@ -2912,14 +2912,14 @@ SELECT
     0.00,
     10.0000,
     3.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'BULONERIA' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'BULONERIA' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '8023',
@@ -2929,14 +2929,14 @@ SELECT
     0.00,
     5.0000,
     2.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'BULONERIA' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
-INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'BULONERIA' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;
+INSERT INTO productos (comercio_id, codigo_sku, nombre, precio_costo, precio_venta, precio_mayoreo, stock_actual, stock_minimo, categoria_id, marca_id, unidad_id)
 SELECT 
     1,
     '8020',
@@ -2946,10 +2946,10 @@ SELECT
     0.00,
     6.0000,
     2.0000,
-    (SELECT id FROM categories WHERE tenant_id = 1 AND name = 'BULONERIA' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = 1 AND name = 'GENÉRICO' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = 1 AND name ILIKE 'UNIDAD%' LIMIT 1)
-ON CONFLICT (tenant_id, sku) DO UPDATE SET
-    selling_price = EXCLUDED.selling_price,
-    cost_price = EXCLUDED.cost_price,
-    current_stock = EXCLUDED.current_stock;
+    (SELECT id FROM categorias WHERE comercio_id = 1 AND nombre = 'BULONERIA' LIMIT 1),
+    (SELECT id FROM marcas WHERE comercio_id = 1 AND nombre = 'GENÉRICO' LIMIT 1),
+    (SELECT id FROM unidades_medida WHERE comercio_id = 1 AND nombre ILIKE 'UNIDAD%' LIMIT 1)
+ON CONFLICT (comercio_id, codigo_sku) DO UPDATE SET
+    precio_venta = EXCLUDED.precio_venta,
+    precio_costo = EXCLUDED.precio_costo,
+    stock_actual = EXCLUDED.stock_actual;

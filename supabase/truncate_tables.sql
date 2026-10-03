@@ -1,30 +1,30 @@
 -- ==============================================================================
--- NEGOTOCK: VACIAR SOLO LOS DATOS DE LAS TABLAS (TRUNCATE)
--- Mantiene las tablas, columnas, índices, triggers y funciones intactas.
+-- NEGOTOCK: VACIAR SOLO LOS DATOS DE LAS TABLAS (100% EN ESPAÑOL)
+-- Mantiene intactas las tablas, columnas, funciones, triggers y políticas RLS.
 -- Ideal para limpiar los datos de prueba y volver a correr supabase/seed.sql
 -- ==============================================================================
 
 TRUNCATE TABLE 
-    price_histories,
-    sale_items, 
-    sales, 
-    pending_order_items, 
-    pending_orders, 
-    stock_movements, 
-    purchase_items, 
-    purchases, 
-    products, 
-    customers, 
-    suppliers, 
-    categories, 
-    brands, 
-    units_of_measure, 
-    voucher_sequences, 
-    cash_shifts, 
-    profiles, 
-    tenants 
+    precios_historial,
+    ventas_detalles, 
+    ventas, 
+    pedidos_preventa_detalles, 
+    pedidos_preventa, 
+    stock_movimientos, 
+    compras_detalles, 
+    compras, 
+    productos, 
+    clientes, 
+    proveedores, 
+    categorias, 
+    marcas, 
+    unidades_medida, 
+    comprobantes_secuencias, 
+    cajas_turnos, 
+    usuarios, 
+    comercios 
 CASCADE;
 
--- Reiniciar secuencias de IDs y comprobantes
-DELETE FROM voucher_sequences;
-ALTER SEQUENCE IF EXISTS tenants_id_seq RESTART WITH 1;
+-- Reiniciar secuencias de comprobantes y comercios
+DELETE FROM comprobantes_secuencias;
+ALTER SEQUENCE IF EXISTS comercios_id_seq RESTART WITH 1;

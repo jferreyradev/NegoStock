@@ -80,16 +80,17 @@ export const usePriceHistoryStore = defineStore('priceHistory', {
       if (isSupabaseConfigured && supabase) {
         try {
           const rows = newEntries.map(e => ({
-            old_cost_price: e.oldCost,
-            new_cost_price: e.newCost,
-            old_selling_price: e.oldSelling,
-            new_selling_price: e.newSelling,
-            old_wholesale_price: e.oldWholesale,
-            new_wholesale_price: e.newWholesale,
-            change_reason: reason,
-            user_name: userName
+            comercio_id: 1,
+            costo_anterior: e.oldCost,
+            costo_nuevo: e.newCost,
+            venta_anterior: e.oldSelling,
+            venta_nueva: e.newSelling,
+            mayoreo_anterior: e.oldWholesale,
+            mayoreo_nuevo: e.newWholesale,
+            motivo_cambio: reason,
+            usuario_nombre: userName
           }));
-          await supabase.from('price_histories').insert(rows);
+          await supabase.from('precios_historial').insert(rows);
         } catch (err) {
           console.error('Error guardando historial en Supabase:', err);
         }

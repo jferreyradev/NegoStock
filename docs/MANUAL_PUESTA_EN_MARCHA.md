@@ -46,7 +46,7 @@ Esta guía detalla los pasos exactos para configurar el entorno de base de datos
 3. Abrí el archivo [supabase/schema.sql](file:///Users/jferreyradev/projects/ag/NegoStock/supabase/schema.sql), copiá todo su contenido, pegalo en el editor de Supabase y hacé clic en **Run** (botón verde).
    *Esto creará todas las tablas con `tenant_id INT`, secuencias correlativas, funciones transaccionales, triggers y políticas RLS.*
 4. Creá otra pestaña en el SQL Editor, abrí el archivo [supabase/seed.sql](file:///Users/jferreyradev/projects/ag/NegoStock/supabase/seed.sql), pegalo y hacé clic en **Run**.
-   *Esto insertará la Ferretería Central (`tenant_id = 1`) y sus 171 productos iniciales.*
+   *Esto insertará la Ferretería Central (`comercio_id = 1`) y sus 171 productos iniciales con rubros, marcas y unidades en español.*
 
 #### Paso 3.3: Obtener las Credenciales y Configurar el Frontend
 1. En Supabase, andá al engranaje abajo a la izquierda: **Project Settings** $\rightarrow$ **API**.

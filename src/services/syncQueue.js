@@ -71,19 +71,19 @@ export async function syncPendingSales(onSaleSyncedCallback) {
   for (const sale of queue) {
     try {
       const payload = {
-        p_tenant_id: 1,
-        p_voucher_type: sale.voucherType,
-        p_payment_method: sale.paymentMethod,
-        p_price_mode: sale.priceMode || 'selling',
+        p_comercio_id: 1,
+        p_tipo_comprobante: sale.voucherType,
+        p_medio_pago: sale.paymentMethod,
+        p_modalidad_precio: sale.priceMode || 'selling',
         p_items: sale.items.map(it => ({
           id: it.id?.startsWith('local-') ? null : it.id,
           sku: it.sku,
           quantity: it.quantity,
           price: it.price
         })),
-        p_discount: sale.discount || 0,
+        p_descuento: sale.discount || 0,
         p_offline_id: sale.id,
-        p_notes: `Cliente: ${sale.customer?.name || 'Consumidor Final'} (Sincronizado Offline)`
+        p_notas: `Cliente: ${sale.customer?.name || 'Consumidor Final'} (Sincronizado Offline)`
       };
 
       const { data, error } = await supabase.rpc('procesar_venta_mostrador', payload);

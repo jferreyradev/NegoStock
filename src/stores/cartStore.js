@@ -201,19 +201,19 @@ export const useCartStore = defineStore('cart', {
       if (isSupabaseConfigured && supabase && syncState.isOnline) {
         try {
           const payload = {
-            p_tenant_id: 1,
-            p_voucher_type: this.voucherType,
-            p_payment_method: this.paymentMethod,
-            p_price_mode: this.priceMode,
+            p_comercio_id: 1,
+            p_tipo_comprobante: this.voucherType,
+            p_medio_pago: this.paymentMethod,
+            p_modalidad_precio: this.priceMode,
             p_items: this.items.map(item => ({
               id: item.id?.startsWith('local-') ? null : item.id,
               sku: item.sku,
               quantity: item.quantity,
               price: this.priceMode === 'wholesale' && item.wholesalePrice > 0 ? item.wholesalePrice : item.sellingPrice
             })),
-            p_discount: this.discountAmount,
+            p_descuento: this.discountAmount,
             p_offline_id: offlineSaleId,
-            p_notes: `Cliente: ${this.customer.name}`
+            p_notas: `Cliente: ${this.customer.name}`
           };
 
           const { data, error } = await supabase.rpc('procesar_venta_mostrador', payload);
