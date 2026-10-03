@@ -214,7 +214,7 @@ export const useProductStore = defineStore('products', {
       if (isSupabaseConfigured && supabase && updatedCount > 0) {
         try {
           await supabase.rpc('actualizar_precios_masivo', {
-            p_tenant_id: '00000000-0000-0000-0000-000000000001',
+            p_tenant_id: 1,
             p_category_name: category === 'TODOS' ? null : category,
             p_brand_name: brand === 'TODAS' ? null : brand,
             p_percentage: percentage,

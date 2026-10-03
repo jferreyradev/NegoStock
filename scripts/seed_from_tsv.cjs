@@ -97,41 +97,41 @@ fs.writeFileSync(
 );
 
 // Generate SQL Seed File
-const defaultTenantId = '00000000-0000-0000-0000-000000000001';
+const defaultTenantId = 1;
 
-let sql = `-- SEED DATA GENERADO AUTOMÁTICAMENTE PARA NEGOTOCK
--- Tenant por defecto
+let sql = `-- SEED DATA GENERADO AUTOMÁTICAMENTE PARA NEGOTOCK (tenant_id = 1)
+-- Tenant por defecto: Ferretería Central
 INSERT INTO tenants (id, name, business_name, cuit)
-VALUES ('${defaultTenantId}', 'Ferretería Central', 'Ferretería Central S.R.L.', '30-71234567-9')
+VALUES (${defaultTenantId}, 'Ferretería Central', 'Ferretería Central S.R.L.', '30-71234567-9')
 ON CONFLICT (id) DO NOTHING;
 
 -- Unidades de Medida
 INSERT INTO units_of_measure (tenant_id, name, abbreviation, allows_decimals) VALUES
-('${defaultTenantId}', 'Unidad', 'u', false),
-('${defaultTenantId}', 'Metro', 'm', true),
-('${defaultTenantId}', 'Rollo', 'rollo', false),
-('${defaultTenantId}', 'Bolsa', 'bolsa', false),
-('${defaultTenantId}', 'Kilo', 'kg', true),
-('${defaultTenantId}', 'Litro', 'lt', true)
+(${defaultTenantId}, 'Unidad', 'u', false),
+(${defaultTenantId}, 'Metro', 'm', true),
+(${defaultTenantId}, 'Rollo', 'rollo', false),
+(${defaultTenantId}, 'Bolsa', 'bolsa', false),
+(${defaultTenantId}, 'Kilo', 'kg', true),
+(${defaultTenantId}, 'Litro', 'lt', true)
 ON CONFLICT DO NOTHING;
 
 -- Categorías
 `;
 
 for (const cat of categoriesSet) {
-    sql += `INSERT INTO categories (tenant_id, name) VALUES ('${defaultTenantId}', '${cat}') ON CONFLICT DO NOTHING;\n`;
+    sql += `INSERT INTO categories (tenant_id, name) VALUES (${defaultTenantId}, '${cat}') ON CONFLICT DO NOTHING;\n`;
 }
 
 sql += `\n-- Marcas detectadas\n`;
 for (const b of brandsSet) {
-    sql += `INSERT INTO brands (tenant_id, name) VALUES ('${defaultTenantId}', '${b}') ON CONFLICT DO NOTHING;\n`;
+    sql += `INSERT INTO brands (tenant_id, name) VALUES (${defaultTenantId}, '${b}') ON CONFLICT DO NOTHING;\n`;
 }
-sql += `INSERT INTO brands (tenant_id, name) VALUES ('${defaultTenantId}', 'GENÉRICO') ON CONFLICT DO NOTHING;\n`;
+sql += `INSERT INTO brands (tenant_id, name) VALUES (${defaultTenantId}, 'GENÉRICO') ON CONFLICT DO NOTHING;\n`;
 
 sql += `\n-- Clientes iniciales para mostrador y gremio\n`;
 sql += `INSERT INTO customers (tenant_id, name, doc_type, doc_number, tax_condition) VALUES
-('${defaultTenantId}', 'Consumidor Final', 'CF', '0', 'CONSUMIDOR_FINAL'),
-('${defaultTenantId}', 'Constructora del Valle', 'CUIT', '30-65432109-8', 'RESPONSABLE_INSCRIPTO')
+(${defaultTenantId}, 'Consumidor Final', 'CF', '0', 'CONSUMIDOR_FINAL'),
+(${defaultTenantId}, 'Constructora del Valle', 'CUIT', '30-65432109-8', 'RESPONSABLE_INSCRIPTO')
 ON CONFLICT DO NOTHING;\n\n`;
 
 sql += `-- Inserción de Productos\n`;
@@ -139,7 +139,7 @@ for (const p of products) {
     const escapedName = p.name.replace(/'/g, "''");
     sql += `INSERT INTO products (tenant_id, sku, name, cost_price, selling_price, wholesale_price, current_stock, min_stock, category_id, brand_id, unit_id)
 SELECT 
-    '${defaultTenantId}',
+    ${defaultTenantId},
     '${p.sku}',
     '${escapedName}',
     ${p.costPrice.toFixed(2)},
@@ -147,9 +147,9 @@ SELECT
     ${p.wholesalePrice.toFixed(2)},
     ${p.stock.toFixed(4)},
     ${p.minStock.toFixed(4)},
-    (SELECT id FROM categories WHERE tenant_id = '${defaultTenantId}' AND name = '${p.dept}' LIMIT 1),
-    (SELECT id FROM brands WHERE tenant_id = '${defaultTenantId}' AND name = '${p.brand}' LIMIT 1),
-    (SELECT id FROM units_of_measure WHERE tenant_id = '${defaultTenantId}' AND name ILIKE '${p.unit}%' LIMIT 1)
+    (SELECT id FROM categories WHERE tenant_id = ${defaultTenantId} AND name = '${p.dept}' LIMIT 1),
+    (SELECT id FROM brands WHERE tenant_id = ${defaultTenantId} AND name = '${p.brand}' LIMIT 1),
+    (SELECT id FROM units_of_measure WHERE tenant_id = ${defaultTenantId} AND name ILIKE '${p.unit}%' LIMIT 1)
 ON CONFLICT (tenant_id, sku) DO UPDATE SET
     selling_price = EXCLUDED.selling_price,
     cost_price = EXCLUDED.cost_price,

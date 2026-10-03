@@ -71,7 +71,7 @@ export async function syncPendingSales(onSaleSyncedCallback) {
   for (const sale of queue) {
     try {
       const payload = {
-        p_tenant_id: '00000000-0000-0000-0000-000000000001',
+        p_tenant_id: 1,
         p_voucher_type: sale.voucherType,
         p_payment_method: sale.paymentMethod,
         p_price_mode: sale.priceMode || 'selling',

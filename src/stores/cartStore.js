@@ -201,7 +201,7 @@ export const useCartStore = defineStore('cart', {
       if (isSupabaseConfigured && supabase && syncState.isOnline) {
         try {
           const payload = {
-            p_tenant_id: '00000000-0000-0000-0000-000000000001',
+            p_tenant_id: 1,
             p_voucher_type: this.voucherType,
             p_payment_method: this.paymentMethod,
             p_price_mode: this.priceMode,

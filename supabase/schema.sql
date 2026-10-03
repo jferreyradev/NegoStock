@@ -1,14 +1,14 @@
 -- ==============================================================================
 -- NEGOTOCK - ESQUEMA RELACIONAL SUPABASE / POSTGRESQL (SAAS FERRETERÍA)
--- Multi-inquilino (tenant_id) + Control de Stock (Kardex) + Ventas + Compras
+-- Multi-inquilino con ID entero simple (tenant_id = 1, 2, 3...)
 -- ==============================================================================
 
 -- 1. EXTENSIONES
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- 2. TENANTS (INQUILINOS / NEGOCIOS SUSCRIPTOS)
+-- 2. TENANTS (INQUILINOS / FERRETERÍAS: 1 = Central, 2 = Sucursal 2, etc.)
 CREATE TABLE IF NOT EXISTS tenants (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id SERIAL PRIMARY KEY,                      -- ID simple y limpio: 1, 2, 3...
     name TEXT NOT NULL,                         -- Nombre comercial / de fantasía
     business_name TEXT,                         -- Razón Social legal
     cuit TEXT,                                  -- CUIT (Argentina)
@@ -23,19 +23,21 @@ CREATE TABLE IF NOT EXISTS tenants (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 3. USUARIOS Y PERFILES
+-- 3. USUARIOS Y PERFILES (Vinculado a Supabase Auth o Empleados)
 CREATE TABLE IF NOT EXISTS profiles (
     id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    tenant_id INT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     full_name TEXT NOT NULL,
-    role TEXT NOT NULL DEFAULT 'CASHIER' CHECK (role IN ('ADMIN', 'MANAGER', 'SELLER', 'CASHIER')),
+    role TEXT NOT NULL DEFAULT 'SELLER' CHECK (role IN ('ADMIN', 'MANAGER', 'CASHIER', 'SELLER')),
+    pin_code TEXT DEFAULT '1111',
+    is_active BOOLEAN DEFAULT true,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 4. UNIDADES DE MEDIDA
+-- 4. UNIDADES DE MEDIDA (u, m, kg, lt, bolsa, rollo)
 CREATE TABLE IF NOT EXISTS units_of_measure (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    tenant_id INT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     name TEXT NOT NULL,
     abbreviation TEXT NOT NULL,
     allows_decimals BOOLEAN DEFAULT false,
@@ -46,7 +48,7 @@ CREATE TABLE IF NOT EXISTS units_of_measure (
 -- 5. CATEGORÍAS (Rubros / Departamentos)
 CREATE TABLE IF NOT EXISTS categories (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    tenant_id INT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     parent_id UUID REFERENCES categories(id) ON DELETE SET NULL,
     name TEXT NOT NULL,
     description TEXT,
@@ -57,7 +59,7 @@ CREATE TABLE IF NOT EXISTS categories (
 -- 6. MARCAS
 CREATE TABLE IF NOT EXISTS brands (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    tenant_id INT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     name TEXT NOT NULL,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     CONSTRAINT uk_tenant_brand UNIQUE (tenant_id, name)
@@ -66,21 +68,23 @@ CREATE TABLE IF NOT EXISTS brands (
 -- 7. PRODUCTOS Y PRECIOS
 CREATE TABLE IF NOT EXISTS products (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
-    sku TEXT NOT NULL,
-    barcode TEXT,
-    name TEXT NOT NULL,
-    description TEXT,
+    tenant_id INT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    sku TEXT NOT NULL,                          -- Código interno de ferretería
+    barcode TEXT,                               -- Código de barras comercial EAN-13
+    name TEXT NOT NULL,                         -- Descripción comercial
+    description TEXT,                           -- Detalles técnicos
     category_id UUID REFERENCES categories(id) ON DELETE SET NULL,
     brand_id UUID REFERENCES brands(id) ON DELETE SET NULL,
     unit_id UUID REFERENCES units_of_measure(id) ON DELETE SET NULL,
     
-    cost_price NUMERIC(14, 2) NOT NULL DEFAULT 0.00,
-    profit_margin NUMERIC(6, 2) DEFAULT 100.00,
-    selling_price NUMERIC(14, 2) NOT NULL DEFAULT 0.00,
-    wholesale_price NUMERIC(14, 2) DEFAULT 0.00,
-    tax_rate NUMERIC(5, 2) NOT NULL DEFAULT 21.00,
+    -- Estructura de Precios
+    cost_price NUMERIC(14, 2) NOT NULL DEFAULT 0.00,        -- Costo de reposición
+    profit_margin NUMERIC(6, 2) DEFAULT 100.00,             -- Margen estimado %
+    selling_price NUMERIC(14, 2) NOT NULL DEFAULT 0.00,     -- Precio Mostrador (Minorista)
+    wholesale_price NUMERIC(14, 2) DEFAULT 0.00,           -- Precio Mayoreo (Gremio/Obra)
+    tax_rate NUMERIC(5, 2) NOT NULL DEFAULT 21.00,          -- IVA (21%, 10.5%, 0%)
     
+    -- Stock
     current_stock NUMERIC(12, 4) NOT NULL DEFAULT 0.0000,
     min_stock NUMERIC(12, 4) NOT NULL DEFAULT 0.0000,
     max_stock NUMERIC(12, 4) DEFAULT NULL,
@@ -99,7 +103,7 @@ CREATE INDEX IF NOT EXISTS idx_products_barcode ON products(tenant_id, barcode);
 -- 8. CLIENTES
 CREATE TABLE IF NOT EXISTS customers (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    tenant_id INT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     name TEXT NOT NULL,
     doc_type TEXT DEFAULT 'DNI' CHECK (doc_type IN ('DNI', 'CUIT', 'CUIL', 'PASAPORTE', 'CF')),
     doc_number TEXT,
@@ -109,7 +113,7 @@ CREATE TABLE IF NOT EXISTS customers (
     address TEXT,
     city TEXT,
     credit_limit NUMERIC(14, 2) DEFAULT 0.00,
-    current_account_balance NUMERIC(14, 2) DEFAULT 0.00,
+    current_account_balance NUMERIC(14, 2) DEFAULT 0.00,    -- Saldo Cta Cte
     is_active BOOLEAN DEFAULT true,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
@@ -118,7 +122,7 @@ CREATE TABLE IF NOT EXISTS customers (
 -- 9. PROVEEDORES
 CREATE TABLE IF NOT EXISTS suppliers (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    tenant_id INT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     name TEXT NOT NULL,
     cuit TEXT,
     contact_name TEXT,
@@ -133,7 +137,7 @@ CREATE TABLE IF NOT EXISTS suppliers (
 -- 10. COMPRAS
 CREATE TABLE IF NOT EXISTS purchases (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    tenant_id INT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     supplier_id UUID REFERENCES suppliers(id) ON DELETE RESTRICT,
     invoice_number TEXT,
     invoice_date DATE DEFAULT CURRENT_DATE,
@@ -155,9 +159,9 @@ CREATE TABLE IF NOT EXISTS purchase_items (
     subtotal NUMERIC(14, 2) NOT NULL
 );
 
--- 11. TABLA DE SECUENCIAS CORRELATIVAS (Garantiza números sin huecos ni colisiones)
+-- 11. TABLA DE SECUENCIAS CORRELATIVAS (Garantiza números sin huecos)
 CREATE TABLE IF NOT EXISTS voucher_sequences (
-    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    tenant_id INT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     point_of_sale INTEGER NOT NULL DEFAULT 1,
     voucher_type TEXT NOT NULL,
     last_number INTEGER NOT NULL DEFAULT 0,
@@ -167,7 +171,7 @@ CREATE TABLE IF NOT EXISTS voucher_sequences (
 -- 12. VENTAS Y COMPROBANTES
 CREATE TABLE IF NOT EXISTS sales (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    tenant_id INT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     customer_id UUID REFERENCES customers(id) ON DELETE RESTRICT,
     
     voucher_type TEXT NOT NULL DEFAULT 'TICKET_X' CHECK (voucher_type IN ('TICKET_X', 'PRESUPUESTO', 'REMITO', 'FACTURA_A', 'FACTURA_B', 'FACTURA_C')),
@@ -184,7 +188,7 @@ CREATE TABLE IF NOT EXISTS sales (
     tax_total NUMERIC(14, 2) NOT NULL DEFAULT 0.00,
     total NUMERIC(14, 2) NOT NULL DEFAULT 0.00,
     
-    client_offline_id TEXT,                                 -- ID generado en modo offline para evitar duplicaciones al sincronizar
+    client_offline_id TEXT,
     notes TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     CONSTRAINT uk_tenant_voucher UNIQUE (tenant_id, point_of_sale, voucher_type, voucher_sequence_number)
@@ -204,7 +208,7 @@ CREATE TABLE IF NOT EXISTS sale_items (
 -- 13. MOVIMIENTOS DE STOCK (Kardex Inmutable)
 CREATE TABLE IF NOT EXISTS stock_movements (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    tenant_id INT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     product_id UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
     movement_type TEXT NOT NULL CHECK (movement_type IN ('VENTA', 'COMPRA', 'AJUSTE_POSITIVO', 'AJUSTE_NEGATIVO', 'ROTURA', 'INICIAL')),
     quantity NUMERIC(12, 4) NOT NULL,
@@ -217,10 +221,54 @@ CREATE TABLE IF NOT EXISTS stock_movements (
 
 CREATE INDEX IF NOT EXISTS idx_stock_movements_prod ON stock_movements(product_id, created_at DESC);
 
--- 14. CAJA Y ARQUEO DIARIO
+-- 14. PREVENTA: PEDIDOS PENDIENTES (Mostrador -> Caja -> Despacho)
+CREATE TABLE IF NOT EXISTS pending_orders (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    tenant_id INT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    order_number TEXT NOT NULL,
+    customer_id UUID REFERENCES customers(id),
+    price_mode TEXT DEFAULT 'selling',
+    subtotal NUMERIC(14, 2) NOT NULL DEFAULT 0.00,
+    discount NUMERIC(14, 2) NOT NULL DEFAULT 0.00,
+    total NUMERIC(14, 2) NOT NULL DEFAULT 0.00,
+    status TEXT DEFAULT 'PENDIENTE' CHECK (status IN ('PENDIENTE', 'COBRADO', 'CANCELADO')),
+    notes TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS pending_order_items (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    order_id UUID NOT NULL REFERENCES pending_orders(id) ON DELETE CASCADE,
+    product_id UUID NOT NULL REFERENCES products(id) ON DELETE RESTRICT,
+    quantity NUMERIC(12, 4) NOT NULL,
+    unit_price NUMERIC(14, 2) NOT NULL,
+    subtotal NUMERIC(14, 2) NOT NULL
+);
+
+-- 15. AUDITORÍA HISTÓRICA DE PRECIOS
+CREATE TABLE IF NOT EXISTS price_histories (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    tenant_id INT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    product_id UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+    old_cost_price NUMERIC(14, 2) NOT NULL DEFAULT 0.00,
+    new_cost_price NUMERIC(14, 2) NOT NULL DEFAULT 0.00,
+    old_selling_price NUMERIC(14, 2) NOT NULL DEFAULT 0.00,
+    new_selling_price NUMERIC(14, 2) NOT NULL DEFAULT 0.00,
+    old_wholesale_price NUMERIC(14, 2) NOT NULL DEFAULT 0.00,
+    new_wholesale_price NUMERIC(14, 2) NOT NULL DEFAULT 0.00,
+    change_reason TEXT NOT NULL DEFAULT 'MANUAL' CHECK (change_reason IN ('MANUAL', 'AUMENTO_MASIVO', 'IMPORTACION_EXCEL', 'RECEPCION_COMPRA')),
+    user_name TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_price_histories_prod ON price_histories(product_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_price_histories_tenant ON price_histories(tenant_id, created_at DESC);
+
+-- 16. CAJA Y ARQUEO DIARIO
 CREATE TABLE IF NOT EXISTS cash_shifts (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    tenant_id INT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     user_id UUID,
     opened_at TIMESTAMPTZ DEFAULT NOW(),
     closed_at TIMESTAMPTZ,
@@ -232,12 +280,42 @@ CREATE TABLE IF NOT EXISTS cash_shifts (
 );
 
 -- ==============================================================================
--- FUNCIÓN TRANSACCIONAL ACID: PROCESAR VENTA MOSTRADOR
--- Ejecuta en un único bloque atómico: Secuencia -> Bloqueo -> Kardex -> Venta
+-- FUNCIONES TRANSACCIONALES ACID
 -- ==============================================================================
 
+-- Trigger: Registro automático de historial de precios
+CREATE OR REPLACE FUNCTION trg_log_price_history()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF (OLD.cost_price IS DISTINCT FROM NEW.cost_price OR
+        OLD.selling_price IS DISTINCT FROM NEW.selling_price OR
+        OLD.wholesale_price IS DISTINCT FROM NEW.wholesale_price) THEN
+        
+        INSERT INTO price_histories (
+            tenant_id, product_id,
+            old_cost_price, new_cost_price,
+            old_selling_price, new_selling_price,
+            old_wholesale_price, new_wholesale_price,
+            change_reason, user_name, created_at
+        ) VALUES (
+            NEW.tenant_id, NEW.id,
+            COALESCE(OLD.cost_price, 0.00), COALESCE(NEW.cost_price, 0.00),
+            COALESCE(OLD.selling_price, 0.00), COALESCE(NEW.selling_price, 0.00),
+            COALESCE(OLD.wholesale_price, 0.00), COALESCE(NEW.wholesale_price, 0.00),
+            'MANUAL', current_user, NOW()
+        );
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE OR REPLACE TRIGGER trg_after_product_price_change
+AFTER UPDATE ON products
+FOR EACH ROW EXECUTE FUNCTION trg_log_price_history();
+
+-- RPC: PROCESAR VENTA MOSTRADOR ATÓMICAMENTE
 CREATE OR REPLACE FUNCTION procesar_venta_mostrador(
-    p_tenant_id UUID,
+    p_tenant_id INT,
     p_voucher_type TEXT,
     p_payment_method TEXT,
     p_price_mode TEXT,
@@ -265,7 +343,7 @@ DECLARE
     v_calc_total NUMERIC(14, 2) := 0.00;
     v_new_stock NUMERIC(12, 4);
 BEGIN
-    -- 1. Idempotencia: Verificar si ya se procesó este comprobante offline
+    -- Idempotencia: Verificar si ya se procesó este comprobante offline
     IF p_offline_id IS NOT NULL THEN
         SELECT id, voucher_number INTO v_sale_id, v_voucher_number 
         FROM sales 
@@ -281,7 +359,7 @@ BEGIN
         END IF;
     END IF;
 
-    -- 2. Incrementar secuencia correlativa con bloqueo de fila (sin carreras)
+    -- Incrementar secuencia correlativa con bloqueo de fila
     INSERT INTO voucher_sequences (tenant_id, point_of_sale, voucher_type, last_number)
     VALUES (p_tenant_id, p_point_of_sale, p_voucher_type, 1)
     ON CONFLICT (tenant_id, point_of_sale, voucher_type)
@@ -289,11 +367,9 @@ BEGIN
     RETURNING last_number INTO v_seq;
 
     v_voucher_number := LPAD(p_point_of_sale::TEXT, 4, '0') || '-' || LPAD(v_seq::TEXT, 8, '0');
-
-    -- 3. Crear cabecera de la venta
     v_sale_id := uuid_generate_v4();
 
-    -- 4. Iterar sobre los ítems del payload JSONB
+    -- Procesar cada ítem del payload
     FOR v_item IN SELECT * FROM jsonb_to_recordset(p_items) AS x(
         id UUID,
         sku TEXT,
@@ -301,7 +377,6 @@ BEGIN
         price NUMERIC(14, 2)
     )
     LOOP
-        -- Bloquear producto para actualización atómica
         SELECT * INTO v_prod 
         FROM products 
         WHERE (id = v_item.id OR (v_item.id IS NULL AND sku = v_item.sku))
@@ -312,12 +387,6 @@ BEGIN
             RAISE EXCEPTION 'Producto no encontrado: SKU %', v_item.sku;
         END IF;
 
-        -- Validar stock si no permite negativo
-        IF NOT v_prod.allows_negative_stock AND (v_prod.current_stock < v_item.quantity) THEN
-            -- En mostrador advertimos o permitimos según política, acá registramos
-        END IF;
-
-        -- Determinar precio según lista
         IF v_item.price IS NOT NULL AND v_item.price > 0 THEN
             v_unit_price := v_item.price;
         ELSIF p_price_mode = 'wholesale' AND v_prod.wholesale_price > 0 THEN
@@ -330,19 +399,16 @@ BEGIN
         v_calc_subtotal := v_calc_subtotal + v_item_subtotal;
         v_new_stock := v_prod.current_stock - v_item.quantity;
 
-        -- Actualizar stock del producto
         UPDATE products 
         SET current_stock = v_new_stock, updated_at = NOW() 
         WHERE id = v_prod.id;
 
-        -- Registrar ítem de venta
         INSERT INTO sale_items (
             sale_id, product_id, quantity, unit_price, cost_price, tax_rate, subtotal
         ) VALUES (
             v_sale_id, v_prod.id, v_item.quantity, v_unit_price, v_prod.cost_price, v_prod.tax_rate, v_item_subtotal
         );
 
-        -- Registrar movimiento en Kardex
         INSERT INTO stock_movements (
             tenant_id, product_id, movement_type, quantity, balance_after, unit_cost, reference_id, notes
         ) VALUES (
@@ -351,11 +417,9 @@ BEGIN
         );
     END LOOP;
 
-    -- 5. Calcular totales
     v_calc_total := GREATEST(0.00, v_calc_subtotal - COALESCE(p_discount, 0.00));
-    v_calc_tax := ROUND(v_calc_total - (v_calc_total / 1.21), 2); -- Estimación IVA 21%
+    v_calc_tax := ROUND(v_calc_total - (v_calc_total / 1.21), 2);
 
-    -- 6. Insertar venta finalizada
     INSERT INTO sales (
         id, tenant_id, customer_id, voucher_type, point_of_sale, voucher_sequence_number,
         voucher_number, status, payment_method, price_mode, subtotal, discount, tax_total,
@@ -366,7 +430,6 @@ BEGIN
         COALESCE(p_discount, 0.00), v_calc_tax, v_calc_total, p_offline_id, p_notes
     );
 
-    -- 7. Si fue a Cuenta Corriente, actualizar saldo del cliente
     IF p_payment_method = 'CTA_CTE' AND p_customer_id IS NOT NULL THEN
         UPDATE customers 
         SET current_account_balance = current_account_balance - v_calc_total,
@@ -374,7 +437,6 @@ BEGIN
         WHERE id = p_customer_id;
     END IF;
 
-    -- Retornar resultado estructurado
     RETURN jsonb_build_object(
         'success', true,
         'sale_id', v_sale_id,
@@ -388,53 +450,9 @@ BEGIN
 END;
 $$;
 
-
--- ==============================================================================
--- 15. PREVENTA: PEDIDOS PENDIENTES (Mostrador -> Caja -> Despacho)
--- ==============================================================================
-
-CREATE TABLE IF NOT EXISTS pending_orders (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
-    order_number TEXT NOT NULL,                     -- Ej: PED-001
-    customer_id UUID REFERENCES customers(id),
-    price_mode TEXT DEFAULT 'selling',
-    subtotal NUMERIC(14, 2) NOT NULL DEFAULT 0.00,
-    discount NUMERIC(14, 2) NOT NULL DEFAULT 0.00,
-    total NUMERIC(14, 2) NOT NULL DEFAULT 0.00,
-    status TEXT DEFAULT 'PENDIENTE' CHECK (status IN ('PENDIENTE', 'COBRADO', 'CANCELADO')),
-    notes TEXT,
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW()
-);
-
-CREATE TABLE IF NOT EXISTS pending_order_items (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    order_id UUID NOT NULL REFERENCES pending_orders(id) ON DELETE CASCADE,
-    product_id UUID NOT NULL REFERENCES products(id) ON DELETE RESTRICT,
-    quantity NUMERIC(12, 4) NOT NULL,
-    unit_price NUMERIC(14, 2) NOT NULL,
-    subtotal NUMERIC(14, 2) NOT NULL
-);
-
--- ==============================================================================
--- 16. AUDITORÍA: HISTORIAL DE ACTUALIZACIONES MASIVAS DE PRECIOS
--- ==============================================================================
-
-CREATE TABLE IF NOT EXISTS price_change_logs (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
-    category_name TEXT,
-    brand_name TEXT,
-    percentage NUMERIC(6, 2) NOT NULL,
-    target TEXT NOT NULL,
-    affected_products_count INTEGER NOT NULL,
-    created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
 -- RPC: ACTUALIZACIÓN MASIVA DE PRECIOS POR INFLACIÓN
 CREATE OR REPLACE FUNCTION actualizar_precios_masivo(
-    p_tenant_id UUID,
+    p_tenant_id INT,
     p_category_name TEXT DEFAULT NULL,
     p_brand_name TEXT DEFAULT NULL,
     p_percentage NUMERIC DEFAULT 0.00,
@@ -510,13 +528,6 @@ BEGIN
 
     GET DIAGNOSTICS v_count = ROW_COUNT;
 
-    -- Registrar log de auditoría
-    INSERT INTO price_change_logs (
-        tenant_id, category_name, brand_name, percentage, target, affected_products_count
-    ) VALUES (
-        p_tenant_id, p_category_name, p_brand_name, p_percentage, p_target, v_count
-    );
-
     RETURN jsonb_build_object(
         'success', true,
         'affected_count', v_count,
@@ -525,14 +536,12 @@ BEGIN
 END;
 $$;
 
-
 -- ==============================================================================
--- 17. SUPABASE ROW LEVEL SECURITY (RLS) & PERMISOS RBAC
+-- ROW LEVEL SECURITY (RLS)
 -- ==============================================================================
 
--- Funciones auxiliares para RLS
 CREATE OR REPLACE FUNCTION get_auth_tenant_id()
-RETURNS UUID
+RETURNS INT
 LANGUAGE sql
 STABLE
 SECURITY DEFINER
@@ -549,7 +558,6 @@ AS $$
     SELECT role FROM profiles WHERE id = auth.uid() LIMIT 1;
 $$;
 
--- Activar RLS en todas las tablas
 ALTER TABLE tenants ENABLE ROW LEVEL SECURITY;
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE products ENABLE ROW LEVEL SECURITY;
@@ -563,30 +571,26 @@ ALTER TABLE sale_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE stock_movements ENABLE ROW LEVEL SECURITY;
 ALTER TABLE pending_orders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE pending_order_items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE price_histories ENABLE ROW LEVEL SECURITY;
 
--- POLÍTICAS: AISLAMIENTO POR TENANT (Inquilino)
--- 1. Profiles
 CREATE POLICY "tenant_profiles_select" ON profiles
     FOR SELECT USING (tenant_id = get_auth_tenant_id() OR auth.uid() = id);
 
 CREATE POLICY "admin_profiles_all" ON profiles
     FOR ALL USING (tenant_id = get_auth_tenant_id() AND get_auth_role() = 'ADMIN');
 
--- 2. Productos
 CREATE POLICY "tenant_products_select" ON products
     FOR SELECT USING (tenant_id = get_auth_tenant_id());
 
 CREATE POLICY "manager_products_modify" ON products
     FOR ALL USING (tenant_id = get_auth_tenant_id() AND get_auth_role() IN ('ADMIN', 'MANAGER'));
 
--- 3. Ventas y Comprobantes
 CREATE POLICY "tenant_sales_select" ON sales
     FOR SELECT USING (tenant_id = get_auth_tenant_id());
 
 CREATE POLICY "cashier_sales_insert" ON sales
     FOR INSERT WITH CHECK (tenant_id = get_auth_tenant_id() AND get_auth_role() IN ('ADMIN', 'MANAGER', 'CASHIER'));
 
--- 4. Preventa / Pedidos Pendientes (Cualquier empleado puede crearlos)
 CREATE POLICY "tenant_pending_orders_all" ON pending_orders
     FOR ALL USING (tenant_id = get_auth_tenant_id());
 
@@ -599,18 +603,20 @@ CREATE POLICY "tenant_pending_order_items_all" ON pending_order_items
         )
     );
 
--- 5. Kardex / Movimientos de Stock
 CREATE POLICY "tenant_stock_movements_select" ON stock_movements
     FOR SELECT USING (tenant_id = get_auth_tenant_id());
 
--- TRIGGER: Auto-crear perfil al registrar un nuevo usuario en Supabase Auth
+CREATE POLICY "tenant_price_histories_select" ON price_histories
+    FOR SELECT USING (tenant_id = get_auth_tenant_id());
+
+-- TRIGGER: Auto-crear perfil en profiles al registrarse en auth.users
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
     INSERT INTO public.profiles (id, tenant_id, full_name, role)
     VALUES (
         NEW.id,
-        COALESCE((NEW.raw_user_meta_data->>'tenant_id')::uuid, '00000000-0000-0000-0000-000000000001'::uuid),
+        COALESCE((NEW.raw_user_meta_data->>'tenant_id')::INT, 1),
         COALESCE(NEW.raw_user_meta_data->>'full_name', NEW.email),
         COALESCE(NEW.raw_user_meta_data->>'role', 'SELLER')
     )
@@ -622,63 +628,3 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 CREATE OR REPLACE TRIGGER on_auth_user_created
     AFTER INSERT ON auth.users
     FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
-
-
--- ==============================================================================
--- 18. AUDITORÍA HISTÓRICA DE PRECIOS (Price History Tracking)
--- Registra automáticamente cada cambio en costo, venta o mayoreo
--- ==============================================================================
-
-CREATE TABLE IF NOT EXISTS price_histories (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
-    product_id UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
-    old_cost_price NUMERIC(14, 2) NOT NULL DEFAULT 0.00,
-    new_cost_price NUMERIC(14, 2) NOT NULL DEFAULT 0.00,
-    old_selling_price NUMERIC(14, 2) NOT NULL DEFAULT 0.00,
-    new_selling_price NUMERIC(14, 2) NOT NULL DEFAULT 0.00,
-    old_wholesale_price NUMERIC(14, 2) NOT NULL DEFAULT 0.00,
-    new_wholesale_price NUMERIC(14, 2) NOT NULL DEFAULT 0.00,
-    change_reason TEXT NOT NULL DEFAULT 'MANUAL' CHECK (change_reason IN ('MANUAL', 'AUMENTO_MASIVO', 'IMPORTACION_EXCEL', 'RECEPCION_COMPRA')),
-    user_name TEXT,
-    created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
-CREATE INDEX IF NOT EXISTS idx_price_histories_prod ON price_histories(product_id, created_at DESC);
-CREATE INDEX IF NOT EXISTS idx_price_histories_tenant ON price_histories(tenant_id, created_at DESC);
-
--- Trigger: Registro automático de historial al actualizar precios en productos
-CREATE OR REPLACE FUNCTION trg_log_price_history()
-RETURNS TRIGGER AS $$
-BEGIN
-    IF (OLD.cost_price IS DISTINCT FROM NEW.cost_price OR
-        OLD.selling_price IS DISTINCT FROM NEW.selling_price OR
-        OLD.wholesale_price IS DISTINCT FROM NEW.wholesale_price) THEN
-        
-        INSERT INTO price_histories (
-            tenant_id, product_id,
-            old_cost_price, new_cost_price,
-            old_selling_price, new_selling_price,
-            old_wholesale_price, new_wholesale_price,
-            change_reason, user_name, created_at
-        ) VALUES (
-            NEW.tenant_id, NEW.id,
-            COALESCE(OLD.cost_price, 0.00), COALESCE(NEW.cost_price, 0.00),
-            COALESCE(OLD.selling_price, 0.00), COALESCE(NEW.selling_price, 0.00),
-            COALESCE(OLD.wholesale_price, 0.00), COALESCE(NEW.wholesale_price, 0.00),
-            'MANUAL', current_user, NOW()
-        );
-    END IF;
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
-CREATE OR REPLACE TRIGGER trg_after_product_price_change
-AFTER UPDATE ON products
-FOR EACH ROW EXECUTE FUNCTION trg_log_price_history();
-
--- Política RLS para Historial de Precios
-ALTER TABLE price_histories ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "tenant_price_histories_select" ON price_histories
-    FOR SELECT USING (tenant_id = get_auth_tenant_id());
