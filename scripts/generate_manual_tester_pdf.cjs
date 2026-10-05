@@ -299,9 +299,19 @@ function generateTesterPdf() {
   ];
 
   testCases.forEach((tc) => {
-    checkPageBreak(50);
+    // Calcular altura estimada del caso de prueba completo para evitar cortes
+    const objLines = doc.splitTextToSize(`Objetivo: ${tc.obj}`, contentWidth - 6);
+    let totalStepLines = 0;
+    tc.steps.forEach(step => {
+      totalStepLines += doc.splitTextToSize(step, contentWidth - 10).length;
+    });
+    const resLines = doc.splitTextToSize(tc.result, contentWidth - 14);
+    const boxH = Math.max(10, resLines.length * 3.6 + 8);
+    const estimatedHeight = 9 + (objLines.length * 3.8) + (totalStepLines * 3.6) + boxH + 6;
 
-    // Caja de Caso de Prueba
+    checkPageBreak(estimatedHeight > 65 ? 45 : estimatedHeight);
+
+    // Caja de Título de Caso de Prueba
     doc.setFillColor(...lightBg);
     doc.setDrawColor(...borderCol);
     doc.roundedRect(marginX, currentY, contentWidth, 7, 1.5, 1.5, 'FD');
@@ -317,8 +327,8 @@ function generateTesterPdf() {
     doc.setFont('helvetica', 'italic');
     doc.setFontSize(7.5);
     doc.setTextColor(...muted);
-    doc.text(`Objetivo: ${tc.obj}`, marginX + 3, currentY);
-    currentY += 4.5;
+    doc.text(objLines, marginX + 3, currentY);
+    currentY += (objLines.length * 3.8) + 1;
 
     // Pasos
     doc.setFont('helvetica', 'normal');
@@ -326,26 +336,30 @@ function generateTesterPdf() {
     doc.setTextColor(...dark);
     tc.steps.forEach(step => {
       checkPageBreak(7);
-      const lines = doc.splitTextToSize(step, contentWidth - 8);
+      const lines = doc.splitTextToSize(step, contentWidth - 10);
       doc.text(lines, marginX + 5, currentY);
       currentY += (lines.length * 3.6);
     });
 
-    currentY += 1.5;
+    currentY += 2;
 
-    // Resultado Esperado (Recuadro verde tenue)
-    checkPageBreak(12);
-    const resLines = doc.splitTextToSize(`✓ Resultado Esperado: ${tc.result}`, contentWidth - 10);
-    const boxH = Math.max(8, resLines.length * 3.6 + 4);
+    // Resultado Esperado (Recuadro verde menta elegante, texto ASCII limpio sin desbordes)
+    checkPageBreak(boxH + 4);
+    doc.setFillColor(240, 253, 250); // Verde menta tenue #F0FDFA
+    doc.setDrawColor(13, 148, 136);  // Borde verde azulado #0D9488
+    doc.roundedRect(marginX + 2, currentY, contentWidth - 4, boxH, 1.2, 1.2, 'FD');
 
-    doc.setFillColor(240, 253, 250); // Verde menta tenue
-    doc.setDrawColor(13, 148, 136);
-    doc.roundedRect(marginX + 3, currentY, contentWidth - 6, boxH, 1, 1, 'FD');
-
+    // Título dentro de la caja
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(7.2);
+    doc.setFontSize(7.5);
     doc.setTextColor(...teal);
-    doc.text(resLines, marginX + 6, currentY + 4.2);
+    doc.text('CRITERIO DE EXITO / RESULTADO ESPERADO:', marginX + 5, currentY + 4.8);
+
+    // Texto de resultado (100% dentro de márgenes)
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7.2);
+    doc.setTextColor(...dark);
+    doc.text(resLines, marginX + 5, currentY + 8.8);
 
     currentY += (boxH + 5);
   });
@@ -381,17 +395,20 @@ function generateTesterPdf() {
   doc.setFontSize(7.5);
   doc.setTextColor(255, 255, 255);
   doc.text('ESTADO', marginX + 3, currentY + 4.2);
-  doc.text('CRITERIO DE ACEPTACIÓN / CONTROL DE CALIDAD', marginX + 25, currentY + 4.2);
+  doc.text('CRITERIO DE ACEPTACIÓN / CONTROL DE CALIDAD', marginX + 28, currentY + 4.2);
   currentY += 6;
 
   checklistItems.forEach((item, idx) => {
-    checkPageBreak(8);
+    const itemLines = doc.splitTextToSize(item, contentWidth - 32);
+    const rowHeight = Math.max(6.5, itemLines.length * 3.6 + 2.5);
+
+    checkPageBreak(rowHeight + 1);
     if (idx % 2 === 0) {
       doc.setFillColor(248, 250, 252);
-      doc.rect(marginX, currentY, contentWidth, 6.5, 'F');
+      doc.rect(marginX, currentY, contentWidth, rowHeight, 'F');
     }
     doc.setDrawColor(...borderCol);
-    doc.line(marginX, currentY + 6.5, marginX + contentWidth, currentY + 6.5);
+    doc.line(marginX, currentY + rowHeight, marginX + contentWidth, currentY + rowHeight);
 
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(7.5);
@@ -399,11 +416,11 @@ function generateTesterPdf() {
     doc.text('[ CONFORME ]', marginX + 3, currentY + 4.2);
 
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(7.5);
+    doc.setFontSize(7.3);
     doc.setTextColor(...dark);
-    doc.text(doc.splitTextToSize(item, contentWidth - 30), marginX + 26, currentY + 4.2);
+    doc.text(itemLines, marginX + 28, currentY + 4.2);
 
-    currentY += 6.5;
+    currentY += rowHeight;
   });
 
   // --- 5. NUMERACIÓN DE PÁGINAS Y PIE UNIFORME ---
