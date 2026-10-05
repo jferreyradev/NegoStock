@@ -1,5 +1,5 @@
 <template>
-  <v-container fluid class="pa-4">
+  <v-container fluid class="pa-2 pa-sm-4">
     <v-card elevation="2" class="mb-4">
       <v-card-item class="bg-amber-lighten-5 py-3">
         <div class="d-flex align-center">
@@ -17,17 +17,18 @@
 
       <v-divider />
 
-      <v-card-text class="pa-4">
+      <v-card-text class="pa-2 pa-sm-4">
         <v-alert
           type="info"
           variant="tonal"
-          density="comfortable"
-          class="mb-4"
+          density="compact"
+          class="mb-3 text-caption"
         >
           <strong>Recomendación del sistema:</strong> En un negocio de ferretería es habitual que los proveedores facturen en rollos/cajas pero en mostrador se venda fraccionado (por metro o unidad), o que existan errores de tipeo al cargar listas. Corregir estos valores asegura que los reportes de margen de ganancia sean 100% reales.
         </v-alert>
 
-        <v-table density="comfortable" hover>
+        <div class="responsive-table-wrapper">
+          <v-table density="compact" hover class="compact-anomalies-table">
           <thead>
             <tr class="bg-grey-lighten-4">
               <th class="font-weight-bold">Código SKU</th>
@@ -110,6 +111,7 @@
             </tr>
           </tbody>
         </v-table>
+        </div>
       </v-card-text>
     </v-card>
   </v-container>
@@ -117,3 +119,16 @@
 
 <script setup>
 </script>
+
+<style scoped>
+.responsive-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.compact-anomalies-table th,
+.compact-anomalies-table td {
+  padding: 6px 10px !important;
+  font-size: 13px;
+}
+</style>

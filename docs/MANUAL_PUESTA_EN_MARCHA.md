@@ -1,7 +1,7 @@
 # Manual de Puesta en Marcha y Despliegue a Producción
-## NegoStock SaaS - Guía de Operaciones
+## NegoStock SaaS - Guía de Operaciones y Práctica Real
 
-Esta guía detalla los pasos exactos para configurar el entorno de base de datos en Supabase, iniciar el sistema en local y desplegarlo en la nube para acceso público de tus clientes.
+Esta guía detalla los pasos exactos para configurar el entorno de base de datos en **Supabase**, verificar permisos de escritura RLS, iniciar el sistema y operar en mostrador real con cualquiera de sus 3 modos de funcionamiento (**En Línea**, **Local Desconectado** o **Automático**).
 
 ---
 
@@ -9,83 +9,112 @@ Esta guía detalla los pasos exactos para configurar el entorno de base de datos
 
 * **Node.js**: Versión 18 o superior (v20+ recomendada).
 * **Navegador Web**: Chrome, Edge, Safari o Firefox.
-* **Cuenta en Supabase**: Gratuita o de pago en [supabase.com](https://supabase.com).
+* **Cuenta en Supabase**: Proyecto activo en [supabase.com](https://supabase.com).
 
 ---
 
-### 2. Puesta en Marcha en Local (Desarrollo y Pruebas)
+### 2. Puesta en Marcha de la Base de Datos en Supabase
 
-1. **Clonar o abrir el proyecto:**
-   ```bash
-   cd /Users/jferreyradev/projects/ag/NegoStock
-   ```
-
-2. **Instalar dependencias:**
-   ```bash
-   npm install
-   ```
-
-3. **Iniciar el servidor web:**
-   ```bash
-   npm run dev
-   ```
-   *La app estará disponible de inmediato en `http://localhost:5173/`.*
-
----
-
-### 3. Puesta en Marcha de la Base de Datos en Supabase
-
-#### Paso 3.1: Crear el Proyecto en la Nube
+#### Paso 2.1: Crear el Proyecto en la Nube
 1. Ingresá a [supabase.com](https://supabase.com) y hacé clic en **"New Project"**.
 2. Asigná un nombre (ej. `NegoStock-Produccion`), una contraseña segura para la base de datos y seleccioná la región más cercana (ej. `Sao Paulo / South America`).
 3. Aguardá aproximadamente 60 segundos hasta que la base de datos esté lista.
 
-#### Paso 3.2: Ejecutar los Scripts SQL
-1. En el menú lateral de tu proyecto en Supabase, ingresá al **SQL Editor** (ícono `>_`).
-2. Creá una nueva consulta (`+ New Query`).
-3. Abrí el archivo [supabase/schema.sql](file:///Users/jferreyradev/projects/ag/NegoStock/supabase/schema.sql), copiá todo su contenido, pegalo en el editor de Supabase y hacé clic en **Run** (botón verde).
-   *Esto creará todas las tablas con `tenant_id INT`, secuencias correlativas, funciones transaccionales, triggers y políticas RLS.*
-4. Creá otra pestaña en el SQL Editor, abrí el archivo [supabase/seed.sql](file:///Users/jferreyradev/projects/ag/NegoStock/supabase/seed.sql), pegalo y hacé clic en **Run**.
-   *Esto insertará la Ferretería Central (`comercio_id = 1`) y sus 171 productos iniciales con rubros, marcas y unidades en español.*
+#### Paso 2.2: Ejecutar los Scripts SQL Esenciales (En este orden exacto)
+En el menú lateral de tu proyecto en Supabase, ingresá al **SQL Editor** (ícono `>_`):
 
-#### Paso 3.3: Obtener las Credenciales y Configurar el Frontend
+1. **Esquema Relacional Inicial:**  
+   Copiá todo el contenido de [supabase/schema.sql](file:///Users/jferreyradev/projects/ag/NegoStock/supabase/schema.sql), pegalo en una pestaña nueva y presioná **Run**.  
+   *Crea las 12 tablas principales, tipos de datos, secuencias correlativas, funciones transaccionales y triggers.*
+
+2. **Carga del Catálogo Base:**  
+   Copiá todo el contenido de [supabase/seed.sql](file:///Users/jferreyradev/projects/ag/NegoStock/supabase/seed.sql) y ejecutalo con **Run**.  
+   *Carga los 171 artículos reales de ferretería con rubros, marcas y costos de reposición.*
+
+3. **Desbloqueo de Escritura RLS (¡Fundamental para Producción!):**  
+   Copiá y ejecutá el script [supabase/desbloquear_escritura_supabase.sql](file:///Users/jferreyradev/projects/ag/NegoStock/supabase/desbloquear_escritura_supabase.sql).  
+   *Este script garantiza que los cajeros y administradores puedan dar de alta artículos, editar precios, registrar auditoría de Kardex (`stock_movimientos`), registrar historial de precios (`precios_historial`) y actualizar datos de comercio sin ser bloqueados por el motor de seguridad RLS.*
+
+#### Paso 2.3: Configurar las Credenciales en el Entorno
 1. En Supabase, andá al engranaje abajo a la izquierda: **Project Settings** $\rightarrow$ **API**.
 2. Copiá:
-   * **Project URL** (ej. `https://xyzcompany.supabase.co`)
+   * **Project URL** (ej. `https://aphqdlmgggglvahbhksu.supabase.co`)
    * **Project API Keys (`anon` / `public`)**
 3. Creá un archivo `.env` en la raíz de tu proyecto local con esos valores:
    ```env
-   VITE_SUPABASE_URL=https://xyzcompany.supabase.co
+   VITE_SUPABASE_URL=https://tu-proyecto.supabase.co
    VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6...
    ```
-4. Al recargar la app en tu navegador, la etiqueta superior pasará automáticamente a:  
-   🟩 **"Supabase Nube"**.
 
 ---
 
-### 4. Despliegue del Frontend a Producción (SaaS en Internet)
+### 3. Verificación de Conexión y Escritura en Tiempo Real
 
-Para que el dueño de la ferretería y sus empleados puedan acceder desde cualquier PC, tablet o celular del local sin depender de que tu computadora personal esté encendida:
+Para verificar que la base de datos está 100% operativa y lista para recibir modificaciones del mostrador, ejecutá el script de verificación automatizada:
 
-#### Opción Recomendada: Despliegue en Vercel (Gratuito)
-1. Subí tu repositorio a GitHub (ej. `github.com/tu-usuario/negostock`).
-2. Entrá a [vercel.com](https://vercel.com) e iniciá sesión con GitHub.
-3. Hacé clic en **"Add New..."** $\rightarrow$ **Project** y seleccioná el repositorio `negostock`.
-4. En la sección **Environment Variables**, agregá las dos variables:
-   * `VITE_SUPABASE_URL` = Tu URL de Supabase
-   * `VITE_SUPABASE_ANON_KEY` = Tu clave anon de Supabase
-5. Clic en **Deploy**.
-6. En menos de 1 minuto tendrás tu enlace público de producción:  
-   👉 `https://negostock.vercel.app` (o podés vincularle tu propio dominio personalizado como `app.negostock.com`).
+```bash
+node scripts/test_crud.cjs
+```
+
+El script ejecuta 4 pruebas en tiempo real contra tu nube:
+1. `INSERT` de un producto de prueba en la tabla `productos`.
+2. `UPDATE` del precio de venta y de costo.
+3. Asiento de auditoría en la tabla `precios_historial`.
+4. Asiento de movimiento Kardex en la tabla `stock_movimientos`.
+
+Al finalizar debe mostrar: `✅ TODOS LOS TESTS DE ESCRITURA EN SUPABASE PASARON CON ÉXITO`.
 
 ---
 
-### 5. Guía de Reseteo y Mantenimiento
+### 4. Modos de Operación para la Práctica Real
 
-En la carpeta `supabase/` disponés de 2 scripts específicos para mantenimiento:
+NegoStock cuenta con un selector en la barra superior que permite alternar entre 3 modos según las condiciones del local comercial:
+
+```
+[ Selector en Barra Superior ]
+├── 1. Automático (Híbrido)   --> Guarda en nube; si se corta la red, encola en IndexedDB (AES-GCM 256 bits).
+├── 2. Sólo en Línea          --> Exige conexión con Supabase; rechaza ventas si no hay respuesta de la nube.
+└── 3. Modo Local             --> Trabaja 100% desconectado en el navegador; acumula ventas y cambios en cola local.
+```
+
+#### Botón de Sincronización Manual:
+Cuando se opera en **Modo Local** o cuando vuelve la señal tras un corte:
+1. El botón **"Sincronizar (X)"** en la barra superior muestra el total de operaciones pendientes (ventas y cambios de productos).
+2. Al hacer clic, se abre una ventana con el resumen detallado.
+3. Al presionar **"Sincronizar Todo Ahora"**, el sistema procesa por lotes los comprobantes en Supabase, genera sus correlativos oficiales y descuenta el stock definitivo.
+
+---
+
+### 5. Configuración de Identidad Comercial y Recibos
+
+Para que los tickets impresos lleven el nombre real del negocio, CUIT y datos de contacto:
+1. Iniciar sesión como **ADMIN** (PIN `1234`).
+2. En el menú lateral, seleccionar **"Datos del Negocio"**.
+3. Completar la razón social, CUIT, teléfono, dirección y el ancho de impresora (80 mm o 58 mm).
+4. Presionar **"Guardar Configuración"**.
+5. Consultar la guía completa de relevamiento en [docs/GUIA_CONFIGURACION_NEGOCIO.md](file:///Users/jferreyradev/projects/ag/NegoStock/docs/GUIA_CONFIGURACION_NEGOCIO.md).
+
+---
+
+### 6. Despliegue del Frontend a Producción (SaaS en Internet)
+
+Para que el personal pueda ingresar desde cualquier computadora o tablet del local:
+
+#### Despliegue en Vercel (Recomendado):
+1. Subí tu repositorio a GitHub.
+2. Ingresá a [vercel.com](https://vercel.com) y vinculá el proyecto.
+3. En la sección **Environment Variables**, agregá:
+   * `VITE_SUPABASE_URL` = URL de tu proyecto
+   * `VITE_SUPABASE_ANON_KEY` = Clave pública anon
+4. Clic en **Deploy**. Tendrás disponible de inmediato tu URL pública segura `https://tu-comercio.vercel.app` con certificado SSL automático.
+
+---
+
+### 7. Comandos de Mantenimiento y Reseteo
 
 | Situación | Archivo a Ejecutar | Qué hace |
 | :--- | :--- | :--- |
-| **Limpiar datos de prueba** | [supabase/truncate_tables.sql](file:///Users/jferreyradev/projects/ag/NegoStock/supabase/truncate_tables.sql) | Vacía todas las ventas y productos de prueba en cascada, pero **mantiene la estructura, tablas y funciones intactas**. Ideal para volver a cargar `seed.sql`. |
-| **Empezar de cero total** | [supabase/drop_all.sql](file:///Users/jferreyradev/projects/ag/NegoStock/supabase/drop_all.sql) | **Destruye todo el esquema público** y lo recrea virgen como si recién crearas la base de Supabase. |
-| **Limpiar navegador local** | Ejecutar en la consola: `localStorage.clear()` | Elimina las ventas y pedidos de preventa guardados en la memoria del navegador. |
+| **Limpiar datos de prueba** | [supabase/truncate_tables.sql](file:///Users/jferreyradev/projects/ag/NegoStock/supabase/truncate_tables.sql) | Vacía todas las ventas y productos de prueba en cascada, pero **mantiene la estructura, tablas y funciones intactas**. |
+| **Empezar de cero total** | [supabase/drop_all.sql](file:///Users/jferreyradev/projects/ag/NegoStock/supabase/drop_all.sql) | Destruye todo el esquema público y lo recrea virgen como si recién crearas la base. |
+| **Re-verificar Escritura** | `node scripts/test_crud.cjs` | Ejecuta el test de ciclo completo de altas, modificaciones e historial. |
+| **Limpiar datos locales** | `localStorage.clear()` + borrar base `negostock_secure_db` en DevTools (F12) $\rightarrow$ Application. | Elimina la memoria local segura del navegador. |

@@ -102,3 +102,84 @@ export function parseUploadedFile(file) {
     reader.readAsArrayBuffer(file);
   });
 }
+
+/**
+ * Exporta el Reporte Ejecutivo de Ventas (Día, Hora, Mes, Pagos, Vendedores) a Excel
+ */
+export function exportSalesReportToExcel(reportData) {
+  const workbook = XLSX.utils.book_new();
+
+  // 1. Hoja: Resumen Diario
+  if (reportData.daily && reportData.daily.length > 0) {
+    const dailyData = reportData.daily.map(d => ({
+      'Fecha': d.dateFormatted,
+      'Día': d.dayName,
+      'Total Facturado ($)': Number(d.total.toFixed(2)),
+      'Cantidad Tickets': d.count,
+      'Ticket Promedio ($)': Number(d.avgTicket.toFixed(2)),
+      'Unidades Vendidas': d.units
+    }));
+    const wsDaily = XLSX.utils.json_to_sheet(dailyData);
+    wsDaily['!cols'] = [{ wch: 14 }, { wch: 14 }, { wch: 20 }, { wch: 18 }, { wch: 20 }, { wch: 18 }];
+    XLSX.utils.book_append_sheet(workbook, wsDaily, 'Por_Dia');
+  }
+
+  // 2. Hoja: Resumen Horario
+  if (reportData.hourly && reportData.hourly.length > 0) {
+    const hourlyData = reportData.hourly.map(h => ({
+      'Franja Horaria': h.label,
+      'Total Facturado ($)': Number(h.total.toFixed(2)),
+      'Cantidad Tickets': h.count,
+      'Ticket Promedio ($)': Number(h.avgTicket.toFixed(2)),
+      'Participación (%)': Number(h.percentage.toFixed(1))
+    }));
+    const wsHourly = XLSX.utils.json_to_sheet(hourlyData);
+    wsHourly['!cols'] = [{ wch: 16 }, { wch: 20 }, { wch: 18 }, { wch: 20 }, { wch: 18 }];
+    XLSX.utils.book_append_sheet(workbook, wsHourly, 'Por_Hora');
+  }
+
+  // 3. Hoja: Resumen Mensual
+  if (reportData.monthly && reportData.monthly.length > 0) {
+    const monthlyData = reportData.monthly.map(m => ({
+      'Período': m.label,
+      'Total Facturado ($)': Number(m.total.toFixed(2)),
+      'Cantidad Tickets': m.count,
+      'Ticket Promedio ($)': Number(m.avgTicket.toFixed(2)),
+      'Días con Venta': m.activeDays,
+      'Promedio Diario ($)': Number(m.dailyAvg.toFixed(2))
+    }));
+    const wsMonthly = XLSX.utils.json_to_sheet(monthlyData);
+    wsMonthly['!cols'] = [{ wch: 18 }, { wch: 20 }, { wch: 18 }, { wch: 20 }, { wch: 16 }, { wch: 20 }];
+    XLSX.utils.book_append_sheet(workbook, wsMonthly, 'Por_Mes');
+  }
+
+  // 4. Hoja: Medios de Pago
+  if (reportData.paymentMethods && reportData.paymentMethods.length > 0) {
+    const payData = reportData.paymentMethods.map(p => ({
+      'Medio de Pago': p.name,
+      'Total Recaudado ($)': Number(p.total.toFixed(2)),
+      'Cantidad Operaciones': p.count,
+      'Participación (%)': Number(p.percentage.toFixed(1))
+    }));
+    const wsPay = XLSX.utils.json_to_sheet(payData);
+    wsPay['!cols'] = [{ wch: 22 }, { wch: 22 }, { wch: 22 }, { wch: 18 }];
+    XLSX.utils.book_append_sheet(workbook, wsPay, 'Medios_De_Pago');
+  }
+
+  // 5. Hoja: Vendedores
+  if (reportData.operators && reportData.operators.length > 0) {
+    const opData = reportData.operators.map(o => ({
+      'Vendedor / Operador': o.name,
+      'Rol': o.role,
+      'Total Vendido ($)': Number(o.total.toFixed(2)),
+      'Cantidad Tickets': o.count,
+      'Ticket Promedio ($)': Number(o.avgTicket.toFixed(2))
+    }));
+    const wsOp = XLSX.utils.json_to_sheet(opData);
+    wsOp['!cols'] = [{ wch: 28 }, { wch: 16 }, { wch: 20 }, { wch: 18 }, { wch: 20 }];
+    XLSX.utils.book_append_sheet(workbook, wsOp, 'Por_Vendedor');
+  }
+
+  const dateStr = new Date().toISOString().split('T')[0];
+  XLSX.writeFile(workbook, `NegoStock_Reporte_Ventas_${dateStr}.xlsx`, { bookType: 'xlsx' });
+}

@@ -1,79 +1,129 @@
-# Manual de Usuario - Empleados (Cajeros y Vendedores de Mostrador)
+# Manual de Usuario - Empleado de Mostrador y Caja
 ## Sistema NegoStock SaaS
 
-Este manual está destinado al personal de atención al público, despachantes de mostrador y cajeros de la ferretería. El sistema está optimizado para operar **100% con teclado y lector de código de barras**, reduciendo el uso del mouse al mínimo.
+Este manual está destinado al personal de atención al público, vendedores de mostrador y cajeros del comercio (ferretería, corralón, pinturería). El sistema está optimizado para facturación ágil, uso intensivo del teclado, pistola lectora de códigos de barras, gestión de clientes, emisión de presupuestos y remitos.
 
 ---
 
-### 1. Inicio de Turno y Cambio de Usuario
-1. En la esquina superior derecha de la pantalla, hacé clic en el botón de usuario o seleccioná **"Ingresar con PIN"**.
-2. Ingresá tu código de 4 dígitos asignado:
-   * **Cajera (Turno Mañana):** PIN `3333`
-   * **Vendedor de Mostrador:** PIN `4444`
-3. El sistema adaptará las opciones disponibles según tus tareas diarias.
+### 1. Inicio de Turno, Cuentas y Bloqueo de Sesión
+* Para operar el mostrador, cada empleado ingresa con su **PIN personal de 4 dígitos** o credenciales:
+  * 👑 **Superusuario (SaaS Master):** PIN `9999` | Email: `superadmin@negostock.com`
+  * 👤 **Dueño / Administrador:** PIN `1234` (o `0000` en demo) | Email: `admin@ferreteria.com`
+  * 🛡️ **Encargado de Local:** PIN `2222`
+  * 💵 **Cajera Turno Mañana:** PIN `3333`
+  * 🏷️ **Vendedor de Mostrador:** PIN `4444`
+* **Seguridad de Sesión (Bloqueo de Cambio al Vuelo):**  
+  Una vez que ingresás con tu usuario, **la sesión queda anclada a tu identidad**. No se permite cambiar de usuario directamente desde el menú para evitar suplantaciones o ventas cruzadas.
+* **Cerrar Sesión para Cambio de Turno (Logout):**  
+  Para entregar la caja a un compañero, relevar el turno o ausentarte del mostrador, hacé clic en el botón rojo **"Salir"** en la barra superior o en el ícono de cerrar sesión del menú lateral. Volverás a la pantalla de acceso con PIN para que el nuevo operador ingrese su clave personal.
 
 ---
 
-### 2. Atajos de Teclado del Mostrador (Para memorizar)
+### 2. Atajos de Teclado del Mostrador (POS)
+Para atender con máxima velocidad sin tocar el mouse, memorizá estos atajos principales:
 
-| Tecla | Acción | Descripción |
-| :---: | :--- | :--- |
-| <kbd>Enter</kbd> | **Pistolear / Agregar** | Al escanear un código de barras o escribir un SKU, lo agrega al carrito automáticamente. |
-| <kbd>F2</kbd> | **Cobrar Venta** | Abre la pantalla de cobro directo y emite el ticket. |
-| <kbd>F4</kbd> | **Cancelar / Limpiar** | Vacía el carrito actual para atender a un nuevo cliente. |
-| <kbd>F6</kbd> | **Guardar Preventa** | Guarda el pedido del cliente en espera y genera un ticket de preventa (`PED-001`). |
-| <kbd>F7</kbd> | **Ver Preventas** | Abre el listado de pedidos pendientes para cargarlos en caja. |
-| <kbd>F8</kbd> | **Alternar Precios** | Cambia entre precio **Minorista (Mostrador)** y precio **Mayorista (Gremio/Obra)**. |
-| <kbd>ESC</kbd> | **Cerrar Ventana** | Cierra cualquier diálogo emergente o visor de ticket y regresa el cursor al buscador. |
-
----
-
-### 3. Uso del Lector de Códigos de Barras y Búsqueda
-* **Pistoleo Directo:** El cursor siempre está listo en la barra de búsqueda. Al pasar el producto por el lector de código de barras:
-  * 🔔 **Bip agudo:** Confirmación de que el artículo fue reconocido y sumado al carrito.
-  * ⚠️ **Tono grave:** Alerta sonora de que el código no existe o no tiene stock.
-* **Búsqueda por Nombre:** Si el artículo no tiene código pegado (ej. clavos sueltos, manguera, alambre), podés escribir parte del nombre (ej. `manguera 3/4` o `alicate`) y presionar <kbd>Enter</kbd> o hacer clic en el botón `+`.
+| Tecla | Acción en el Mostrador |
+| :---: | :--- |
+| <kbd>Enter</kbd> | Busca el código escaneado con la pistola o agrega el artículo seleccionado. |
+| <kbd>F2</kbd> | **Cobrar / Concretar Venta:** En cualquier modo (incluso Presupuesto), abre el modal de cobro y medios de pago para cerrar la venta inmediatamente. |
+| <kbd>F4</kbd> | **Limpiar Mostrador / Descartar:** Vacía el changuito actual y restablece el cotizador listo para la próxima atención. |
+| <kbd>F6</kbd> | **Emitir / Guardar Presupuesto:** Abre el diálogo para guardar cotizaciones formales (`PRES-XXX`), definir días de validez y descargar PDF. |
+| <kbd>F7</kbd> | **Ver Presupuestos y Pedidos:** Abre la lista para recuperar presupuestos guardados o cobrar pedidos en espera. |
+| <kbd>F8</kbd> | **Alternar Precios:** Cambia entre precio **Mostrador** (minorista) y **Gremio/Mayoreo**. |
+| <kbd>Esc</kbd> | Cierra cualquier ventana modal o cancela la búsqueda activa. |
 
 ---
 
-### 4. Fraccionamiento de Unidades (Metros, Kilos, Fracciones)
-En ferretería muchos artículos se venden fraccionados:
-* En la columna de cantidad del carrito podés ingresar números decimales directamente:
-  * `0.5` para medio metro de cable.
-  * `2.25` para 2 metros y cuarto de caño o manguera.
-  * `1.50` para un kilo y medio de clavos.
-* El sistema calculará el precio exacto proporcionalmente.
+### 3. Venta Rápida con Pistola de Código de Barras
+1. Con el cursor en la barra de búsqueda superior, apuntá y dispará la pistola sobre el código de barras del producto.
+2. El sistema emitirá un **pitido agudo de confirmación** y agregará el artículo al carrito.
+3. Si disparás el mismo código varias veces, se incrementa la cantidad automáticamente.
+4. **Artículos Pausados o No Disponibles:** Si un artículo fue marcado como *No Disponible* por el dueño (falta de stock o cambio de proveedor), el sistema emitirá un **tono grave de alerta** y te informará en pantalla que el artículo no puede venderse en mostrador.
 
 ---
 
-### 5. Flujo de Trabajo en la Ferretería
-
-#### Caso A: Venta Rápida en Caja Única (Carga y Cobro en el mismo puesto)
-1. Escaneás o buscás los artículos del cliente.
-2. Si el cliente es gremio/constructor, presionás <kbd>F8</kbd> para activar la lista Mayorista.
-3. Presionás <kbd>F2</kbd> (**Cobrar**).
-4. Seleccionás la forma de pago (Efectivo, Débito, Transferencia/Alias, Mercado Pago QR o Cuenta Corriente).
-5. Presionás <kbd>Enter</kbd> para imprimir el comprobante térmico o entregar el ticket.
-
-#### Caso B: Despacho en Mostrador y Cobro en Caja Central (Preventa)
-1. **El Vendedor en su terminal de mostrador:**
-   * Carga los 5 o 10 materiales que el cliente necesita.
-   * Presiona <kbd>F6</kbd> (**Guardar Preventa**).
-   * El sistema le asigna un número corto (ej. `PED-004`).
-   * El vendedor le dice al cliente: *"Pasá por la caja con el pedido número 4"*.
-   * La pantalla del vendedor queda limpia al instante para atender al siguiente cliente en la fila.
-2. **La Cajera en la terminal de cobro:**
-   * El cliente dice: *"Vengo a pagar el pedido 4"*.
-   * La cajera presiona <kbd>F7</kbd> (**Ver Preventas**).
-   * Hace clic en **"Cargar a Caja"** en el pedido `PED-004`.
-   * El pedido se vuelca automáticamente a la pantalla de cobro.
-   * La cajera presiona <kbd>F2</kbd>, cobra y entrega el ticket sellado al cliente para que retire en depósito.
+### 4. Gestión y Selección de Clientes en Mostrador
+En la parte superior del carrito de compras disponés de la barra de cliente activo:
+* **Cliente Predeterminado:** Inicia siempre en `Consumidor Final`.
+* **Buscar Cliente Existente:**  
+  Hacé clic en **"Clientes"** para buscar por nombre, CUIT, DNI o teléfono (ej. contratistas, talleres o cuentas corrientes). Hacé clic en *"Seleccionar"* para asignarlo al carrito.
+* **Alta Rápida de Cliente en Mostrador:**  
+  Hacé clic en el botón **`+`** para cargar un cliente nuevo sin salir del mostrador:
+  * Nombre o Razón Social (Obligatorio).
+  * CUIT o DNI.
+  * Condición de IVA (Consumidor Final, Monotributo, Responsable Inscripto).
+  * Teléfono / WhatsApp para avisarle cuando llegue su pedido.
+* **Volver a Consumidor Final:**  
+  Hacé clic en la **`✖`** al lado del nombre del cliente para restablecer la venta rápida.
 
 ---
 
-### 6. ¿Qué hacer si se corta Internet en el local?
-* **No te preocupes:** NegoStock cuenta con tecnología *Offline-Resilient*.
-* En la barra superior verás un cartel naranja: **"Modo Desconectado Activado"**.
-* **Podés seguir vendiendo, cobrando y emitiendo comprobantes normalmente.**
-* Las ventas quedarán guardadas en la memoria de la computadora y verás un indicador diciendo: `3 por sincronizar`.
-* Cuando vuelva la conexión a internet o el WiFi, **el sistema subirá automáticamente todas las ventas a la nube** sin que tengas que hacer nada.
+### 5. Circuito de Cotización y Venta: Presupuesto por Defecto y Cierre de Compra
+
+En NegoStock, el mostrador inicia **por defecto en modo Presupuesto (Cotización)**. Esto permite armar cotizaciones libremente para clientes que consultan precios sin alterar las existencias de stock del local.
+
+#### 5.1. Armar una Cotización y Pasarla a Venta Inmediata ("Me lo llevo")
+1. Cargá los artículos pedidos por el cliente.
+2. Verás el encabezado en color ámbar: **`Cotizador / Presupuesto`** y el total cotizado.
+3. Si el cliente dice *"Me lo llevo ahora / te lo pago"*:
+   * Hacé clic en el botón verde prominente **`CONCRETAR VENTA Y COBRAR [F2]`** (o presioná <kbd>F2</kbd>).
+   * El sistema cambia automáticamente el comprobante a **Ticket X (Venta Mostrador)** y abre el modal de cobro.
+   * Elegí el medio de pago (Efectivo, Débito, Transferencia, QR, Cta Cte), ingresá el importe recibido para calcular el vuelto y presioná **`Confirmar Cobro e Imprimir`**.
+   * **Efecto en stock:** Se descuenta el inventario físico en tiempo real y se emite el comprobante.
+
+#### 5.2. Guardar y Emitir Presupuesto Formal (Sin Descontar Stock)
+Si el cliente solo quiere llevarse el presupuesto para evaluar o consultar con su arquitecto/empresa:
+1. Hacé clic en el botón **`Guardar / Emitir Presupuesto [F6]`** (o tecla <kbd>F6</kbd>).
+2. En la ventana modal:
+   * **Plazo de validez:** Podés elegir 7, 15 o 30 días, o marcar la casilla **"Presupuesto sin fecha de caducidad"**.
+   * **Notas:** Escribí observaciones (ej. *"Precios sujetos a variación de fábrica. Entrega inmediata"*).
+3. Opciones de salida:
+   * **Guardar:** Lo almacena en el sistema con un número correlativo (ej. `PRES-001`).
+   * **Descargar PDF:** Descarga inmediatamente un PDF vectorial A4 profesional sin costo adicional.
+   * **Imprimir:** Emite el presupuesto en la ticketera térmica del mostrador.
+4. **Regla de oro:** El presupuesto queda guardado con estado `PENDIENTE` y **NO descuenta stock**.
+
+#### 5.3. Recuperar un Presupuesto para Cobrarlo o Actualizarlo
+Cuando el cliente regresa al local a concretar la compra o solicitar modificaciones:
+1. Presioná **`[F7] Presupuestos`** (o el botón inferior *"Presupuestos"*).
+2. Buscá por el número (`PRES-001`) o nombre del cliente y hacé clic en **"Cargar"**.
+3. El mostrador cargará los artículos y mostrará la barra: `📋 Presupuesto PRES-001 cargado`.
+4. **Si el cliente viene a pagar (Concretar Venta):**  
+   Hacé clic en **`PASAR A VENTA Y COBRAR [F2]`** o cambiá el selector a *Ticket X*. Al confirmar el cobro, el presupuesto `PRES-001` se cierra automáticamente, se descuenta el stock y queda asentado en el historial de ventas.
+5. **Si el cliente quiere agregar o quitar artículos (Actualizar Presupuesto):**  
+   Modificá las cantidades en el changuito y hacé clic en **`Actualizar Presupuesto (PRES-001)`**. Los cambios se guardarán en la cotización existente sin duplicarla ni tocar el inventario.
+
+---
+
+### 6. Emisión de Remitos de Entrega
+Para envíos a obra, fletes o entregas a domicilio:
+1. En el desplegable de comprobante elegí **`Remito de Entrega`**.
+2. Cargá los materiales y presioná **`EMITIR REMITO [F2]`**.
+3. En el modal de confirmación completá:
+   * **Dirección de Destino / Obra**.
+   * **Transporte / Chofer / Patente**.
+4. Hacé clic en **`Confirmar y Bajar PDF`**.
+5. El sistema descuenta el stock de las existencias y descarga el remito oficial con el detalle de bultos y el espacio para firma de conformidad.
+
+---
+
+### 7. Calidad Vectorial en PDFs (Cero Superposición)
+* Todos los presupuestos, comprobantes de venta y remitos descargados en PDF están maquetados milimétricamente en alta definición vectorial A4.
+* Las descripciones largas de productos se dividen de forma automática en varios renglones sin pisar la columna de precios unitarios ni subtotales.
+* Los totales y condiciones legales se presentan apilados en recuadros claros, garantizando una presentación formal e impecable ante tus clientes.
+
+---
+
+### 8. Flujo de Preventa (Salón $\rightarrow$ Caja)
+En ferreterías con separación física entre vendedores de salón y la caja de cobro:
+1. **El Vendedor:** Carga los materiales y presiona <kbd>F6</kbd> $\rightarrow$ *"Guardar como Preventa Mostrador"*. El pedido queda en espera con número `PED-XXX`.
+2. **El Cajero:** Presiona <kbd>F7</kbd>, abre la pestaña *"Preventas"*, hace clic en *"Cargar"* y cobra con el medio de pago elegido (<kbd>F2</kbd>).
+
+---
+
+### 9. ¿Qué hacer si se corta Internet en el local?
+* NegoStock cuenta con almacenamiento local cifrado de alta seguridad (AES-GCM de 256 bits).
+* Si el indicador de la barra superior pasa a **"Sin Red"**:
+  * Podés seguir presupuestando, cobrando e imprimiendo comprobantes con normalidad.
+  * Todas las operaciones se guardan en la memoria segura de la PC.
+  * Al regresar la señal (o al pulsar *"Sincronizar"* en la barra superior), todos los comprobantes se subirán a la nube automáticamente sin duplicarse.

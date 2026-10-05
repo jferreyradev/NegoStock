@@ -26,10 +26,11 @@ CREATE TABLE IF NOT EXISTS comercios (
 
 -- 3. USUARIOS Y PERFILES (Vinculado a Supabase Auth o Empleados de mostrador)
 CREATE TABLE IF NOT EXISTS usuarios (
-    id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     comercio_id INT NOT NULL REFERENCES comercios(id) ON DELETE CASCADE,
     nombre_completo TEXT NOT NULL,
-    rol TEXT NOT NULL DEFAULT 'SELLER' CHECK (rol IN ('ADMIN', 'MANAGER', 'CASHIER', 'SELLER')),
+    email TEXT DEFAULT '',
+    rol TEXT NOT NULL DEFAULT 'SELLER' CHECK (rol IN ('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'SELLER')),
     codigo_pin TEXT DEFAULT '1111',
     esta_activo BOOLEAN DEFAULT true,
     creado_en TIMESTAMPTZ DEFAULT NOW()
@@ -578,19 +579,19 @@ CREATE POLICY "comercio_usuarios_select" ON usuarios
     FOR SELECT USING (comercio_id = obtener_comercio_id_autenticado() OR auth.uid() = id);
 
 CREATE POLICY "admin_usuarios_all" ON usuarios
-    FOR ALL USING (comercio_id = obtener_comercio_id_autenticado() AND obtener_rol_autenticado() = 'ADMIN');
+    FOR ALL USING (comercio_id = obtener_comercio_id_autenticado() AND obtener_rol_autenticado() IN ('SUPERADMIN', 'ADMIN'));
 
 CREATE POLICY "comercio_productos_select" ON productos
     FOR SELECT USING (comercio_id = obtener_comercio_id_autenticado());
 
 CREATE POLICY "manager_productos_modify" ON productos
-    FOR ALL USING (comercio_id = obtener_comercio_id_autenticado() AND obtener_rol_autenticado() IN ('ADMIN', 'MANAGER'));
+    FOR ALL USING (comercio_id = obtener_comercio_id_autenticado() AND obtener_rol_autenticado() IN ('SUPERADMIN', 'ADMIN', 'MANAGER'));
 
 CREATE POLICY "comercio_ventas_select" ON ventas
     FOR SELECT USING (comercio_id = obtener_comercio_id_autenticado());
 
 CREATE POLICY "cajero_ventas_insert" ON ventas
-    FOR INSERT WITH CHECK (comercio_id = obtener_comercio_id_autenticado() AND obtener_rol_autenticado() IN ('ADMIN', 'MANAGER', 'CASHIER'));
+    FOR INSERT WITH CHECK (comercio_id = obtener_comercio_id_autenticado() AND obtener_rol_autenticado() IN ('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER'));
 
 CREATE POLICY "comercio_pedidos_preventa_all" ON pedidos_preventa
     FOR ALL USING (comercio_id = obtener_comercio_id_autenticado());
@@ -629,3 +630,34 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 CREATE OR REPLACE TRIGGER en_auth_usuario_creado
     AFTER INSERT ON auth.users
     FOR EACH ROW EXECUTE FUNCTION public.manejar_nuevo_usuario();
+
+
+-- ==============================================================================
+-- 19. PERMISOS GENERALES DE ACCESO A ROLES SUPABASE (anon y authenticated)
+-- ==============================================================================
+
+GRANT USAGE ON SCHEMA public TO postgres, anon, authenticated, service_role;
+GRANT ALL ON ALL TABLES IN SCHEMA public TO postgres, anon, authenticated, service_role;
+GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO postgres, anon, authenticated, service_role;
+GRANT ALL ON ALL ROUTINES IN SCHEMA public TO postgres, anon, authenticated, service_role;
+
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO postgres, anon, authenticated, service_role;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO postgres, anon, authenticated, service_role;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON ROUTINES TO postgres, anon, authenticated, service_role;
+
+-- Políticas de lectura de catálogo para mostrador
+DROP POLICY IF EXISTS "comercio_productos_select" ON productos;
+CREATE POLICY "comercio_productos_select" ON productos
+    FOR SELECT USING (comercio_id = COALESCE(obtener_comercio_id_autenticado(), 1));
+
+DROP POLICY IF EXISTS "comercio_categorias_select" ON categorias;
+CREATE POLICY "comercio_categorias_select" ON categorias
+    FOR SELECT USING (comercio_id = COALESCE(obtener_comercio_id_autenticado(), 1));
+
+DROP POLICY IF EXISTS "comercio_marcas_select" ON marcas;
+CREATE POLICY "comercio_marcas_select" ON marcas
+    FOR SELECT USING (comercio_id = COALESCE(obtener_comercio_id_autenticado(), 1));
+
+DROP POLICY IF EXISTS "comercio_unidades_select" ON unidades_medida;
+CREATE POLICY "comercio_unidades_select" ON unidades_medida
+    FOR SELECT USING (comercio_id = COALESCE(obtener_comercio_id_autenticado(), 1));

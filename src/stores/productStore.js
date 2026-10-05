@@ -1,23 +1,124 @@
 import { defineStore } from 'pinia';
 import { supabase, isSupabaseConfigured } from '@/services/supabase';
 import initialSeed from '@/data/seedData.json';
+import {
+  secureSet,
+  secureGet,
+  secureGetAll,
+  secureRemove,
+  secureClear
+} from '@/services/secureStorage';
+import { useSyncModeStore } from './syncModeStore';
+import { useAuthStore } from './authStore';
+
+async function getOrCreateCategory(comercioId, catName) {
+  if (!catName || !isSupabaseConfigured || !supabase) return null;
+  try {
+    const clean = catName.trim().toUpperCase();
+    const { data: existing } = await supabase
+      .from('categorias')
+      .select('id')
+      .eq('comercio_id', comercioId)
+      .ilike('nombre', clean)
+      .maybeSingle();
+
+    if (existing) return existing.id;
+
+    const { data: created } = await supabase
+      .from('categorias')
+      .insert({ comercio_id: comercioId, nombre: clean })
+      .select('id')
+      .single();
+
+    return created ? created.id : null;
+  } catch {
+    return null;
+  }
+}
+
+async function getOrCreateBrand(comercioId, brandName) {
+  if (!brandName || !isSupabaseConfigured || !supabase) return null;
+  try {
+    const clean = brandName.trim().toUpperCase();
+    const { data: existing } = await supabase
+      .from('marcas')
+      .select('id')
+      .eq('comercio_id', comercioId)
+      .ilike('nombre', clean)
+      .maybeSingle();
+
+    if (existing) return existing.id;
+
+    const { data: created } = await supabase
+      .from('marcas')
+      .insert({ comercio_id: comercioId, nombre: clean })
+      .select('id')
+      .single();
+
+    return created ? created.id : null;
+  } catch {
+    return null;
+  }
+}
+
+async function getOrCreateUnit(comercioId, unitAbbr) {
+  if (!unitAbbr || !isSupabaseConfigured || !supabase) return null;
+  try {
+    const clean = unitAbbr.trim().toLowerCase();
+    const { data: existing } = await supabase
+      .from('unidades_medida')
+      .select('id')
+      .eq('comercio_id', comercioId)
+      .ilike('abreviatura', clean)
+      .maybeSingle();
+
+    if (existing) return existing.id;
+
+    const { data: created } = await supabase
+      .from('unidades_medida')
+      .insert({ comercio_id: comercioId, nombre: clean.toUpperCase(), abreviatura: clean })
+      .select('id')
+      .single();
+
+    return created ? created.id : null;
+  } catch {
+    return null;
+  }
+}
 
 export const useProductStore = defineStore('products', {
   state: () => ({
     products: [],
-    categories: [],
-    brands: [],
+    categories: ['TODOS'],
+    brands: ['TODAS'],
     anomalies: initialSeed.anomalies || [],
     loading: false,
     error: null,
     searchQuery: '',
     selectedCategory: null,
     filterOnlyLowStock: false,
+    filterAvailability: 'TODOS', // 'TODOS', 'DISPONIBLES', 'NO_DISPONIBLES'
   }),
 
   getters: {
+    // Productos disponibles para venta en mostrador (con existencia y activos)
+    availableProducts: (state) => {
+      return state.products.filter(p => p.isActive !== false && Number(p.stock) > 0);
+    },
+
+    outOfStockCount: (state) => {
+      return state.products.filter(p => p.isActive === false || Number(p.stock) <= 0).length;
+    },
+
     filteredProducts: (state) => {
       let list = state.products;
+
+      // Filtro de disponibilidad
+      if (state.filterAvailability === 'DISPONIBLES') {
+        list = list.filter(p => p.isActive !== false && Number(p.stock) > 0);
+      } else if (state.filterAvailability === 'NO_DISPONIBLES') {
+        list = list.filter(p => p.isActive === false || Number(p.stock) <= 0);
+      }
 
       if (state.selectedCategory && state.selectedCategory !== 'TODOS') {
         list = list.filter(p => p.dept === state.selectedCategory);
@@ -41,15 +142,23 @@ export const useProductStore = defineStore('products', {
     },
 
     lowStockCount: (state) => {
-      return state.products.filter(p => Number(p.stock) <= Number(p.minStock)).length;
+      return state.products.filter(p => p.isActive !== false && Number(p.stock) <= Number(p.minStock)).length;
+    },
+
+    inactiveProductsCount: (state) => {
+      return state.products.filter(p => p.isActive === false).length;
     },
 
     totalInventoryValue: (state) => {
-      return state.products.reduce((acc, p) => acc + (Number(p.costPrice) * Number(p.stock)), 0);
+      return state.products
+        .filter(p => p.isActive !== false)
+        .reduce((acc, p) => acc + (Number(p.costPrice) * Number(p.stock)), 0);
     },
 
     totalSalesValue: (state) => {
-      return state.products.reduce((acc, p) => acc + (Number(p.sellingPrice) * Number(p.stock)), 0);
+      return state.products
+        .filter(p => p.isActive !== false)
+        .reduce((acc, p) => acc + (Number(p.sellingPrice) * Number(p.stock)), 0);
     }
   },
 
@@ -59,49 +168,75 @@ export const useProductStore = defineStore('products', {
       this.error = null;
 
       try {
+        let loadedFromSupabase = false;
+
         if (isSupabaseConfigured && supabase) {
-          const { data, error } = await supabase
-            .from('productos')
-            .select(`
-              id, codigo_sku, codigo_barras, nombre, precio_costo, precio_venta, precio_mayoreo,
-              stock_actual, stock_minimo,
-              categorias ( nombre ),
-              marcas ( nombre ),
-              unidades_medida ( abreviatura )
-            `)
-            .order('nombre');
+          try {
+            const { data, error } = await supabase
+              .from('productos')
+              .select(`
+                id, codigo_sku, codigo_barras, nombre, descripcion, precio_costo, margen_ganancia,
+                precio_venta, precio_mayoreo, alicuota_iva, stock_actual, stock_minimo, esta_activo,
+                categorias ( nombre ),
+                marcas ( nombre ),
+                unidades_medida ( abreviatura )
+              `)
+              .order('nombre');
 
-          if (error) throw error;
+            if (!error && data) {
+              this.products = data.map(p => ({
+                id: p.id,
+                sku: p.codigo_sku,
+                barcode: p.codigo_barras || '',
+                name: p.nombre,
+                description: p.descripcion || '',
+                costPrice: Number(p.precio_costo || 0),
+                margin: Number(p.margen_ganancia || 100),
+                sellingPrice: Number(p.precio_venta || 0),
+                wholesalePrice: Number(p.precio_mayoreo || 0),
+                ivaRate: Number(p.alicuota_iva || 21),
+                stock: Number(p.stock_actual || 0),
+                minStock: Number(p.stock_minimo || 0),
+                isActive: p.esta_activo !== false,
+                dept: p.categorias?.nombre || 'GENERAL',
+                brand: p.marcas?.nombre || 'GENÉRICO',
+                unit: p.unidades_medida?.abreviatura || 'u'
+              }));
+              loadedFromSupabase = true;
 
-          this.products = data.map(p => ({
-            id: p.id,
-            sku: p.codigo_sku,
-            barcode: p.codigo_barras,
-            name: p.nombre,
-            costPrice: Number(p.precio_costo),
-            sellingPrice: Number(p.precio_venta),
-            wholesalePrice: Number(p.precio_mayoreo),
-            stock: Number(p.stock_actual),
-            minStock: Number(p.stock_minimo),
-            dept: p.categorias?.nombre || 'GENERAL',
-            brand: p.marcas?.nombre || 'GENÉRICO',
-            unit: p.unidades_medida?.abreviatura || 'u'
-          }));
-        } else {
-          // LocalStorage fallback / Demo mode
-          const localData = localStorage.getItem('negostock_products');
-          if (localData) {
-            this.products = JSON.parse(localData);
+              // Guardar réplica cifrada en IndexedDB para disponibilidad offline
+              await this.cacheAllProductsToSecureStorage();
+            }
+          } catch (supErr) {
+            console.warn('[ProductStore] Falla conectando a Supabase. Cargando caché cifrada local:', supErr);
+          }
+        }
+
+        if (!loadedFromSupabase) {
+          // Cargar desde almacén seguro cifrado IndexedDB
+          const cachedProds = await secureGetAll('products_catalog');
+          if (cachedProds && cachedProds.length > 0) {
+            this.products = cachedProds.map(p => ({
+              ...p,
+              isActive: p.isActive !== false
+            }));
           } else {
+            // Semilla inicial
             this.products = initialSeed.products.map((p, idx) => ({
               id: 'local-' + (idx + 1),
+              description: '',
+              margin: 100,
+              ivaRate: 21,
+              isActive: true,
               ...p
             }));
-            this.saveToLocal();
+            await this.cacheAllProductsToSecureStorage();
           }
-          this.categories = ['TODOS', ...initialSeed.categories];
-          this.brands = ['TODAS', ...initialSeed.brands];
         }
+
+        // Actualizar listas dinámicas de categorías y marcas
+        this.refreshCategoriesAndBrands();
+
       } catch (err) {
         console.error('Error cargando productos:', err);
         this.error = err.message;
@@ -110,24 +245,662 @@ export const useProductStore = defineStore('products', {
       }
     },
 
-    saveToLocal() {
-      if (!isSupabaseConfigured) {
-        localStorage.setItem('negostock_products', JSON.stringify(this.products));
+    refreshCategoriesAndBrands() {
+      const depts = new Set(this.products.map(p => p.dept).filter(Boolean));
+      this.categories = ['TODOS', ...Array.from(depts).sort()];
+
+      const brands = new Set(this.products.map(p => p.brand).filter(Boolean));
+      this.brands = ['TODAS', ...Array.from(brands).sort()];
+    },
+
+    async cacheAllProductsToSecureStorage() {
+      try {
+        for (const p of this.products) {
+          await secureSet('products_catalog', p.id, p);
+        }
+      } catch (err) {
+        console.warn('[ProductStore] Error cacheando productos de forma segura:', err);
       }
     },
 
-    async updateStock(productId, newStock, movementType = 'AJUSTE') {
+    /**
+     * ALTA DE PRODUCTO (NUEVO ARTÍCULO)
+     */
+    async createProduct(productData) {
+      this.loading = true;
+      try {
+        const sku = productData.sku?.trim() || `SKU-${Date.now().toString().slice(-6)}`;
+        const name = productData.name?.trim();
+        const costPrice = Number(productData.costPrice || 0);
+        const margin = Number(productData.margin || 100);
+        const sellingPrice = Number(productData.sellingPrice || (costPrice * (1 + margin / 100)));
+        const wholesalePrice = Number(productData.wholesalePrice || 0);
+        const stock = Number(productData.stock || 0);
+        const minStock = Number(productData.minStock || 0);
+        const ivaRate = Number(productData.ivaRate || 21);
+        const isActive = productData.isActive !== false;
+        const dept = (productData.dept || 'GENERAL').trim().toUpperCase();
+        const brand = (productData.brand || 'GENÉRICO').trim().toUpperCase();
+        const unit = (productData.unit || 'u').trim().toLowerCase();
+
+        const syncModeStore = useSyncModeStore();
+        let newId = `local-${Date.now()}`;
+
+        const basePayload = {
+          comercio_id: 1,
+          codigo_sku: sku,
+          codigo_barras: productData.barcode?.trim() || null,
+          nombre: name,
+          descripcion: productData.description?.trim() || null,
+          precio_costo: costPrice,
+          margen_ganancia: margin,
+          precio_venta: sellingPrice,
+          precio_mayoreo: wholesalePrice,
+          alicuota_iva: ivaRate,
+          stock_actual: stock,
+          stock_minimo: minStock,
+          esta_activo: isActive
+        };
+
+        if (syncModeStore.isLocalOnly) {
+          // MODO LOCAL: Guardar en cola de pendientes de productos y continuar localmente
+          await syncModeStore.enqueueProductChange('CREATE', basePayload);
+          console.log(`[ProductStore] Producto "${name}" guardado en MODO LOCAL para sincronizar luego.`);
+        } else if (syncModeStore.isOnlineOnly) {
+          // MODO SÓLO EN LÍNEA: Requiere Supabase obligatoriamente
+          if (!isSupabaseConfigured || !supabase) {
+            throw new Error('Modo "Sólo en Línea" activo: Supabase no está configurado.');
+          }
+
+          const [catId, brandId, unitId] = await Promise.all([
+            getOrCreateCategory(1, dept),
+            getOrCreateBrand(1, brand),
+            getOrCreateUnit(1, unit)
+          ]);
+
+          const insertPayload = {
+            ...basePayload,
+            categoria_id: catId,
+            marca_id: brandId,
+            unidad_id: unitId
+          };
+
+          const { data, error } = await supabase
+            .from('productos')
+            .insert(insertPayload)
+            .select('id')
+            .single();
+
+          if (error) throw error;
+          if (data) newId = data.id;
+
+          const authStore = useAuthStore();
+          const opName = authStore.currentUser?.fullName || 'Administrador';
+          const opRole = authStore.currentUser?.role || 'ADMIN';
+          const operatorBadge = `${opName} (${authStore.roleLabel || opRole})`;
+
+          if (stock > 0) {
+            await supabase.from('stock_movimientos').insert({
+              comercio_id: 1,
+              producto_id: newId,
+              tipo_movimiento: 'INICIAL',
+              cantidad: stock,
+              saldo_posterior: stock,
+              costo_unitario: costPrice,
+              notas: `Stock inicial por alta de producto [por ${operatorBadge}]`
+            });
+          }
+
+          await supabase.from('precios_historial').insert({
+            comercio_id: 1,
+            producto_id: newId,
+            costo_anterior: costPrice,
+            costo_nuevo: costPrice,
+            venta_anterior: sellingPrice,
+            venta_nueva: sellingPrice,
+            mayoreo_anterior: wholesalePrice,
+            mayoreo_nuevo: wholesalePrice,
+            motivo_cambio: 'MANUAL',
+            usuario_nombre: operatorBadge
+          });
+        } else {
+          // MODO AUTOMÁTICO (HÍBRIDO): Intenta nube; si falla, encola offline
+          let uploaded = false;
+          if (isSupabaseConfigured && supabase) {
+            try {
+              const [catId, brandId, unitId] = await Promise.all([
+                getOrCreateCategory(1, dept),
+                getOrCreateBrand(1, brand),
+                getOrCreateUnit(1, unit)
+              ]);
+
+              const insertPayload = {
+                ...basePayload,
+                categoria_id: catId,
+                marca_id: brandId,
+                unidad_id: unitId
+              };
+
+              const { data, error } = await supabase
+                .from('productos')
+                .insert(insertPayload)
+                .select('id')
+                .single();
+
+              if (!error && data) {
+                newId = data.id;
+                uploaded = true;
+
+                const authStore = useAuthStore();
+                const opName = authStore.currentUser?.fullName || 'Administrador';
+                const opRole = authStore.currentUser?.role || 'ADMIN';
+                const operatorBadge = `${opName} (${authStore.roleLabel || opRole})`;
+
+                if (stock > 0) {
+                  await supabase.from('stock_movimientos').insert({
+                    comercio_id: 1,
+                    producto_id: newId,
+                    tipo_movimiento: 'INICIAL',
+                    cantidad: stock,
+                    saldo_posterior: stock,
+                    costo_unitario: costPrice,
+                    notas: `Stock inicial por alta de producto [por ${operatorBadge}]`
+                  });
+                }
+
+                await supabase.from('precios_historial').insert({
+                  comercio_id: 1,
+                  producto_id: newId,
+                  costo_anterior: costPrice,
+                  costo_nuevo: costPrice,
+                  venta_anterior: sellingPrice,
+                  venta_nueva: sellingPrice,
+                  mayoreo_anterior: wholesalePrice,
+                  mayoreo_nuevo: wholesalePrice,
+                  motivo_cambio: 'MANUAL',
+                  usuario_nombre: operatorBadge
+                });
+              }
+            } catch (err) {
+              console.warn('[ProductStore] Falla al conectar a Supabase en modo automático. Encolando producto...', err);
+            }
+          }
+
+          if (!uploaded) {
+            await syncModeStore.enqueueProductChange('CREATE', basePayload);
+          }
+        }
+
+        const authStore = useAuthStore();
+        const opName = authStore.currentUser?.fullName || 'Administrador';
+        const opRole = authStore.currentUser?.role || 'ADMIN';
+        const operatorBadge = `${opName} (${authStore.roleLabel || opRole})`;
+
+        const newProduct = {
+          id: newId,
+          sku,
+          barcode: productData.barcode?.trim() || '',
+          name,
+          description: productData.description?.trim() || '',
+          costPrice,
+          margin,
+          sellingPrice,
+          wholesalePrice,
+          ivaRate,
+          stock,
+          minStock,
+          isActive,
+          dept,
+          brand,
+          unit,
+          createdBy: {
+            id: authStore.currentUser?.id,
+            name: opName,
+            role: opRole,
+            at: new Date().toISOString()
+          }
+        };
+
+        this.products.unshift(newProduct);
+        this.refreshCategoriesAndBrands();
+        await secureSet('products_catalog', newId, newProduct);
+
+        // Guardar registro en historial local
+        await this.logLocalPriceChange(newId, 0, costPrice, 0, sellingPrice, 'ALTA_PRODUCTO', operatorBadge);
+        if (stock > 0) {
+          await this.logLocalStockMovement(newId, 'INICIAL', stock, stock, `Stock inicial por alta de producto [por ${operatorBadge}]`, operatorBadge);
+        }
+
+        return { success: true, product: newProduct };
+      } catch (err) {
+        console.error('Error creando producto:', err);
+        return { success: false, error: err.message };
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    /**
+     * MODIFICACIÓN DE PRODUCTO EXISTENTE CON HISTORIAL
+     */
+    async updateProduct(productId, updates) {
+      this.loading = true;
+      try {
+        const idx = this.products.findIndex(p => p.id === productId);
+        if (idx === -1) throw new Error('Producto no encontrado');
+
+        const prev = this.products[idx];
+        const costPrice = updates.costPrice !== undefined ? Number(updates.costPrice) : prev.costPrice;
+        const margin = updates.margin !== undefined ? Number(updates.margin) : prev.margin;
+        const sellingPrice = updates.sellingPrice !== undefined ? Number(updates.sellingPrice) : prev.sellingPrice;
+        const wholesalePrice = updates.wholesalePrice !== undefined ? Number(updates.wholesalePrice) : prev.wholesalePrice;
+        const stock = updates.stock !== undefined ? Number(updates.stock) : prev.stock;
+        const minStock = updates.minStock !== undefined ? Number(updates.minStock) : prev.minStock;
+        const ivaRate = updates.ivaRate !== undefined ? Number(updates.ivaRate) : prev.ivaRate;
+        const isActive = updates.isActive !== undefined ? updates.isActive : prev.isActive;
+        const dept = updates.dept ? updates.dept.trim().toUpperCase() : prev.dept;
+        const brand = updates.brand ? updates.brand.trim().toUpperCase() : prev.brand;
+        const unit = updates.unit ? updates.unit.trim().toLowerCase() : prev.unit;
+
+        const pricesChanged = prev.costPrice !== costPrice || prev.sellingPrice !== sellingPrice || prev.wholesalePrice !== wholesalePrice;
+        const stockChanged = prev.stock !== stock;
+
+        const syncModeStore = useSyncModeStore();
+
+        const updatePayload = {
+          codigo_sku: updates.sku !== undefined ? updates.sku.trim() : prev.sku,
+          codigo_barras: updates.barcode !== undefined ? (updates.barcode.trim() || null) : (prev.barcode || null),
+          nombre: updates.name !== undefined ? updates.name.trim() : prev.name,
+          descripcion: updates.description !== undefined ? (updates.description.trim() || null) : (prev.description || null),
+          precio_costo: costPrice,
+          margen_ganancia: margin,
+          precio_venta: sellingPrice,
+          precio_mayoreo: wholesalePrice,
+          alicuota_iva: ivaRate,
+          stock_actual: stock,
+          stock_minimo: minStock,
+          esta_activo: isActive,
+          actualizado_en: new Date().toISOString()
+        };
+
+        if (syncModeStore.isLocalOnly) {
+          // MODO LOCAL: Encolar cambio para sincronización por lote posterior
+          await syncModeStore.enqueueProductChange('UPDATE', { id: productId, updates: updatePayload });
+          console.log(`[ProductStore] Modificación de "${prev.name}" encolada en MODO LOCAL.`);
+        } else if (syncModeStore.isOnlineOnly) {
+          // MODO SÓLO EN LÍNEA: Obligatorio Supabase
+          if (!isSupabaseConfigured || !supabase || productId.startsWith('local-')) {
+            throw new Error('Modo "Sólo en Línea" activo: No se puede actualizar en la nube (verifique conexión con Supabase).');
+          }
+
+          const [catId, brandId, unitId] = await Promise.all([
+            getOrCreateCategory(1, dept),
+            getOrCreateBrand(1, brand),
+            getOrCreateUnit(1, unit)
+          ]);
+          updatePayload.categoria_id = catId;
+          updatePayload.marca_id = brandId;
+          updatePayload.unidad_id = unitId;
+
+          const { data: updatedRows, error } = await supabase
+            .from('productos')
+            .update(updatePayload)
+            .eq('id', productId)
+            .select();
+
+          if (error) throw error;
+          if (!updatedRows || updatedRows.length === 0) {
+            throw new Error('Supabase no permitió actualizar el artículo (bloqueo RLS). Ejecutá el script desbloquear_escritura_supabase.sql en el SQL Editor.');
+          }
+
+          const authStore = useAuthStore();
+          const opName = authStore.currentUser?.fullName || 'Administrador';
+          const opRole = authStore.currentUser?.role || 'ADMIN';
+          const operatorBadge = `${opName} (${authStore.roleLabel || opRole})`;
+
+          if (pricesChanged) {
+            await supabase.from('precios_historial').insert({
+              comercio_id: 1,
+              producto_id: productId,
+              costo_anterior: prev.costPrice,
+              costo_nuevo: costPrice,
+              venta_anterior: prev.sellingPrice,
+              venta_nueva: sellingPrice,
+              mayoreo_anterior: prev.wholesalePrice,
+              mayoreo_nuevo: wholesalePrice,
+              motivo_cambio: 'MANUAL',
+              usuario_nombre: operatorBadge
+            });
+          }
+
+          if (stockChanged) {
+            const diff = stock - prev.stock;
+            await supabase.from('stock_movimientos').insert({
+              comercio_id: 1,
+              producto_id: productId,
+              tipo_movimiento: diff > 0 ? 'AJUSTE_POSITIVO' : 'AJUSTE_NEGATIVO',
+              cantidad: diff,
+              saldo_posterior: stock,
+              costo_unitario: costPrice,
+              notas: updates.stockReason
+                ? `${updates.stockReason} [por ${operatorBadge}]`
+                : `Ajuste desde edición de artículo [por ${operatorBadge}]`
+            });
+          }
+        } else {
+          // MODO AUTOMÁTICO (HÍBRIDO): Intenta nube; si falla, encola offline
+          let uploaded = false;
+          if (isSupabaseConfigured && supabase && !productId.startsWith('local-')) {
+            try {
+              const [catId, brandId, unitId] = await Promise.all([
+                getOrCreateCategory(1, dept),
+                getOrCreateBrand(1, brand),
+                getOrCreateUnit(1, unit)
+              ]);
+              updatePayload.categoria_id = catId;
+              updatePayload.marca_id = brandId;
+              updatePayload.unidad_id = unitId;
+
+              const { data: updatedRows, error } = await supabase
+                .from('productos')
+                .update(updatePayload)
+                .eq('id', productId)
+                .select();
+
+              if (!error && updatedRows && updatedRows.length > 0) {
+                uploaded = true;
+
+                const authStore = useAuthStore();
+                const opName = authStore.currentUser?.fullName || 'Administrador';
+                const opRole = authStore.currentUser?.role || 'ADMIN';
+                const operatorBadge = `${opName} (${authStore.roleLabel || opRole})`;
+
+                if (pricesChanged) {
+                  await supabase.from('precios_historial').insert({
+                    comercio_id: 1,
+                    producto_id: productId,
+                    costo_anterior: prev.costPrice,
+                    costo_nuevo: costPrice,
+                    venta_anterior: prev.sellingPrice,
+                    venta_nueva: sellingPrice,
+                    mayoreo_anterior: prev.wholesalePrice,
+                    mayoreo_nuevo: wholesalePrice,
+                    motivo_cambio: 'MANUAL',
+                    usuario_nombre: operatorBadge
+                  });
+                }
+
+                if (stockChanged) {
+                  const diff = stock - prev.stock;
+                  await supabase.from('stock_movimientos').insert({
+                    comercio_id: 1,
+                    producto_id: productId,
+                    tipo_movimiento: diff > 0 ? 'AJUSTE_POSITIVO' : 'AJUSTE_NEGATIVO',
+                    cantidad: diff,
+                    saldo_posterior: stock,
+                    costo_unitario: costPrice,
+                    notas: updates.stockReason
+                      ? `${updates.stockReason} [por ${operatorBadge}]`
+                      : `Ajuste desde edición de artículo [por ${operatorBadge}]`
+                  });
+                }
+              }
+            } catch (err) {
+              console.warn('[ProductStore] Falla al actualizar en nube en modo automático. Encolando...', err);
+            }
+          }
+
+          if (!uploaded) {
+            await syncModeStore.enqueueProductChange('UPDATE', { id: productId, updates: updatePayload });
+          }
+        }
+
+        const authStore = useAuthStore();
+        const opName = authStore.currentUser?.fullName || 'Administrador';
+        const opRole = authStore.currentUser?.role || 'ADMIN';
+        const operatorBadge = `${opName} (${authStore.roleLabel || opRole})`;
+
+        // Registrar en historial local cifrado
+        if (pricesChanged) {
+          await this.logLocalPriceChange(productId, prev.costPrice, costPrice, prev.sellingPrice, sellingPrice, updates.priceReason || 'MODIFICACION_FICHA', operatorBadge);
+        }
+        if (stockChanged) {
+          const diff = stock - prev.stock;
+          const noteText = updates.stockReason
+            ? `${updates.stockReason} [por ${operatorBadge}]`
+            : `Ajuste desde edición de artículo [por ${operatorBadge}]`;
+          await this.logLocalStockMovement(productId, diff > 0 ? 'AJUSTE_POSITIVO' : 'AJUSTE_NEGATIVO', diff, stock, noteText, operatorBadge);
+        }
+
+        const updatedProduct = {
+          ...prev,
+          ...updates,
+          costPrice,
+          margin,
+          sellingPrice,
+          wholesalePrice,
+          stock,
+          minStock,
+          ivaRate,
+          isActive,
+          dept,
+          brand,
+          unit,
+          lastModifiedBy: {
+            id: authStore.currentUser?.id,
+            name: opName,
+            role: opRole,
+            at: new Date().toISOString()
+          }
+        };
+
+        this.products[idx] = updatedProduct;
+        this.refreshCategoriesAndBrands();
+        await secureSet('products_catalog', productId, updatedProduct);
+
+        return { success: true, product: updatedProduct };
+      } catch (err) {
+        console.error('Error actualizando producto:', err);
+        return { success: false, error: err.message };
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    /**
+     * CAMBIAR DISPONIBILIDAD (DISPONIBLE / NO DISPONIBLE)
+     * No hay borrado físico: el artículo simplemente se pausa o se reactiva.
+     */
+    async toggleProductAvailability(productId) {
+      const prod = this.products.find(p => p.id === productId);
+      if (!prod) return { success: false, error: 'Producto no encontrado' };
+
+      const newStatus = !prod.isActive;
+      const syncModeStore = useSyncModeStore();
+
+      if (syncModeStore.isLocalOnly) {
+        // MODO LOCAL
+        await syncModeStore.enqueueProductChange('TOGGLE_AVAILABILITY', { id: productId, isActive: newStatus });
+      } else if (syncModeStore.isOnlineOnly) {
+        // MODO SÓLO EN LÍNEA
+        if (!isSupabaseConfigured || !supabase || productId.startsWith('local-')) {
+          return { success: false, error: 'Modo "Sólo en Línea" activo: No se puede conectar con Supabase.' };
+        }
+        try {
+          const { data: updatedRows, error } = await supabase
+            .from('productos')
+            .update({ esta_activo: newStatus, actualizado_en: new Date().toISOString() })
+            .eq('id', productId)
+            .select();
+
+          if (error) throw error;
+          if (!updatedRows || updatedRows.length === 0) {
+            return { success: false, error: 'Supabase no permitió actualizar la disponibilidad (bloqueo RLS). Ejecutá el script desbloquear_escritura_supabase.sql.' };
+          }
+        } catch (e) {
+          return { success: false, error: e.message };
+        }
+      } else {
+        // MODO AUTOMÁTICO (HÍBRIDO)
+        let uploaded = false;
+        if (isSupabaseConfigured && supabase && !productId.startsWith('local-')) {
+          try {
+            const { data: updatedRows, error } = await supabase
+              .from('productos')
+              .update({ esta_activo: newStatus, actualizado_en: new Date().toISOString() })
+              .eq('id', productId)
+              .select();
+
+            if (!error && updatedRows && updatedRows.length > 0) {
+              uploaded = true;
+            }
+          } catch (e) {
+            console.warn('[ProductStore] Falla al actualizar disponibilidad en nube. Encolando...', e);
+          }
+        }
+        if (!uploaded) {
+          await syncModeStore.enqueueProductChange('TOGGLE_AVAILABILITY', { id: productId, isActive: newStatus });
+        }
+      }
+
+      const authStore = useAuthStore();
+      prod.isActive = newStatus;
+      prod.lastModifiedBy = {
+        id: authStore.currentUser?.id,
+        name: authStore.currentUser?.fullName || 'Administrador',
+        role: authStore.currentUser?.role || 'ADMIN',
+        at: new Date().toISOString()
+      };
+      await secureSet('products_catalog', prod.id, prod);
+      return { success: true, isActive: newStatus, name: prod.name };
+    },
+
+    /**
+     * OBTENER HISTORIA COMPLETA DE UN ARTÍCULO (PRECIOS Y KARDEX DE STOCK)
+     */
+    async fetchProductHistory(productId) {
+      let priceHistory = [];
+      let stockHistory = [];
+
+      // 1. Consultar Supabase si está disponible
+      if (isSupabaseConfigured && supabase && !productId.startsWith('local-')) {
+        try {
+          const [pRes, sRes] = await Promise.all([
+            supabase
+              .from('precios_historial')
+              .select('id, costo_anterior, costo_nuevo, venta_anterior, venta_nueva, mayoreo_anterior, mayoreo_nuevo, motivo_cambio, usuario_nombre, creado_en')
+              .eq('producto_id', productId)
+              .order('creado_en', { ascending: false }),
+            supabase
+              .from('stock_movimientos')
+              .select('id, tipo_movimiento, cantidad, saldo_posterior, costo_unitario, notas, creado_en')
+              .eq('producto_id', productId)
+              .order('creado_en', { ascending: false })
+          ]);
+
+          if (pRes.data && pRes.data.length > 0) priceHistory = pRes.data;
+          if (sRes.data && sRes.data.length > 0) stockHistory = sRes.data;
+        } catch (e) {
+          console.warn('[ProductStore] Error consultando historial en Supabase:', e);
+        }
+      }
+
+      // 2. Si no hay en Supabase o estamos offline, consultar almacén seguro local
+      if (priceHistory.length === 0) {
+        const localPrices = await secureGet('app_metadata', `hist_precios_${productId}`);
+        if (localPrices) priceHistory = localPrices;
+      }
+      if (stockHistory.length === 0) {
+        const localStock = await secureGet('app_metadata', `hist_stock_${productId}`);
+        if (localStock) stockHistory = localStock;
+      }
+
+      return { priceHistory, stockHistory };
+    },
+
+    async logLocalPriceChange(productId, oldCost, newCost, oldSelling, newSelling, reason, operatorName = null) {
+      try {
+        const authStore = useAuthStore();
+        const userName = operatorName || `${authStore.currentUser?.fullName || 'Administrador'} (${authStore.roleLabel || authStore.currentUser?.role || 'ADMIN'})`;
+        const key = `hist_precios_${productId}`;
+        const existing = (await secureGet('app_metadata', key)) || [];
+        existing.unshift({
+          id: 'p-hist-' + Date.now(),
+          costo_anterior: oldCost,
+          costo_nuevo: newCost,
+          venta_anterior: oldSelling,
+          venta_nueva: newSelling,
+          motivo_cambio: reason,
+          usuario_nombre: userName,
+          creado_en: new Date().toISOString()
+        });
+        await secureSet('app_metadata', key, existing);
+      } catch {}
+    },
+
+    async logLocalStockMovement(productId, tipo, cantidad, saldo, notas, operatorName = null) {
+      try {
+        const authStore = useAuthStore();
+        const userName = operatorName || `${authStore.currentUser?.fullName || 'Operador'} (${authStore.roleLabel || authStore.currentUser?.role || 'CASHIER'})`;
+        const key = `hist_stock_${productId}`;
+        const existing = (await secureGet('app_metadata', key)) || [];
+        existing.unshift({
+          id: 's-hist-' + Date.now(),
+          tipo_movimiento: tipo,
+          cantidad,
+          saldo_posterior: saldo,
+          notas,
+          usuario_nombre: userName,
+          creado_en: new Date().toISOString()
+        });
+        await secureSet('app_metadata', key, existing);
+      } catch {}
+    },
+
+    async updateStock(productId, newStock, movementType = 'AJUSTE', customNotes = null) {
       const prod = this.products.find(p => p.id === productId);
       if (!prod) return;
 
-      const diff = newStock - prod.stock;
-      prod.stock = Number(newStock);
-      this.saveToLocal();
+      const authStore = useAuthStore();
+      const opName = `${authStore.currentUser?.fullName || 'Encargado'} (${authStore.roleLabel || authStore.currentUser?.role || 'MANAGER'})`;
 
-      if (isSupabaseConfigured && supabase) {
+      const parsedStock = Math.max(0, Number(newStock));
+      const diff = parsedStock - prod.stock;
+      prod.stock = parsedStock;
+
+      // REGLA FUNDAMENTAL: Si se acaba el stock, pasa a no disponible sin stock.
+      // Si entra mercadería (> 0), vuelve a estar disponible automáticamente.
+      // NUNCA SE ELIMINA EL PRODUCTO.
+      if (prod.stock <= 0) {
+        prod.isActive = false;
+      } else {
+        prod.isActive = true;
+      }
+
+      prod.lastModifiedBy = {
+        id: authStore.currentUser?.id,
+        name: authStore.currentUser?.fullName,
+        role: authStore.currentUser?.role,
+        at: new Date().toISOString()
+      };
+      await secureSet('products_catalog', prod.id, prod);
+
+      const noteText = customNotes || `Ajuste rápido de stock (${movementType}) [por ${opName}]`;
+
+      // Registrar Kardex local
+      await this.logLocalStockMovement(
+        productId,
+        movementType || (diff > 0 ? 'AJUSTE_POSITIVO' : 'AJUSTE_NEGATIVO'),
+        diff,
+        prod.stock,
+        noteText,
+        opName
+      );
+
+      if (isSupabaseConfigured && supabase && !productId.startsWith('local-')) {
         await supabase
           .from('productos')
-          .update({ stock_actual: newStock })
+          .update({ stock_actual: prod.stock, esta_activo: prod.isActive })
           .eq('id', productId);
 
         await supabase
@@ -135,35 +908,61 @@ export const useProductStore = defineStore('products', {
           .insert({
             comercio_id: 1,
             producto_id: productId,
-            tipo_movimiento: diff > 0 ? 'AJUSTE_POSITIVO' : 'AJUSTE_NEGATIVO',
+            tipo_movimiento: movementType || (diff > 0 ? 'AJUSTE_POSITIVO' : 'AJUSTE_NEGATIVO'),
             cantidad: diff,
-            saldo_posterior: newStock,
-            notas: `Ajuste manual desde la aplicación (${movementType})`
+            saldo_posterior: prod.stock,
+            notas: noteText
           });
       }
     },
 
+    async adjustStock(productId, newStock, movementType = 'AJUSTE', customNotes = null) {
+      return this.updateStock(productId, newStock, movementType, customNotes);
+    },
+
     async deductStockForSale(items, saleId = null) {
+      const authStore = useAuthStore();
+      const opName = `${authStore.currentUser?.fullName || 'Cajero'} (${authStore.roleLabel || authStore.currentUser?.role || 'CASHIER'})`;
+
       for (const item of items) {
         const prod = this.products.find(p => p.id === item.id || p.sku === item.sku);
         if (prod) {
           prod.stock = Math.max(0, Number(prod.stock) - Number(item.quantity));
+
+          // Si el stock llega a 0, pasa automáticamente a NO DISPONIBLE (nunca se borra)
+          if (prod.stock <= 0) {
+            prod.isActive = false;
+          }
+
+          await secureSet('products_catalog', prod.id, prod);
+          await this.logLocalStockMovement(
+            prod.id,
+            'VENTA',
+            -item.quantity,
+            prod.stock,
+            `Venta mostrador #${saleId || 'local'} [por ${opName}]`,
+            opName
+          );
         }
       }
-      this.saveToLocal();
 
       if (isSupabaseConfigured && supabase) {
         for (const item of items) {
           const prod = this.products.find(p => p.id === item.id || p.sku === item.sku);
-          if (prod) {
+          if (prod && !prod.id.startsWith('local-')) {
+            await supabase.from('productos').update({
+              stock_actual: prod.stock,
+              esta_activo: prod.isActive
+            }).eq('id', prod.id);
+
             await supabase.from('stock_movimientos').insert({
               comercio_id: 1,
               producto_id: prod.id,
               tipo_movimiento: 'VENTA',
               cantidad: -item.quantity,
               saldo_posterior: prod.stock,
-              referencia_id: saleId,
-              notas: `Venta comprobante #${saleId || 'local'}`
+              referencia_id: saleId?.startsWith('sale-offline') ? null : saleId,
+              notas: `Venta mostrador #${saleId || 'local'} [por ${opName}]`
             });
           }
         }
@@ -171,9 +970,12 @@ export const useProductStore = defineStore('products', {
     },
 
     /**
-     * ACTUALIZADOR MASIVO DE PRECIOS POR INFLACIÓN
+     * ACTUALIZADOR MASIVO DE PRECIOS POR INFLACIÓN CON HISTORIAL
      */
     async applyMassPriceUpdate({ category, brand, percentage, target = 'selling', rounding = 0 }) {
+      const authStore = useAuthStore();
+      const opName = `${authStore.currentUser?.fullName || 'Administrador'} (${authStore.roleLabel || authStore.currentUser?.role || 'ADMIN'})`;
+
       const factor = 1 + (percentage / 100);
       let updatedCount = 0;
       const roundValue = (val) => {
@@ -181,18 +983,16 @@ export const useProductStore = defineStore('products', {
         return Math.ceil(val / rounding) * rounding;
       };
 
-      const updatedIds = [];
-
       for (const prod of this.products) {
         const matchesCategory = !category || category === 'TODOS' || prod.dept === category;
         const matchesBrand = !brand || brand === 'TODAS' || prod.brand === brand;
 
         if (matchesCategory && matchesBrand) {
           updatedCount++;
-          updatedIds.push(prod.id);
+          const oldCost = prod.costPrice;
+          const oldSelling = prod.sellingPrice;
 
           if (target === 'cost_and_selling') {
-            const oldCost = prod.costPrice;
             prod.costPrice = roundValue(prod.costPrice * factor);
             const margin = oldCost > 0 ? (prod.sellingPrice / oldCost) : 2;
             prod.sellingPrice = roundValue(prod.costPrice * margin);
@@ -207,12 +1007,27 @@ export const useProductStore = defineStore('products', {
           } else if (target === 'cost_only') {
             prod.costPrice = roundValue(prod.costPrice * factor);
           }
+
+          prod.lastModifiedBy = {
+            id: authStore.currentUser?.id,
+            name: authStore.currentUser?.fullName,
+            role: authStore.currentUser?.role,
+            at: new Date().toISOString()
+          };
+
+          await secureSet('products_catalog', prod.id, prod);
+          await this.logLocalPriceChange(
+            prod.id,
+            oldCost,
+            prod.costPrice,
+            oldSelling,
+            prod.sellingPrice,
+            `AUMENTO_MASIVO_${percentage}%`,
+            opName
+          );
         }
       }
 
-      this.saveToLocal();
-
-      // Si Supabase está conectado, actualizar en lote
       if (isSupabaseConfigured && supabase && updatedCount > 0) {
         try {
           await supabase.rpc('actualizar_precios_masivo', {

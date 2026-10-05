@@ -149,30 +149,34 @@
           </v-card-title>
           <v-divider />
 
-          <v-table density="comfortable" hover>
-            <thead>
-              <tr class="bg-grey-lighten-4">
-                <th class="font-weight-bold">SKU</th>
-                <th class="font-weight-bold">Descripción</th>
-                <th class="font-weight-bold text-right">P. Venta Actual</th>
-                <th class="font-weight-bold text-center"><v-icon icon="mdi-arrow-right" /></th>
-                <th class="font-weight-bold text-right text-primary">P. Venta Nuevo</th>
-                <th class="font-weight-bold text-right text-success">Variación</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="prod in previewList" :key="prod.id">
-                <td><v-chip size="x-small" color="primary" variant="tonal">{{ prod.sku }}</v-chip></td>
-                <td class="font-weight-medium">{{ prod.name }}</td>
-                <td class="text-right text-grey font-weight-medium">${{ formatMoney(prod.sellingPrice) }}</td>
-                <td class="text-center text-grey"><v-icon icon="mdi-arrow-right" size="small" /></td>
-                <td class="text-right font-weight-black text-primary">${{ formatMoney(calcNewPrice(prod)) }}</td>
-                <td class="text-right font-weight-bold text-success">
-                  +${{ formatMoney(calcNewPrice(prod) - prod.sellingPrice) }}
-                </td>
-              </tr>
-            </tbody>
-          </v-table>
+          <div class="responsive-table-wrapper">
+            <v-table density="compact" hover class="compact-update-table">
+              <thead>
+                <tr class="bg-grey-lighten-4">
+                  <th class="font-weight-bold">SKU</th>
+                  <th class="font-weight-bold">Descripción</th>
+                  <th class="font-weight-bold text-right">P. Venta Actual</th>
+                  <th class="font-weight-bold text-center"><v-icon icon="mdi-arrow-right" /></th>
+                  <th class="font-weight-bold text-right text-primary">P. Venta Nuevo</th>
+                  <th class="font-weight-bold text-right text-success">Variación</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="prod in previewList" :key="prod.id">
+                  <td><v-chip size="x-small" color="primary" variant="tonal" class="font-mono text-2xs">{{ prod.sku }}</v-chip></td>
+                  <td class="font-weight-medium">
+                    <div class="text-truncate" style="max-width: 260px;" :title="prod.name">{{ prod.name }}</div>
+                  </td>
+                  <td class="text-right text-grey font-weight-medium font-mono text-caption">${{ formatMoney(prod.sellingPrice) }}</td>
+                  <td class="text-center text-grey"><v-icon icon="mdi-arrow-right" size="x-small" /></td>
+                  <td class="text-right font-weight-black text-primary font-mono text-caption">${{ formatMoney(calcNewPrice(prod)) }}</td>
+                  <td class="text-right font-weight-bold text-success font-mono text-caption">
+                    +${{ formatMoney(calcNewPrice(prod) - prod.sellingPrice) }}
+                  </td>
+                </tr>
+              </tbody>
+            </v-table>
+          </div>
         </v-card>
       </v-window-item>
 
@@ -284,32 +288,36 @@
           </v-card-title>
           <v-divider />
 
-          <v-table density="comfortable" hover>
-            <thead>
-              <tr class="bg-grey-lighten-4">
-                <th class="font-weight-bold">SKU</th>
-                <th class="font-weight-bold">Descripción</th>
-                <th class="font-weight-bold text-right">Costo Actual</th>
-                <th class="font-weight-bold text-right text-info">Costo Nuevo</th>
-                <th class="font-weight-bold text-right">Venta Actual</th>
-                <th class="font-weight-bold text-right text-primary">Venta Nueva</th>
-                <th class="font-weight-bold text-right text-success">Variación</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="ch in parsedChanges" :key="ch.sku">
-                <td><v-chip size="x-small" color="primary">{{ ch.sku }}</v-chip></td>
-                <td class="font-weight-medium">{{ ch.name }}</td>
-                <td class="text-right text-grey font-weight-medium">${{ formatMoney(ch.oldCost) }}</td>
-                <td class="text-right text-info font-weight-bold">${{ formatMoney(ch.newCost) }}</td>
-                <td class="text-right text-grey font-weight-medium">${{ formatMoney(ch.oldSelling) }}</td>
-                <td class="text-right text-primary font-weight-black">${{ formatMoney(ch.newSelling) }}</td>
-                <td class="text-right font-weight-bold" :class="ch.newSelling >= ch.oldSelling ? 'text-success' : 'text-error'">
-                  {{ ch.newSelling >= ch.oldSelling ? '+' : '' }}${{ formatMoney(ch.newSelling - ch.oldSelling) }}
-                </td>
-              </tr>
-            </tbody>
-          </v-table>
+          <div class="responsive-table-wrapper">
+            <v-table density="compact" hover class="compact-update-table">
+              <thead>
+                <tr class="bg-grey-lighten-4">
+                  <th class="font-weight-bold">SKU</th>
+                  <th class="font-weight-bold">Descripción</th>
+                  <th class="font-weight-bold text-right">Costo Actual</th>
+                  <th class="font-weight-bold text-right text-info">Costo Nuevo</th>
+                  <th class="font-weight-bold text-right">Venta Actual</th>
+                  <th class="font-weight-bold text-right text-primary">Venta Nueva</th>
+                  <th class="font-weight-bold text-right text-success">Variación</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="ch in parsedChanges" :key="ch.sku">
+                  <td><v-chip size="x-small" color="primary" variant="tonal" class="font-mono text-2xs">{{ ch.sku }}</v-chip></td>
+                  <td class="font-weight-medium">
+                    <div class="text-truncate" style="max-width: 240px;" :title="ch.name">{{ ch.name }}</div>
+                  </td>
+                  <td class="text-right text-grey font-weight-medium font-mono text-caption">${{ formatMoney(ch.oldCost) }}</td>
+                  <td class="text-right text-info font-weight-bold font-mono text-caption">${{ formatMoney(ch.newCost) }}</td>
+                  <td class="text-right text-grey font-weight-medium font-mono text-caption">${{ formatMoney(ch.oldSelling) }}</td>
+                  <td class="text-right text-primary font-weight-black font-mono text-caption">${{ formatMoney(ch.newSelling) }}</td>
+                  <td class="text-right font-weight-bold font-mono text-caption" :class="ch.newSelling >= ch.oldSelling ? 'text-success' : 'text-error'">
+                    {{ ch.newSelling >= ch.oldSelling ? '+' : '' }}${{ formatMoney(ch.newSelling - ch.oldSelling) }}
+                  </td>
+                </tr>
+              </tbody>
+            </v-table>
+          </div>
         </v-card>
       </v-window-item>
 
@@ -336,44 +344,48 @@
           </v-card-title>
           <v-divider />
 
-          <v-table density="comfortable" hover>
-            <thead>
-              <tr class="bg-grey-lighten-4">
-                <th class="font-weight-bold">Fecha / Hora</th>
-                <th class="font-weight-bold">SKU</th>
-                <th class="font-weight-bold">Producto</th>
-                <th class="font-weight-bold text-right">Costo Viejo $\rightarrow$ Nuevo</th>
-                <th class="font-weight-bold text-right">Venta Vieja $\rightarrow$ Nueva</th>
-                <th class="font-weight-bold">Origen / Motivo</th>
-                <th class="font-weight-bold">Responsable</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="h in filteredHistory" :key="h.id">
-                <td class="text-caption font-weight-medium">{{ formatDateTime(h.createdAt) }}</td>
-                <td><v-chip size="x-small" color="primary">{{ h.sku }}</v-chip></td>
-                <td class="font-weight-medium">{{ h.name }}</td>
-                <td class="text-right text-caption">
-                  ${{ formatMoney(h.oldCost) }} $\rightarrow$ <strong>${{ formatMoney(h.newCost) }}</strong>
-                </td>
-                <td class="text-right text-body-2 font-weight-bold text-primary">
-                  ${{ formatMoney(h.oldSelling) }} $\rightarrow$ <strong class="text-success">${{ formatMoney(h.newSelling) }}</strong>
-                </td>
-                <td>
-                  <v-chip size="x-small" :color="getReasonColor(h.reason)" variant="flat">
-                    {{ formatReason(h.reason) }}
-                  </v-chip>
-                </td>
-                <td class="text-caption text-grey-darken-2">{{ h.userName }}</td>
-              </tr>
+          <div class="responsive-table-wrapper">
+            <v-table density="compact" hover class="compact-update-table">
+              <thead>
+                <tr class="bg-grey-lighten-4">
+                  <th class="font-weight-bold">Fecha / Hora</th>
+                  <th class="font-weight-bold">SKU</th>
+                  <th class="font-weight-bold">Producto</th>
+                  <th class="font-weight-bold text-right">Costo Viejo $\rightarrow$ Nuevo</th>
+                  <th class="font-weight-bold text-right">Venta Vieja $\rightarrow$ Nueva</th>
+                  <th class="font-weight-bold">Origen / Motivo</th>
+                  <th class="font-weight-bold">Responsable</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="h in filteredHistory" :key="h.id">
+                  <td class="text-caption font-mono text-grey-darken-2" style="font-size: 11px;">{{ formatDateTime(h.createdAt) }}</td>
+                  <td><v-chip size="x-small" color="primary" variant="tonal" class="font-mono text-2xs">{{ h.sku }}</v-chip></td>
+                  <td class="font-weight-medium">
+                    <div class="text-truncate" style="max-width: 200px;" :title="h.name">{{ h.name }}</div>
+                  </td>
+                  <td class="text-right text-caption font-mono">
+                    ${{ formatMoney(h.oldCost) }} $\rightarrow$ <strong>${{ formatMoney(h.newCost) }}</strong>
+                  </td>
+                  <td class="text-right text-caption font-weight-bold font-mono text-primary">
+                    ${{ formatMoney(h.oldSelling) }} $\rightarrow$ <strong class="text-success">${{ formatMoney(h.newSelling) }}</strong>
+                  </td>
+                  <td>
+                    <v-chip size="x-small" :color="getReasonColor(h.reason)" variant="flat" class="text-2xs">
+                      {{ formatReason(h.reason) }}
+                    </v-chip>
+                  </td>
+                  <td class="text-caption text-grey-darken-2">{{ h.userName }}</td>
+                </tr>
 
-              <tr v-if="filteredHistory.length === 0">
-                <td colspan="7" class="text-center py-8 text-grey">
-                  No hay registros de cambios de precio para mostrar
-                </td>
-              </tr>
-            </tbody>
-          </v-table>
+                <tr v-if="filteredHistory.length === 0">
+                  <td colspan="7" class="text-center py-6 text-grey">
+                    No se encontraron registros de cambios de precio
+                  </td>
+                </tr>
+              </tbody>
+            </v-table>
+          </div>
         </v-card>
       </v-window-item>
     </v-window>
@@ -647,3 +659,21 @@ function formatDateTime(isoStr) {
   return d.toLocaleDateString('es-AR') + ' ' + d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
 }
 </script>
+
+<style scoped>
+.responsive-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.compact-update-table th,
+.compact-update-table td {
+  padding: 4px 8px !important;
+  height: 36px !important;
+  font-size: 12.5px;
+}
+.text-2xs {
+  font-size: 9.5px !important;
+  line-height: 12px !important;
+}
+</style>

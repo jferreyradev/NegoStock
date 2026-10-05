@@ -1,7 +1,12 @@
 import { reactive } from 'vue';
 import { supabase, isSupabaseConfigured } from './supabase';
-
-const QUEUE_KEY = 'negostock_offline_sales_queue';
+import {
+  secureSet,
+  secureGetAll,
+  secureRemove,
+  secureClear,
+  migrateLegacyPlainStorage
+} from './secureStorage';
 
 export const syncState = reactive({
   isOnline: navigator.onLine,
@@ -11,48 +16,54 @@ export const syncState = reactive({
   syncError: null
 });
 
-function getQueue() {
+async function refreshPendingCount() {
   try {
-    const raw = localStorage.getItem(QUEUE_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch {
+    const queue = await secureGetAll('sales_queue');
+    syncState.pendingCount = queue.length;
+    return queue;
+  } catch (e) {
+    console.error('[SyncQueue] Error leyendo cola segura:', e);
     return [];
   }
 }
 
-function saveQueue(queue) {
-  localStorage.setItem(QUEUE_KEY, JSON.stringify(queue));
-  syncState.pendingCount = queue.length;
-}
+export async function initSyncManager(onSaleSyncedCallback) {
+  // 1. Migrar datos antiguos de texto plano si existían
+  await migrateLegacyPlainStorage();
 
-export function initSyncManager(onSaleSyncedCallback) {
-  syncState.pendingCount = getQueue().length;
+  // 2. Calcular pendientes iniciales
+  await refreshPendingCount();
 
-  window.addEventListener('online', () => {
+  // 3. Listeners de conectividad
+  window.addEventListener('online', async () => {
     syncState.isOnline = true;
-    console.log('[NegoStock] Conexión a internet restablecida. Iniciando sincronización...');
-    syncPendingSales(onSaleSyncedCallback);
+    console.log('[NegoStock] Conexión a internet restablecida. Iniciando sincronización segura...');
+    await syncPendingSales(onSaleSyncedCallback);
   });
 
   window.addEventListener('offline', () => {
     syncState.isOnline = false;
-    console.warn('[NegoStock] Conexión perdida. Operando en Modo Mostrador Offline.');
+    console.warn('[NegoStock] Conexión perdida. Operando en Modo Mostrador Seguro Offline (Cifrado AES-256).');
   });
 
-  // Attempt sync on startup if online
+  // Intentar sincronizar al inicio si hay internet y ventas pendientes
   if (syncState.isOnline && syncState.pendingCount > 0) {
-    syncPendingSales(onSaleSyncedCallback);
+    await syncPendingSales(onSaleSyncedCallback);
   }
 }
 
-export function enqueueOfflineSale(saleRecord) {
-  const queue = getQueue();
-  queue.push({
+export async function enqueueOfflineSale(saleRecord) {
+  const record = {
     ...saleRecord,
+    id: saleRecord.id || `offline-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
     enqueuedAt: new Date().toISOString()
-  });
-  saveQueue(queue);
-  console.log(`[NegoStock] Venta #${saleRecord.voucherNumber} encolada offline. Total pendientes: ${queue.length}`);
+  };
+
+  // Guardado en IndexedDB con cifrado AES-256
+  await secureSet('sales_queue', record.id, record);
+  await refreshPendingCount();
+
+  console.log(`[NegoStock] Venta #${record.voucherNumber || record.id} encolada de forma segura cifrada. Total pendientes: ${syncState.pendingCount}`);
 }
 
 export async function syncPendingSales(onSaleSyncedCallback) {
@@ -60,13 +71,13 @@ export async function syncPendingSales(onSaleSyncedCallback) {
     return;
   }
 
-  const queue = getQueue();
+  const queue = await refreshPendingCount();
   if (queue.length === 0) return;
 
   syncState.isSyncing = true;
   syncState.syncError = null;
 
-  const remaining = [];
+const isUUID = (str) => typeof str === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
 
   for (const sale of queue) {
     try {
@@ -76,34 +87,44 @@ export async function syncPendingSales(onSaleSyncedCallback) {
         p_medio_pago: sale.paymentMethod,
         p_modalidad_precio: sale.priceMode || 'selling',
         p_items: sale.items.map(it => ({
-          id: it.id?.startsWith('local-') ? null : it.id,
+          id: isUUID(it.id) ? it.id : null,
           sku: it.sku,
           quantity: it.quantity,
           price: it.price
         })),
         p_descuento: sale.discount || 0,
+        p_cliente_id: isUUID(sale.customer?.id) ? sale.customer.id : null,
         p_offline_id: sale.id,
-        p_notas: `Cliente: ${sale.customer?.name || 'Consumidor Final'} (Sincronizado Offline)`
+        p_notas: [
+          sale.notes,
+          sale.remitoDeliveryAddress ? `Entrega: ${sale.remitoDeliveryAddress}` : null,
+          sale.remitoCarrier ? `Transporte: ${sale.remitoCarrier}` : null,
+          `Cliente: ${sale.customer?.name || 'Consumidor Final'}`,
+          `Atendido por: ${sale.userName || 'Mostrador'} (${sale.userRole || 'Cajero'})`,
+          `[Sincronizado Offline]`
+        ].filter(Boolean).join(' | ')
       };
 
       const { data, error } = await supabase.rpc('procesar_venta_mostrador', payload);
 
       if (error) {
-        console.error('[NegoStock] Error sincronizando venta:', error);
-        remaining.push(sale);
+        console.error('[NegoStock] Error sincronizando venta en Supabase:', error);
+        syncState.syncError = error.message;
       } else {
-        console.log(`[NegoStock] Venta sincronizada exitosamente:`, data);
+        console.log(`[NegoStock] Venta ${sale.id} sincronizada exitosamente:`, data);
+        // Eliminar del almacén seguro una vez confirmada
+        await secureRemove('sales_queue', sale.id);
         if (onSaleSyncedCallback) {
           onSaleSyncedCallback(sale, data);
         }
       }
     } catch (err) {
       console.error('[NegoStock] Excepción en sincronización:', err);
-      remaining.push(sale);
+      syncState.syncError = err.message;
     }
   }
 
-  saveQueue(remaining);
+  await refreshPendingCount();
   syncState.isSyncing = false;
   syncState.lastSyncTime = new Date().toISOString();
 }
