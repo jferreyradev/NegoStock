@@ -234,6 +234,35 @@ El sistema dispone de cuentas preparadas para evaluar todos los niveles de privi
 
 ---
 
+#### 🛒 CASO 13: Armador Avanzado de Presupuestos, Cotizaciones y Pedidos (`/armar-presupuesto`)
+* **Objetivo:** Validar la vista completa de cotizaciones con ítems personalizados libres, descuentos por renglón, ajuste de precio unitario en vivo y sincronización con el mostrador.
+* **Pasos de Prueba:**
+  1. Desde el Mostrador (`/`), hacer clic en el botón superior **`Armador`** o navegar a **`Armador de Presupuesto`** desde el menú lateral (`/armar-presupuesto`).
+  2. Verificar que los artículos agregados en el mostrador aparezcan reflejados inmediatamente en la tabla.
+  3. Probar agregar un artículo libre / concepto no catalogado:
+     - Hacer clic en **`+ Ítem Personalizado / Varios`**.
+     - Cargar nombre: *"Flete a obra y descarga en planta baja"*, precio `$ 15.000`, cantidad `1`, unidad `viaje`.
+     - Confirmar: verificar que se añade a la tabla con SKU correlativo `VAR-XX` y badge `LIBRE`.
+  4. Probar descuentos y precios editables por línea:
+     - En el campo **`P. Unit. Cotizado`**, modificar manualmente el precio de un artículo.
+     - En la columna **`% Bonif.`**, ingresar un `10`% de descuento.
+     - Verificar que el subtotal del renglón y el resumen lateral calculen el descuento exacto.
+  5. Probar selección de cliente y validez de la oferta:
+     - Seleccionar un cliente de cuenta o cargar datos rápidos.
+     - Seleccionar validez: `30 días`.
+  6. Presionar **`Guardar Presupuesto [F6]`**:
+     - Se emite el presupuesto `PRES-XXX` sin descontar existencias.
+     - Descargar el PDF y verificar que incluye los conceptos libres, bonificaciones y validez.
+  7. Probar **`Pasar a Venta y Cobrar [F2]`**:
+     - Conmuta a modo `Ticket X` y abre el diálogo de cobro en efectivo / tarjeta / transferencia.
+     - Al confirmar el cobro, descuenta el stock de los productos de catálogo y liquida la venta.
+* **Resultado Esperado:**
+  - El presupuesto se confecciona de forma integral y detallada.
+  - Los ítems libres se presupuestan y cobran sin trabar el inventario.
+  - El pase de Presupuesto a Venta efectiva es inmediato y sin pérdidas de datos.
+
+---
+
 ### 3. Checklist de Aprobación para Publicación (Go-Live)
 
 | Ítem | Criterio de Aceptación | Estado |
@@ -252,3 +281,5 @@ El sistema dispone de cuentas preparadas para evaluar todos los niveles de privi
 | 12 | El informe y resumen de ventas (día, horas pico y mes) es exclusivo de Admin y Superusuario. | [ ] |
 | 13 | Los comprobantes PDF vectoriales garantizan cero superposición de textos en descripciones y totales. | [ ] |
 | 14 | Las tablas del sistema son compactas y mantienen visible la columna de acciones flotante (sticky). | [ ] |
+| 15 | El Armador de Presupuestos (`/armar-presupuesto`) gestiona ítems libres, bonificaciones y pase a venta. | [ ] |
+

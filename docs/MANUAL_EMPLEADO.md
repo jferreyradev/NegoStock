@@ -93,6 +93,17 @@ Cuando el cliente regresa al local a concretar la compra o solicitar modificacio
 5. **Si el cliente quiere agregar o quitar artículos (Actualizar Presupuesto):**  
    Modificá las cantidades en el changuito y hacé clic en **`Actualizar Presupuesto (PRES-001)`**. Los cambios se guardarán en la cotización existente sin duplicarla ni tocar el inventario.
 
+#### 5.4. Armador Avanzado de Presupuestos y Pedidos (`/armar-presupuesto`)
+Para cotizaciones complejas, licitaciones o pedidos detallados con conceptos libres:
+1. Ingresá desde el menú lateral a **`Armador de Presupuesto`** o hacé clic en el botón **`Armador`** de la cabecera del carrito.
+2. Esta vista te permite:
+   * **Agregar Ítems Libres / Personalizados:** Fletes, cortes a medida, mano de obra o servicios no cargados en el inventario fijo (`+ Ítem Personalizado`).
+   * **Editar Precios Unitarios en Vivo:** Ajustar el precio unitario pactado para cada renglón.
+   * **Bonificaciones / Descuentos por Renglón:** Asignar un % de bonificación específico para cada ítem (ej. 10% en tornillería).
+   * **Descuento Global del Pedido:** Aplicar 5%, 10%, 15% o un % personalizado sobre el total.
+   * **Definir Validez Formal:** Establecer 7, 15, 30, 60 días o sin caducidad.
+   * **Pasar a Venta Directa [F2]:** En 1 solo clic conmuta a Ticket X y abre el modal de cobro sin perder los artículos cargados.
+
 ---
 
 ### 6. Emisión de Remitos de Entrega

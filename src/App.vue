@@ -142,6 +142,23 @@
         <span class="d-none d-md-inline">{{ syncState.isOnline ? 'Conectado' : 'Sin Red' }}</span>
       </v-chip>
 
+      <!-- Carrito / Armador de Presupuestos -->
+      <v-btn
+        icon
+        size="small"
+        to="/armar-presupuesto"
+        class="text-white"
+        title="Ver Carrito y Armador de Presupuestos"
+      >
+        <v-badge
+          :content="cartStore.itemCount"
+          :model-value="cartStore.itemCount > 0"
+          color="amber-accent-4"
+        >
+          <v-icon icon="mdi-cart" size="small" />
+        </v-badge>
+      </v-btn>
+
       <!-- Alerta de Stock Bajo -->
       <v-btn
         icon
@@ -203,6 +220,20 @@
           :subtitle="moduleStore.modules.preventas ? 'Cobro y Preventa [F6]' : 'Cobro rápido mostrador'"
           color="primary"
         />
+
+        <v-list-item
+          to="/armar-presupuesto"
+          prepend-icon="mdi-cart-outline"
+          title="Armador de Presupuesto"
+          subtitle="Cotizaciones, descuentos y pedidos"
+          color="amber-darken-3"
+        >
+          <template #append v-if="cartStore.itemCount > 0">
+            <v-chip size="x-small" color="amber-darken-3" variant="flat" class="font-weight-bold">
+              {{ cartStore.itemCount }}
+            </v-chip>
+          </template>
+        </v-list-item>
 
         <v-list-item
           to="/inventario"
@@ -755,6 +786,7 @@
 import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useProductStore } from '@/stores/productStore';
+import { useCartStore } from '@/stores/cartStore';
 import { useAuthStore } from '@/stores/authStore';
 import { useSyncModeStore } from '@/stores/syncModeStore';
 import { useBusinessStore } from '@/stores/businessStore';
@@ -773,6 +805,7 @@ const moduleDialog = ref(false);
 const syncResult = ref(null);
 
 const productStore = useProductStore();
+const cartStore = useCartStore();
 const authStore = useAuthStore();
 const syncModeStore = useSyncModeStore();
 const businessStore = useBusinessStore();

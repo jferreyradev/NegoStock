@@ -34,22 +34,52 @@ export const useCartStore = defineStore('cart', {
   }),
 
   getters: {
-    subtotal: (state) => {
+    // Subtotal bruto a precio de lista (sin considerar descuentos por línea)
+    grossSubtotal: (state) => {
       return state.items.reduce((sum, item) => {
-        const price = state.priceMode === 'wholesale' && item.wholesalePrice > 0 
-          ? item.wholesalePrice 
-          : item.sellingPrice;
+        const price = item.customUnitPrice !== undefined && item.customUnitPrice !== null
+          ? Number(item.customUnitPrice)
+          : (state.priceMode === 'wholesale' && item.wholesalePrice > 0 ? item.wholesalePrice : item.sellingPrice);
         return sum + (price * item.quantity);
       }, 0);
     },
 
+    // Subtotal neto considerando descuentos aplicados a nivel de cada ítem
+    subtotal: (state) => {
+      return state.items.reduce((sum, item) => {
+        const price = item.customUnitPrice !== undefined && item.customUnitPrice !== null
+          ? Number(item.customUnitPrice)
+          : (state.priceMode === 'wholesale' && item.wholesalePrice > 0 ? item.wholesalePrice : item.sellingPrice);
+        const lineDiscount = Number(item.discountPercent || 0);
+        const effectivePrice = Math.max(0, price * (1 - lineDiscount / 100));
+        return sum + (effectivePrice * item.quantity);
+      }, 0);
+    },
+
+    // Total de bonificaciones/descuentos otorgados en las líneas de artículos
+    lineDiscountsTotal: (state) => {
+      return Math.max(0, state.grossSubtotal - state.subtotal);
+    },
+
+    // Descuento global sobre el total del pedido (%)
     discountAmount: (state) => {
       if (!state.discountPercent) return 0;
       return (state.subtotal * state.discountPercent) / 100;
     },
 
+    // Importe total definitivo a pagar o presupuestar
     total: (state) => {
       return Math.max(0, state.subtotal - state.discountAmount);
+    },
+
+    // IVA 21% estimativo referencial
+    estimatedIva: (state) => {
+      return state.total * 0.21;
+    },
+
+    // Neto gravado sin IVA (estimativo)
+    netWithoutIva: (state) => {
+      return state.total / 1.21;
     },
 
     itemCount: (state) => {
@@ -76,7 +106,8 @@ export const useCartStore = defineStore('cart', {
         docType: cust.tipo_documento || cust.docType || 'DNI',
         docNumber: cust.numero_documento || cust.docNumber || '',
         taxCondition: cust.condicion_iva || cust.taxCondition || 'CONSUMIDOR_FINAL',
-        phone: cust.telefono || cust.phone || ''
+        phone: cust.telefono || cust.phone || '',
+        address: cust.direccion || cust.address || ''
       };
     },
 
@@ -84,23 +115,53 @@ export const useCartStore = defineStore('cart', {
       this.priceMode = this.priceMode === 'selling' ? 'wholesale' : 'selling';
     },
 
-    addItem(product, quantity = 1) {
-      const existing = this.items.find(i => i.id === product.id || i.sku === product.sku);
+    addItem(product, quantity = 1, options = {}) {
+      const existing = this.items.find(i => i.id === product.id || (product.sku && i.sku === product.sku));
       if (existing) {
         existing.quantity += Number(quantity);
+        if (options.discountPercent !== undefined) existing.discountPercent = Number(options.discountPercent);
+        if (options.customUnitPrice !== undefined) existing.customUnitPrice = Number(options.customUnitPrice);
+        if (options.notes !== undefined) existing.notes = options.notes;
       } else {
         this.items.push({
-          id: product.id,
-          sku: product.sku,
+          id: product.id || 'prod-' + Date.now(),
+          sku: product.sku || 'VAR',
           name: product.name,
           unit: product.unit || 'u',
-          costPrice: product.costPrice,
-          sellingPrice: product.sellingPrice,
-          wholesalePrice: product.wholesalePrice,
+          costPrice: product.costPrice || 0,
+          sellingPrice: product.sellingPrice || 0,
+          wholesalePrice: product.wholesalePrice || 0,
+          customUnitPrice: options.customUnitPrice !== undefined ? Number(options.customUnitPrice) : null,
+          discountPercent: options.discountPercent ? Number(options.discountPercent) : 0,
+          notes: options.notes || '',
           quantity: Number(quantity),
-          stock: product.stock
+          stock: product.stock !== undefined ? product.stock : 999,
+          isCustom: product.isCustom || false
         });
       }
+    },
+
+    /**
+     * Permite agregar un ítem vario / libre al presupuesto (flete, mano de obra, corte, etc.)
+     */
+    addCustomItem({ name, price, quantity = 1, costPrice = 0, unit = 'u', notes = '', discountPercent = 0 }) {
+      const customId = 'custom-' + Date.now();
+      const customSku = `VAR-${String(this.items.length + 1).padStart(2, '0')}`;
+      this.items.push({
+        id: customId,
+        sku: customSku,
+        name: name || 'Artículo / Servicio Personalizado',
+        unit: unit || 'u',
+        costPrice: Number(costPrice) || 0,
+        sellingPrice: Number(price) || 0,
+        wholesalePrice: Number(price) || 0,
+        customUnitPrice: Number(price) || 0,
+        discountPercent: Number(discountPercent) || 0,
+        notes: notes || '',
+        quantity: Number(quantity) || 1,
+        stock: 999,
+        isCustom: true
+      });
     },
 
     updateQuantity(index, quantity) {
@@ -109,6 +170,21 @@ export const useCartStore = defineStore('cart', {
       } else {
         this.items[index].quantity = Number(quantity);
       }
+    },
+
+    updateItemDiscount(index, discountPercent) {
+      if (!this.items[index]) return;
+      this.items[index].discountPercent = Math.min(100, Math.max(0, Number(discountPercent) || 0));
+    },
+
+    updateItemPrice(index, price) {
+      if (!this.items[index]) return;
+      this.items[index].customUnitPrice = Number(price) >= 0 ? Number(price) : null;
+    },
+
+    updateItemNotes(index, notes) {
+      if (!this.items[index]) return;
+      this.items[index].notes = String(notes || '').trim();
     },
 
     removeItem(index) {
@@ -416,12 +492,19 @@ export const useCartStore = defineStore('cart', {
           p_tipo_comprobante: this.voucherType,
           p_medio_pago: this.paymentMethod,
           p_modalidad_precio: this.priceMode,
-          p_items: this.items.map(item => ({
-            id: isUUID(item.id) ? item.id : null,
-            sku: item.sku,
-            quantity: item.quantity,
-            price: this.priceMode === 'wholesale' && item.wholesalePrice > 0 ? item.wholesalePrice : item.sellingPrice
-          })),
+          p_items: this.items.map(item => {
+            const basePrice = item.customUnitPrice !== undefined && item.customUnitPrice !== null
+              ? Number(item.customUnitPrice)
+              : (this.priceMode === 'wholesale' && item.wholesalePrice > 0 ? item.wholesalePrice : item.sellingPrice);
+            const lineDisc = Number(item.discountPercent || 0);
+            const effectivePrice = lineDisc > 0 ? Math.max(0, basePrice * (1 - lineDisc / 100)) : basePrice;
+            return {
+              id: isUUID(item.id) ? item.id : null,
+              sku: item.sku,
+              quantity: item.quantity,
+              price: effectivePrice
+            };
+          }),
           p_descuento: this.discountAmount,
           p_cliente_id: isUUID(this.customer?.id) ? this.customer.id : null,
           p_offline_id: offlineSaleId,

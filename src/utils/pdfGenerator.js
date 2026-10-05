@@ -304,7 +304,22 @@ export function generateVoucherPdf(voucher, business = {}) {
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(8.5);
 
-      const itemName = item.name || item.descripcion || 'Artículo';
+      const isWholesale = voucher.priceMode === 'wholesale' && item.wholesalePrice > 0;
+      const basePrice = item.customUnitPrice !== undefined && item.customUnitPrice !== null
+        ? Number(item.customUnitPrice)
+        : (isWholesale ? item.wholesalePrice : (item.sellingPrice || item.price || 0));
+      const lineDisc = Number(item.discountPercent || 0);
+      const unitPrice = lineDisc > 0 ? Math.max(0, basePrice * (1 - lineDisc / 100)) : basePrice;
+      const subtotal = (item.quantity || 1) * unitPrice;
+
+      let itemName = item.name || item.descripcion || 'Artículo';
+      if (lineDisc > 0) {
+        itemName += ` [Bonif. ${lineDisc}%]`;
+      }
+      if (item.notes) {
+        itemName += ` (${item.notes})`;
+      }
+
       const descLines = doc.splitTextToSize(itemName, maxDescW);
       const rowH = Math.max(6.5, (descLines.length * 4.2) + 2.5);
 
@@ -316,10 +331,6 @@ export function generateVoucherPdf(voucher, business = {}) {
         currentY = 14;
         drawTableHeader();
       }
-
-      const isWholesale = voucher.priceMode === 'wholesale' && item.wholesalePrice > 0;
-      const unitPrice = isWholesale ? item.wholesalePrice : (item.sellingPrice || item.price || 0);
-      const subtotal = (item.quantity || 1) * unitPrice;
 
       // Sombreado alternado
       if (idx % 2 === 1) {

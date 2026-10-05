@@ -7,6 +7,7 @@ import AnomaliesView from '@/views/AnomaliesView.vue';
 import UsersView from '@/views/UsersView.vue';
 import LoginView from '@/views/LoginView.vue';
 import SalesReportsView from '@/views/SalesReportsView.vue';
+import QuoteBuilderView from '@/views/QuoteBuilderView.vue';
 import { useAuthStore } from '@/stores/authStore';
 
 const routes = [
@@ -21,6 +22,13 @@ const routes = [
     name: 'pos',
     component: PosView,
     meta: { title: 'Punto de Venta (Mostrador)' }
+  },
+  {
+    path: '/armar-presupuesto',
+    name: 'quote-builder',
+    alias: ['/carrito', '/cotizador'],
+    component: QuoteBuilderView,
+    meta: { title: 'Armador de Presupuesto y Pedidos - NegoStock' }
   },
   {
     path: '/inventario',

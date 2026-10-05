@@ -295,6 +295,19 @@ function generateTesterPdf() {
         '4. Desplazar la tabla horizontalmente hacia la izquierda.'
       ],
       result: 'La columna "Acciones" permanece fija (sticky) al margen derecho con fondo sólido y sombra, permitiendo operar cada fila sin desplazarse.'
+    },
+    {
+      id: 'CASO 13',
+      title: 'Armador Avanzado de Presupuestos y Pedidos (/armar-presupuesto)',
+      obj: 'Verificar la vista completa de cotizaciones con ítems personalizados libres, descuentos por renglón y pase a venta.',
+      steps: [
+        '1. Desde Mostrador hacer clic en "Armador" o ingresar a /armar-presupuesto desde el menú lateral.',
+        '2. Agregar un ítem libre con "+ Ítem Personalizado" (ej. Flete, Mano de Obra, Corte a medida).',
+        '3. Ajustar el precio unitario pactado en la tabla y aplicar un 10% de bonificación de línea.',
+        '4. Definir validez a 30 días, guardar como presupuesto [F6] y descargar PDF vectorial.',
+        '5. Probar "Pasar a Venta y Cobrar [F2]": conmuta a Ticket X y liquida la venta con descuento de stock.'
+      ],
+      result: 'El armador permite cotizaciones detalladas y conceptos no catalogados sin trabar el stock. La conversión de presupuesto a venta es fluida y sincronizada.'
     }
   ];
 
@@ -386,7 +399,8 @@ function generateTesterPdf() {
     'El Superusuario es el único con acceso a Backup & Restore y habilitación de módulos del SaaS.',
     'El informe y resumen de ventas (día, horas pico y mes) es exclusivo de Admin/Dueño y Superusuario.',
     'Los comprobantes PDF vectoriales garantizan cero superposición de textos en descripciones y totales.',
-    'Las tablas del sistema son compactas y mantienen visible la columna de acciones flotante (sticky).'
+    'Las tablas del sistema son compactas y mantienen visible la columna de acciones flotante (sticky).',
+    'El Armador de Presupuestos (/armar-presupuesto) gestiona ítems libres, bonificaciones y pase a venta.'
   ];
 
   doc.setFillColor(...primary);

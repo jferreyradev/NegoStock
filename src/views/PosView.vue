@@ -184,9 +184,22 @@
                   {{ cartStore.voucherType === 'PRESUPUESTO' ? 'Cotizador / Presupuesto' : (cartStore.voucherType === 'REMITO' ? 'Remito de Entrega' : 'Venta Mostrador') }}
                 </span>
               </div>
-              <v-chip size="small" color="white" variant="flat" :class="cartStore.voucherType === 'PRESUPUESTO' ? 'text-amber-darken-4 font-weight-black' : (cartStore.voucherType === 'REMITO' ? 'text-orange-darken-4 font-weight-black' : 'text-primary font-weight-black')">
-                {{ cartStore.voucherType.replace('_', ' ') }}
-              </v-chip>
+              <div class="d-flex align-center ga-1">
+                <v-btn
+                  size="x-small"
+                  variant="tonal"
+                  color="white"
+                  to="/armar-presupuesto"
+                  class="font-weight-bold text-none"
+                  title="Abrir en pantalla completa / Armador de cotizaciones avanzadas"
+                >
+                  <v-icon icon="mdi-arrow-expand-all" size="x-small" class="mr-1" />
+                  Armador
+                </v-btn>
+                <v-chip size="small" color="white" variant="flat" :class="cartStore.voucherType === 'PRESUPUESTO' ? 'text-amber-darken-4 font-weight-black' : (cartStore.voucherType === 'REMITO' ? 'text-orange-darken-4 font-weight-black' : 'text-primary font-weight-black')">
+                  {{ cartStore.voucherType.replace('_', ' ') }}
+                </v-chip>
+              </div>
             </div>
           </v-card-item>
 
