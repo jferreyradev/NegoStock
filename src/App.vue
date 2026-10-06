@@ -899,4 +899,14 @@ body {
   0%, 100% { opacity: 1; }
   50% { opacity: .6; }
 }
+
+/* Normalización de inputs numéricos: elimina spinners nativos que deforman el diseño */
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button {
+  -webkit-appearance: none !important;
+  margin: 0 !important;
+}
+input[type=number] {
+  -moz-appearance: textfield !important;
+}
 </style>

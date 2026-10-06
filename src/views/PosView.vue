@@ -605,18 +605,18 @@
                 >
                   Quitar
                 </v-btn>
-                <div style="width: 72px;">
-                  <v-text-field
+                <div class="pos-discount-box d-flex align-center bg-white rounded border px-2 py-0.5">
+                  <input
                     v-model.number="cartStore.discountPercent"
                     type="number"
                     min="0"
                     max="100"
-                    density="compact"
-                    variant="outlined"
-                    suffix="%"
-                    hide-details
-                    class="bg-white"
+                    placeholder="0"
+                    class="pos-discount-input font-weight-bold font-mono text-right"
+                    title="Descuento global (%)"
+                    @focus="$event.target.select()"
                   />
+                  <span class="text-caption font-weight-bold text-grey-darken-1 ml-1">%</span>
                 </div>
               </div>
             </div>
@@ -2312,7 +2312,7 @@ function formatTime(isoStr) {
   padding: 0 !important;
 }
 .qty-input-modern {
-  width: 44px;
+  width: 48px;
   height: 24px;
   border: none;
   outline: none;
@@ -2326,6 +2326,31 @@ function formatTime(isoStr) {
 }
 .qty-input-modern::-webkit-outer-spin-button,
 .qty-input-modern::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.pos-discount-box {
+  width: 76px;
+  height: 28px;
+  border: 1px solid #cbd5e1;
+  transition: all 0.15s ease-in-out;
+}
+.pos-discount-box:focus-within {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+}
+.pos-discount-input {
+  width: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 13px;
+  color: #1e293b;
+  text-align: right;
+  -moz-appearance: textfield;
+}
+.pos-discount-input::-webkit-outer-spin-button,
+.pos-discount-input::-webkit-inner-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }

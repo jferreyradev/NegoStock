@@ -223,7 +223,7 @@
                 <div class="text-caption font-weight-bold text-grey-darken-2 mb-1">LISTA [F8]</div>
                 <v-btn
                   block
-                  size="small"
+                  height="40"
                   :color="cartStore.priceMode === 'wholesale' ? 'secondary' : 'primary'"
                   variant="tonal"
                   class="font-weight-black text-none"
@@ -276,8 +276,7 @@
                   :items="productStore.products"
                   item-title="name"
                   return-object
-                  label="Buscar producto por SKU, Código de barras o Nombre..."
-                  placeholder="Escribí para buscar en inventario..."
+                  placeholder="Buscar producto por SKU, Código de barras o Nombre..."
                   density="compact"
                   variant="outlined"
                   hide-details
@@ -324,10 +323,12 @@
                   type="number"
                   min="0.01"
                   step="1"
-                  label="Cantidad"
+                  prefix="Cant:"
+                  placeholder="1"
                   density="compact"
                   variant="outlined"
                   hide-details
+                  class="font-mono font-weight-bold"
                   @keydown.enter="addProductToCart"
                 />
               </v-col>
@@ -337,7 +338,7 @@
                 <v-btn
                   color="primary"
                   variant="flat"
-                  size="small"
+                  height="40"
                   class="font-weight-bold flex-grow-1"
                   :disabled="!selectedProductToAdd"
                   @click="addProductToCart"
@@ -349,7 +350,8 @@
                 <v-btn
                   color="secondary"
                   variant="tonal"
-                  size="small"
+                  height="40"
+                  width="44"
                   icon="mdi-playlist-plus"
                   title="Agregar concepto libre / servicio no catalogado"
                   @click="openCustomItemDialog"
@@ -434,12 +436,12 @@
                   <th class="text-center font-weight-black" style="width: 45px;">#</th>
                   <th class="font-weight-black" style="width: 90px;">SKU</th>
                   <th class="font-weight-black">Descripción / Detalle</th>
-                  <th class="text-center font-weight-black" style="width: 90px;">Stock</th>
-                  <th class="text-right font-weight-black" style="width: 110px;">P. Base</th>
-                  <th class="text-right font-weight-black" style="width: 125px;">P. Unit. Cotizado</th>
-                  <th class="text-center font-weight-black" style="width: 120px;">Cantidad</th>
-                  <th class="text-center font-weight-black" style="width: 90px;">% Bonif.</th>
-                  <th class="text-right font-weight-black" style="width: 120px;">Subtotal</th>
+                  <th class="text-center font-weight-black" style="width: 85px;">Stock</th>
+                  <th class="text-right font-weight-black" style="width: 105px;">P. Base</th>
+                  <th class="text-right font-weight-black" style="width: 135px;">P. Unit. Cotizado</th>
+                  <th class="text-center font-weight-black" style="width: 130px;">Cantidad</th>
+                  <th class="text-center font-weight-black" style="width: 95px;">% Bonif.</th>
+                  <th class="text-right font-weight-black" style="width: 115px;">Subtotal</th>
                   <th class="text-center font-weight-black" style="width: 45px;"></th>
                 </tr>
               </thead>
@@ -550,43 +552,50 @@
 
                   <!-- P. Unitario Cotizado (Editable) -->
                   <td class="text-right">
-                    <v-text-field
-                      :model-value="getEffectiveItemBasePrice(item)"
-                      type="number"
-                      min="0"
-                      step="1"
-                      prefix="$"
-                      density="compact"
-                      variant="plain"
-                      hide-details
-                      class="font-mono font-weight-bold price-input"
-                      @update:model-value="val => onPriceChange(idx, val)"
-                    />
+                    <div class="table-input-cell d-flex align-center justify-end px-2 py-1 rounded border bg-white">
+                      <span class="text-caption text-grey-darken-1 font-weight-bold mr-1">$</span>
+                      <input
+                        type="number"
+                        min="0"
+                        step="any"
+                        :value="getEffectiveItemBasePrice(item)"
+                        class="table-cell-input font-mono font-weight-bold text-right"
+                        title="Clic para editar precio unitario"
+                        @focus="$event.target.select()"
+                        @change="e => onPriceChange(idx, e.target.value)"
+                      />
+                    </div>
                   </td>
 
                   <!-- Cantidad con Steppers -->
-                  <td>
-                    <div class="d-flex align-center justify-center ga-1">
+                  <td class="text-center">
+                    <div class="table-qty-stepper d-inline-flex align-center rounded border bg-white">
                       <v-btn
-                        icon="mdi-minus"
-                        size="20"
-                        variant="tonal"
-                        color="grey-darken-2"
+                        :icon="item.quantity <= 1 ? 'mdi-trash-can-outline' : 'mdi-minus'"
+                        size="x-small"
+                        variant="text"
+                        :color="item.quantity <= 1 ? 'error' : 'grey-darken-3'"
+                        class="table-stepper-btn"
+                        :title="item.quantity <= 1 ? 'Quitar artículo' : 'Restar 1'"
                         @click="cartStore.updateQuantity(idx, item.quantity - 1)"
                       />
                       <input
                         type="number"
                         min="0.01"
-                        step="1"
+                        step="any"
                         :value="item.quantity"
-                        class="qty-input text-center font-weight-bold font-mono"
+                        class="table-qty-input text-center font-weight-bold font-mono"
+                        title="Clic para editar cantidad"
+                        @focus="$event.target.select()"
                         @change="e => cartStore.updateQuantity(idx, parseFloat(e.target.value) || 1)"
                       />
                       <v-btn
                         icon="mdi-plus"
-                        size="20"
-                        variant="tonal"
+                        size="x-small"
+                        variant="text"
                         color="primary"
+                        class="table-stepper-btn"
+                        title="Sumar 1"
                         @click="cartStore.updateQuantity(idx, item.quantity + 1)"
                       />
                     </div>
@@ -594,17 +603,21 @@
 
                   <!-- % Bonif / Descuento de Renglón -->
                   <td class="text-center">
-                    <input
-                      type="number"
-                      min="0"
-                      max="100"
-                      step="1"
-                      :value="item.discountPercent || 0"
-                      placeholder="0"
-                      class="discount-input text-center font-mono"
-                      @change="e => cartStore.updateItemDiscount(idx, parseFloat(e.target.value) || 0)"
-                    />
-                    <span class="text-2xs text-grey ml-1">%</span>
+                    <div class="table-input-cell d-inline-flex align-center justify-center px-2 py-1 rounded border bg-white" style="width: 72px;">
+                      <input
+                        type="number"
+                        min="0"
+                        max="100"
+                        step="1"
+                        :value="item.discountPercent || 0"
+                        placeholder="0"
+                        class="table-cell-input text-center font-mono font-weight-bold"
+                        title="Bonificación de línea (%)"
+                        @focus="$event.target.select()"
+                        @change="e => cartStore.updateItemDiscount(idx, parseFloat(e.target.value) || 0)"
+                      />
+                      <span class="text-caption font-weight-bold text-grey-darken-1 ml-0.5">%</span>
+                    </div>
                   </td>
 
                   <!-- Subtotal de Línea -->
@@ -673,42 +686,47 @@
               </div>
               <v-row dense align="center">
                 <v-col cols="6">
-                  <v-text-field
-                    v-model.number="cartStore.discountPercent"
-                    type="number"
-                    min="0"
-                    max="100"
-                    suffix="%"
-                    density="compact"
-                    variant="outlined"
-                    hide-details
-                    placeholder="0"
-                  />
+                  <div class="summary-discount-box d-flex align-center bg-white rounded border px-2">
+                    <input
+                      v-model.number="cartStore.discountPercent"
+                      type="number"
+                      min="0"
+                      max="100"
+                      placeholder="0"
+                      class="summary-discount-input font-weight-bold font-mono text-right flex-grow-1"
+                      title="Descuento global (%)"
+                      @focus="$event.target.select()"
+                    />
+                    <span class="text-caption font-weight-bold text-grey-darken-1 ml-1">%</span>
+                  </div>
                 </v-col>
                 <v-col cols="6" class="d-flex ga-1">
                   <v-btn
-                    size="x-small"
+                    size="small"
+                    height="32"
                     variant="tonal"
                     :color="cartStore.discountPercent === 5 ? 'primary' : 'grey'"
-                    class="font-weight-bold px-1"
+                    class="font-weight-bold px-1 flex-grow-1"
                     @click="cartStore.discountPercent = cartStore.discountPercent === 5 ? 0 : 5"
                   >
                     5%
                   </v-btn>
                   <v-btn
-                    size="x-small"
+                    size="small"
+                    height="32"
                     variant="tonal"
                     :color="cartStore.discountPercent === 10 ? 'primary' : 'grey'"
-                    class="font-weight-bold px-1"
+                    class="font-weight-bold px-1 flex-grow-1"
                     @click="cartStore.discountPercent = cartStore.discountPercent === 10 ? 0 : 10"
                   >
                     10%
                   </v-btn>
                   <v-btn
-                    size="x-small"
+                    size="small"
+                    height="32"
                     variant="tonal"
                     :color="cartStore.discountPercent === 15 ? 'primary' : 'grey'"
-                    class="font-weight-bold px-1"
+                    class="font-weight-bold px-1 flex-grow-1"
                     @click="cartStore.discountPercent = cartStore.discountPercent === 15 ? 0 : 15"
                   >
                     15%
@@ -1985,38 +2003,89 @@ onUnmounted(() => {
   border-bottom: 1px solid #f1f5f9;
 }
 
-.qty-input {
-  width: 44px;
-  padding: 2px 4px;
-  border: 1px solid #cbd5e1;
-  border-radius: 4px;
-  font-size: 0.85rem;
+.table-input-cell {
   background-color: #ffffff;
-}
-
-.qty-input:focus {
-  outline: 2px solid #2563eb;
-  border-color: transparent;
-}
-
-.discount-input {
-  width: 36px;
-  padding: 2px 2px;
   border: 1px solid #cbd5e1;
-  border-radius: 4px;
-  font-size: 0.8rem;
-  background-color: #ffffff;
+  border-radius: 6px;
+  height: 28px;
+  transition: all 0.15s ease-in-out;
 }
-
-.discount-input:focus {
-  outline: 2px solid #16a34a;
-  border-color: transparent;
+.table-input-cell:focus-within {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
 }
-
-.price-input :deep(input) {
-  text-align: right;
-  padding: 2px 0;
+.table-cell-input {
+  border: none;
+  outline: none;
+  background: transparent;
   font-size: 0.85rem;
+  width: 100%;
+  color: #1e293b;
+  -moz-appearance: textfield;
+}
+.table-cell-input::-webkit-outer-spin-button,
+.table-cell-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.table-qty-stepper {
+  border: 1px solid #cbd5e1;
+  background-color: #ffffff;
+  height: 28px;
+  overflow: hidden;
+  transition: all 0.15s ease-in-out;
+}
+.table-qty-stepper:focus-within {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+}
+.table-stepper-btn {
+  width: 26px !important;
+  height: 26px !important;
+  min-width: 26px !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+}
+.table-qty-input {
+  width: 48px;
+  height: 26px;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 0.85rem;
+  color: #1e293b;
+  text-align: center;
+  -moz-appearance: textfield;
+}
+.table-qty-input::-webkit-outer-spin-button,
+.table-qty-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.summary-discount-box {
+  height: 32px;
+  border: 1px solid #cbd5e1;
+  transition: all 0.15s ease-in-out;
+}
+.summary-discount-box:focus-within {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+}
+.summary-discount-input {
+  width: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 0.9rem;
+  color: #1e293b;
+  -moz-appearance: textfield;
+}
+.summary-discount-input::-webkit-outer-spin-button,
+.summary-discount-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }
 
 .kbd-badge {
