@@ -344,9 +344,11 @@ export function parseProductImportFile(file) {
               const norm = k.toLowerCase().trim();
               const normNoUnderscore = norm.replace(/_/g, ' ');
               const normWithUnderscore = norm.replace(/\s+/g, '_');
+              const normClean = norm.replace(/[\._]/g, ' ').replace(/\s+/g, ' ').trim();
               return candidates.some(c => {
                 const cNorm = c.toLowerCase().trim();
-                return norm === cNorm || normNoUnderscore === cNorm || normWithUnderscore === cNorm;
+                const cClean = cNorm.replace(/[\._]/g, ' ').replace(/\s+/g, ' ').trim();
+                return norm === cNorm || normNoUnderscore === cNorm || normWithUnderscore === cNorm || normClean === cClean;
               });
             });
             return found ? row[found] : null;
@@ -394,7 +396,8 @@ export function parseProductImportFile(file) {
             'stock_actual', 'stock actual', 'stock', 'cantidad', 'existencia', 'existencias', 'cant', 'stock_inicial', 'stock inicial', 'inventario'
           ]);
           const minStockRaw = findKey([
-            'stock_minimo', 'stock minimo', 'stock_mínimo', 'minimo', 'mínimo', 'min_stock', 'alerta_stock', 'stock min'
+            'stock_minimo', 'stock minimo', 'stock_mínimo', 'minimo', 'mínimo', 'min_stock', 'alerta_stock', 'stock min',
+            'inv. minimo', 'inv minimo', 'inv. mínimo', 'inv mínimo', 'inventario minimo', 'inventario mínimo'
           ]);
           const ivaRaw = findKey([
             'alicuota_iva', 'iva', 'alicuota', 'alícuota', 'tasa_iva', '% iva', 'iva %'

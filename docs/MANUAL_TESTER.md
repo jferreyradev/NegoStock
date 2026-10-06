@@ -310,6 +310,24 @@ El sistema dispone de cuentas preparadas para evaluar todos los niveles de privi
 
 ---
 
+#### 🧹 CASO 16: Vaciado de Tablas e Importación del Archivo Base de Ferretería
+* **Objetivo:** Comprobar el vaciado seguro de datos de prueba para arrancar desde cero y la importación íntegra de la planilla base original (171 productos).
+* **Pasos de Prueba:**
+  1. Ingresar como Administrador (`PIN 0000` o `1234`) y dirigirse a **Control de Stock** (`/inventario`).
+  2. Presionar el botón **`Vaciar Tablas`** en la barra superior.
+  3. Escribir la palabra de confirmación `VACIAR` y presionar **`Confirmar y Vaciar Tablas`**:
+     - Constatar que la tabla queda en blanco (0 productos) y las estadísticas se reinician.
+  4. Presionar el botón **`Importar Excel`**.
+  5. En el paso 2, hacer clic en el botón *"Cargar mi archivo base original (171 productos)"*:
+     - Constatar que la vista previa detecta de inmediato los 171 artículos con sus SKUs numéricos, descripciones, costos, precios de venta, stock y rubros.
+  6. Presionar **`Confirmar e Importar 171 Productos`**:
+     - El catálogo se puebla con los 171 artículos reales, sus rubros (`HERRAMIENTAS`, `BULONERIA`, `PINTURERIA`, etc.) y existencias exactas.
+* **Resultado Esperado:**
+  - El vaciado elimina los datos previos sin errores.
+  - La planilla base original de ferretería se parsea y almacena al 100% con precisión.
+
+---
+
 ### 3. Checklist de Aprobación para Publicación (Go-Live)
 
 | Ítem | Criterio de Aceptación | Estado |
@@ -331,4 +349,5 @@ El sistema dispone de cuentas preparadas para evaluar todos los niveles de privi
 | 15 | El Armador de Presupuestos (`/armar-presupuesto`) gestiona ítems libres, bonificaciones y pase a venta. | [ ] |
 | 16 | El sistema bloquea la terminal por inactividad tras el tiempo configurado y activa cooldown de 30s tras 5 intentos fallidos. | [ ] |
 | 17 | Se puede descargar la plantilla oficial de carga e importar masivamente productos con vista previa y validación. | [ ] |
+| 18 | Se pueden vaciar las tablas de forma segura y cargar el catálogo base original de 171 artículos sin errores. | [ ] |
 

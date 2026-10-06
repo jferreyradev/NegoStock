@@ -335,6 +335,20 @@ function generateTesterPdf() {
         '6. Presionar "Confirmar e Importar Productos": constatar que el inventario se actualiza y los nuevos artículos quedan disponibles para la venta.'
       ],
       result: 'El catálogo procesa la carga masiva en bloque, crea productos nuevos con su stock inicial, actualiza precios/costos de existentes y mantiene el historial y sincronización intactos.'
+    },
+    {
+      id: 'CASO 16',
+      title: 'Vaciado de Tablas e Importación del Archivo Base de Ferretería',
+      obj: 'Comprobar el vaciado seguro de datos de prueba para arrancar desde cero y la importación íntegra de la planilla base original (171 productos).',
+      steps: [
+        '1. Ingresar como Administrador (PIN 0000 o 1234) y dirigirse a Control de Stock (/inventario).',
+        '2. Presionar el botón "Vaciar Tablas" en la barra superior.',
+        '3. Escribir VACIAR y confirmar: verificar que el inventario queda en blanco (0 productos).',
+        '4. Presionar "Importar Excel" y hacer clic en "Cargar mi archivo base original (171 productos)".',
+        '5. Constatar la detección automática de los 171 artículos con sus SKUs numéricos, costos, venta y rubros.',
+        '6. Presionar "Confirmar e Importar": verificar que el catálogo se puebla con los 171 artículos reales listos para vender.'
+      ],
+      result: 'El catálogo elimina de forma segura los datos anteriores y puebla de inmediato los 171 productos reales con su stock, costos y departamentos de ferretería.'
     }
   ];
 
@@ -429,7 +443,8 @@ function generateTesterPdf() {
     'Las tablas del sistema son compactas y mantienen visible la columna de acciones flotante (sticky).',
     'El Armador de Presupuestos (/armar-presupuesto) gestiona ítems libres, bonificaciones y pase a venta.',
     'El sistema protege la terminal con timeout de inactividad configurable y bloqueo temporal de 30s tras 5 intentos fallidos.',
-    'Se puede descargar la plantilla oficial de carga e importar masivamente productos con vista previa y validación.'
+    'Se puede descargar la plantilla oficial de carga e importar masivamente productos con vista previa y validación.',
+    'Se pueden vaciar las tablas de forma segura y cargar el catálogo base original de 171 artículos sin errores.'
   ];
 
   doc.setFillColor(...primary);

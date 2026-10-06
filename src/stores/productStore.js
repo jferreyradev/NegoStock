@@ -214,12 +214,16 @@ export const useProductStore = defineStore('products', {
 
         if (!loadedFromSupabase) {
           // Cargar desde almacén seguro cifrado IndexedDB
+          const isCleared = await secureGet('app_metadata', 'catalog_is_cleared');
           const cachedProds = await secureGetAll('products_catalog');
           if (cachedProds && cachedProds.length > 0) {
             this.products = cachedProds.map(p => ({
               ...p,
               isActive: p.isActive !== false
             }));
+          } else if (isCleared) {
+            // El usuario limpió intencionalmente el catálogo para comenzar desde cero
+            this.products = [];
           } else {
             // Semilla inicial
             this.products = initialSeed.products.map((p, idx) => ({
@@ -1047,14 +1051,54 @@ export const useProductStore = defineStore('products', {
     },
 
     /**
+     * VACIAR COMPLETAMENTE EL CATÁLOGO DE PRODUCTOS (REINICIO LIMPIO)
+     */
+    async clearProductsCatalog({ clearSales = false, clearHistory = true } = {}) {
+      this.loading = true;
+      try {
+        this.products = [];
+        this.categories = ['TODOS'];
+        this.brands = ['TODAS'];
+
+        // Limpiar almacén seguro IndexedDB cifrado
+        await secureClear('products_catalog');
+        await secureSet('app_metadata', 'catalog_is_cleared', true);
+
+        if (clearSales) {
+          await secureClear('sales_queue');
+        }
+
+        // Si Supabase está conectado, eliminar de la tabla remota
+        if (isSupabaseConfigured && supabase) {
+          try {
+            await supabase.from('productos').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+          } catch (supErr) {
+            console.warn('[ProductStore] Aviso eliminando productos en Supabase:', supErr);
+          }
+        }
+
+        return { success: true };
+      } catch (err) {
+        console.error('[ProductStore] Error vaciando catálogo:', err);
+        return { success: false, error: err.message };
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    /**
      * IMPORTACIÓN MASIVA DE PRODUCTOS (DESDE EXCEL / CSV)
      */
-    async importProductsBatch(items, { updateExisting = true } = {}) {
+    async importProductsBatch(items, { updateExisting = true, replaceAll = false } = {}) {
       if (!items || items.length === 0) {
         return { success: false, error: 'No se recibieron productos para importar.' };
       }
 
       this.loading = true;
+
+      if (replaceAll) {
+        await this.clearProductsCatalog({ clearSales: false, clearHistory: false });
+      }
       let createdCount = 0;
       let updatedCount = 0;
 
@@ -1170,6 +1214,9 @@ export const useProductStore = defineStore('products', {
             createdCount++;
           }
         }
+
+        // Marcar que el catálogo ya contiene datos válidos
+        await secureSet('app_metadata', 'catalog_is_cleared', false);
 
         // Actualizar categorías y marcas dinámicas
         this.refreshCategoriesAndBrands();

@@ -128,6 +128,19 @@
             Exportar
           </v-btn>
 
+          <!-- Botón Vaciar / Reiniciar Tablas (Sólo Admin o Superadmin) -->
+          <v-btn
+            v-if="authStore.isAdmin"
+            color="red-darken-2"
+            variant="tonal"
+            prepend-icon="mdi-database-remove-outline"
+            class="font-weight-bold text-none mr-2"
+            title="Vaciar las tablas para iniciar catálogo desde cero"
+            @click="openWipeDialog"
+          >
+            Vaciar Tablas
+          </v-btn>
+
           <!-- Filtro de Disponibilidad -->
           <v-select
             v-model="productStore.filterAvailability"
@@ -1067,7 +1080,7 @@
             />
 
             <!-- Opciones de importación -->
-            <div class="d-flex align-center justify-space-between flex-wrap mt-2">
+            <div class="mt-2">
               <v-checkbox
                 v-model="updateExistingProducts"
                 label="Actualizar datos de productos existentes si el Código SKU ya existe en el sistema"
@@ -1076,6 +1089,37 @@
                 hide-details
                 class="font-weight-medium text-caption"
               />
+              <v-checkbox
+                v-model="replaceCatalogOnImport"
+                label="Vaciar catálogo actual antes de importar (Reemplazo total desde cero)"
+                color="error"
+                density="compact"
+                hide-details
+                class="font-weight-bold text-caption text-error mt-1"
+              />
+              <v-alert
+                v-if="replaceCatalogOnImport"
+                type="warning"
+                variant="tonal"
+                density="compact"
+                class="text-caption mt-2"
+              >
+                <strong>Atención:</strong> Se eliminarán todos los artículos actuales del sistema antes de cargar los productos de la planilla.
+              </v-alert>
+
+              <div class="mt-3 pt-2 border-t d-flex align-center justify-space-between flex-wrap gap-2">
+                <span class="text-caption text-grey-darken-1 font-weight-medium">¿Querés probar con tu archivo base de ferretería?</span>
+                <v-btn
+                  size="small"
+                  variant="text"
+                  color="teal-darken-3"
+                  prepend-icon="mdi-file-find"
+                  class="font-weight-bold text-none"
+                  @click="loadOriginalBaseFile"
+                >
+                  Cargar mi archivo base original (171 productos)
+                </v-btn>
+              </div>
             </div>
           </v-card>
 
@@ -1198,6 +1242,62 @@
       </v-card>
     </v-dialog>
 
+    <!-- MODAL DE VACIADO / REINICIO DE TABLAS (ADMIN / SUPERADMIN) -->
+    <v-dialog v-model="wipeDialog" max-width="500">
+      <v-card class="rounded-xl overflow-hidden">
+        <v-card-title class="bg-red-darken-3 text-white d-flex align-center py-3">
+          <v-icon icon="mdi-alert-octagon" class="mr-2" />
+          <span class="font-weight-black">Vaciar Tablas y Reiniciar Catálogo</span>
+        </v-card-title>
+
+        <v-card-text class="pa-4">
+          <p class="text-body-2 mb-3">
+            Esta acción eliminará <strong>todos los productos cargados actualmente</strong> ({{ productStore.products.length }} artículos) de la base de datos y la memoria local cifrada para que puedas arrancar con un catálogo 100% limpio.
+          </p>
+
+          <v-alert type="warning" variant="tonal" density="compact" class="text-caption mb-3">
+            <strong>Precaución:</strong> Una vez vaciadas las tablas, deberás cargar tus productos mediante importación Excel o creación manual.
+          </v-alert>
+
+          <v-checkbox
+            v-model="wipeClearSalesQueue"
+            label="Limpiar también historial y movimientos de stock"
+            color="error"
+            density="compact"
+            hide-details
+            class="mb-3 text-caption font-weight-bold"
+          />
+
+          <div class="text-caption font-weight-bold mb-1 text-grey-darken-3">
+            Para confirmar, escribí la palabra <strong>VACIAR</strong> a continuación:
+          </div>
+          <v-text-field
+            v-model="wipeConfirmInput"
+            placeholder="VACIAR"
+            variant="outlined"
+            density="compact"
+            hide-details
+            class="font-weight-bold"
+          />
+        </v-card-text>
+
+        <v-card-actions class="pa-4 pt-0">
+          <v-btn variant="text" color="grey" @click="wipeDialog = false">Cancelar</v-btn>
+          <v-spacer />
+          <v-btn
+            color="error"
+            variant="flat"
+            class="px-4 font-weight-bold"
+            :disabled="wipeConfirmInput.trim().toUpperCase() !== 'VACIAR'"
+            :loading="isWiping"
+            @click="executeWipeCatalog"
+          >
+            Confirmar y Vaciar Tablas
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
     <!-- SNACKBAR DE NOTIFICACIÓN -->
     <v-snackbar v-model="snackbar.show" :color="snackbar.color" timeout="3000">
       {{ snackbar.text }}
@@ -1251,6 +1351,7 @@ const importFile = ref(null);
 const importError = ref('');
 const isImporting = ref(false);
 const updateExistingProducts = ref(true);
+const replaceCatalogOnImport = ref(false);
 const parsedProducts = ref([]);
 const importSummary = ref({
   totalRows: 0,
@@ -1259,6 +1360,68 @@ const importSummary = ref({
   updateCount: 0,
   ignoredCount: 0
 });
+
+// Estado de Vaciado / Reinicio de Tablas
+const wipeDialog = ref(false);
+const wipeConfirmInput = ref('');
+const wipeClearSalesQueue = ref(false);
+const isWiping = ref(false);
+
+function openWipeDialog() {
+  if (!authStore.isAdmin) {
+    snackbar.text = 'Acceso Denegado: Solo el Administrador o Superusuario pueden vaciar las tablas.';
+    snackbar.color = 'error';
+    snackbar.show = true;
+    return;
+  }
+  wipeConfirmInput.value = '';
+  wipeClearSalesQueue.value = false;
+  wipeDialog.value = true;
+}
+
+async function executeWipeCatalog() {
+  if (wipeConfirmInput.value.trim().toUpperCase() !== 'VACIAR') return;
+  isWiping.value = true;
+  try {
+    const res = await productStore.clearProductsCatalog({
+      clearSales: wipeClearSalesQueue.value,
+      clearHistory: true
+    });
+    if (res.success) {
+      snackbar.text = '✅ Tablas vaciadas exitosamente. El catálogo está listo para cargar productos desde cero.';
+      snackbar.color = 'success';
+      snackbar.show = true;
+      wipeDialog.value = false;
+    } else {
+      snackbar.text = 'Error al vaciar catálogo: ' + (res.error || 'Desconocido');
+      snackbar.color = 'error';
+      snackbar.show = true;
+    }
+  } catch (err) {
+    snackbar.text = 'Error inesperado: ' + err.message;
+    snackbar.color = 'error';
+    snackbar.show = true;
+  } finally {
+    isWiping.value = false;
+  }
+}
+
+async function loadOriginalBaseFile() {
+  importError.value = '';
+  try {
+    const res = await fetch('/Catalogo_Base_Ferreteria_Original.xls');
+    if (!res.ok) throw new Error('No se pudo encontrar el archivo base en el servidor.');
+    const blob = await res.blob();
+    const file = new File([blob], 'Catalogo_Base_Ferreteria_Original.xls', { type: 'application/vnd.ms-excel' });
+    importFile.value = file;
+    await handleFileSelect(file);
+    snackbar.text = '¡Archivo base original de ferretería cargado en la vista previa!';
+    snackbar.color = 'teal-darken-2';
+    snackbar.show = true;
+  } catch (err) {
+    importError.value = 'No se pudo cargar el archivo base: ' + err.message;
+  }
+}
 
 function openImportDialog() {
   if (!authStore.canEditPrices) {
@@ -1269,6 +1432,7 @@ function openImportDialog() {
   }
   importFile.value = null;
   importError.value = '';
+  replaceCatalogOnImport.value = false;
   parsedProducts.value = [];
   importSummary.value = { totalRows: 0, validCount: 0, newCount: 0, updateCount: 0, ignoredCount: 0 };
   importDialog.value = true;
@@ -1338,7 +1502,8 @@ async function executeImport() {
   isImporting.value = true;
   try {
     const res = await productStore.importProductsBatch(parsedProducts.value, {
-      updateExisting: updateExistingProducts.value
+      updateExisting: updateExistingProducts.value,
+      replaceAll: replaceCatalogOnImport.value
     });
 
     if (res.success) {

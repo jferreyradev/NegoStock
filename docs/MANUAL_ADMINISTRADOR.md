@@ -115,17 +115,22 @@ Diseñado para aplicar aumentos de listas de proveedores en segundos:
 
 ### 6. Trabajo con Planillas Excel (.xlsx / .csv)
 
-#### 6.1 Carga Inicial e Importación Masiva de Productos (Inventario)
-Para dar de alta artículos nuevos por lote o migrar un catálogo existente:
+#### 6.1 Carga Inicial, Vaciado de Tablas e Importación Masiva (Inventario)
+Para dar de alta artículos nuevos por lote, migrar un catálogo existente o comenzar desde cero:
 1. Dirigite a **Control de Stock e Inventario** (`/inventario`).
-2. Hacé clic en el botón superior **`Importar Excel`**.
-3. **Descargar Plantilla Oficial:**
-   - Presioná **`Bajar Plantilla (.xlsx)`** o **`Bajar Plantilla (.csv)`**.
-   - La plantilla incluye las columnas necesarias (`Codigo_SKU`, `Codigo_Barras`, `Descripcion`, `Rubro`, `Marca`, `Unidad`, `Precio_Costo`, `Margen_Ganancia`, `Precio_Venta`, `Precio_Mayoreo`, `Stock_Actual`, `Stock_Minimo`, `Alicuota_IVA`) con filas de ejemplo y hoja de instrucciones.
-   - *Regla clave:* La única columna obligatoria es **Descripción**. Si el SKU está vacío, el sistema le asigna uno correlativo automáticamente. Si ingresás Costo y Margen (%), el Precio de Venta se autocalcula.
-4. **Subir Archivo:** Arrastrá tu planilla completada al selector de archivos.
-5. **Vista Previa Inteligente:** El sistema detecta cuántos artículos son nuevos a crear (`+Nuevos`) y cuántos ya existen para actualizar (`~Actualizaciones`).
-6. Presioná **`Confirmar e Importar Productos`**. El sistema procesa los artículos, asienta los movimientos de stock iniciales y actualiza el catálogo en tiempo real.
+2. **Vaciar Tablas para Arrancar en Limpio (Opcional):**
+   - Si deseás eliminar los datos de prueba o demo antes de cargar tu catálogo real, presioná el botón **`Vaciar Tablas`** en la barra superior.
+   - Por seguridad, el sistema solicita confirmar escribiendo la palabra `VACIAR`. Podés tildar si deseás borrar también el historial de comprobantes.
+   - Las tablas quedan en blanco (0 productos), listas para tu archivo real.
+3. Hacé clic en el botón superior **`Importar Excel`**.
+4. **Opciones de Carga:**
+   - **Opción A (Tu archivo base de Ferretería):** Presioná el botón *"Cargar mi archivo base original (171 productos)"*. El sistema detecta y procesa automáticamente las columnas originales (`Codigo`, `Descripcion`, `Precio Costo`, `Precio Venta`, `Precio Mayoreo`, `Inventario`, `Inv. Minimo`, `Departamento`).
+   - **Opción B (Plantilla Oficial):** Presioná **`Bajar Plantilla (.xlsx)`**, completá los artículos y subí el archivo.
+   - **Opción C (Tu propio Excel/CSV):** Arrastrá cualquier planilla Excel existente. El lector inteligente empareja automáticamente nombres de columnas sin importar mayúsculas, tildes ni puntos.
+5. **Reemplazo Total vs Actualización:**
+   - Podés marcar **`Vaciar catálogo actual antes de importar (Reemplazo total desde cero)`** si querés que los productos cargados sustituyan por completo a los existentes.
+6. **Vista Previa Inteligente:** El sistema detecta cuántos artículos son nuevos a crear (`+Nuevos`) y cuántos ya existen para actualizar (`~Actualizaciones`).
+7. Presioná **`Confirmar e Importar Productos`**. El sistema procesa los artículos, asienta los movimientos de stock iniciales en el Kardex y actualiza el catálogo en tiempo real.
 
 #### 6.2 Actualización Masiva de Precios desde Excel
 Si ya tenés productos cargados y querés modificar sus listas de precios:
