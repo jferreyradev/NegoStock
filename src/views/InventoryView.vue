@@ -103,9 +103,9 @@
             Nuevo Artículo
           </v-btn>
 
-          <!-- Botón de Importar Catálogo Excel (Sólo Admin / Encargado) -->
+          <!-- Botón de Importar Catálogo Excel (Sólo Admin / Encargado y Módulo Habilitado) -->
           <v-btn
-            v-if="authStore.canEditPrices"
+            v-if="authStore.canEditPrices && moduleStore.modules.importacionExcel !== false"
             color="teal-darken-2"
             variant="tonal"
             prepend-icon="mdi-file-excel-box"
@@ -294,8 +294,9 @@
                   @click="openAdjustDialog(prod)"
                 />
 
-                <!-- Ver Historial de Precios y Kardex de Stock -->
+                <!-- Ver Historial de Precios y Kardex de Stock (Si está habilitado) -->
                 <v-btn
+                  v-if="moduleStore.modules.kardex !== false"
                   icon="mdi-history"
                   size="x-small"
                   variant="tonal"
@@ -1208,6 +1209,7 @@
 import { ref, computed, reactive } from 'vue';
 import { useProductStore } from '@/stores/productStore';
 import { useAuthStore } from '@/stores/authStore';
+import { useModuleStore } from '@/stores/moduleStore';
 import {
   downloadBlob,
   generateSqlBackupContent,
@@ -1223,6 +1225,7 @@ import {
 
 const productStore = useProductStore();
 const authStore = useAuthStore();
+const moduleStore = useModuleStore();
 
 const page = ref(1);
 const perPage = ref(20);

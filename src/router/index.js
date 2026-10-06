@@ -9,6 +9,7 @@ import LoginView from '@/views/LoginView.vue';
 import SalesReportsView from '@/views/SalesReportsView.vue';
 import QuoteBuilderView from '@/views/QuoteBuilderView.vue';
 import { useAuthStore } from '@/stores/authStore';
+import { useModuleStore } from '@/stores/moduleStore';
 
 const routes = [
   {
@@ -28,7 +29,7 @@ const routes = [
     name: 'quote-builder',
     alias: ['/carrito', '/cotizador'],
     component: QuoteBuilderView,
-    meta: { title: 'Armador de Presupuesto y Pedidos - NegoStock' }
+    meta: { title: 'Armador de Presupuesto y Pedidos - NegoStock', requiredModule: 'armadorPresupuesto' }
   },
   {
     path: '/inventario',
@@ -40,7 +41,7 @@ const routes = [
     path: '/actualizar-precios',
     name: 'mass-price-update',
     component: MassPriceUpdateView,
-    meta: { title: 'Actualizador Masivo de Precios', requiresAdmin: true }
+    meta: { title: 'Actualizador Masivo de Precios', requiresAdmin: true, requiredModule: 'aumentoMasivo' }
   },
   {
     path: '/ventas',
@@ -52,19 +53,19 @@ const routes = [
     path: '/reportes-ventas',
     name: 'sales-reports',
     component: SalesReportsView,
-    meta: { title: 'Informe y Resumen de Ventas', requiresAdmin: true }
+    meta: { title: 'Informe y Resumen de Ventas', requiresAdmin: true, requiredModule: 'reportesVentas' }
   },
   {
     path: '/auditoria',
     name: 'anomalies',
     component: AnomaliesView,
-    meta: { title: 'Auditoría de Planilla' }
+    meta: { title: 'Auditoría de Planilla', requiredModule: 'auditoriaCostos' }
   },
   {
     path: '/usuarios',
     name: 'users',
     component: UsersView,
-    meta: { title: 'Gestión de Personal y Permisos', requiresAdmin: true }
+    meta: { title: 'Gestión de Personal y Permisos', requiresAdmin: true, requiredModule: 'multiUsuario' }
   }
 ];
 
@@ -76,9 +77,14 @@ const router = createRouter({
 // Guardián de Navegación (Protección de Rutas)
 router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore();
+  const moduleStore = useModuleStore();
 
   if (!authStore.currentUser) {
     await authStore.initAuth();
+  }
+
+  if (!moduleStore.isLoaded) {
+    await moduleStore.init();
   }
 
   // 1. Si no está autenticado y la ruta no es pública, redirigir a /login
@@ -94,6 +100,12 @@ router.beforeEach(async (to, from, next) => {
   // 3. Si la ruta requiere ADMIN y el usuario no tiene rol SUPERADMIN ni ADMIN, redirigir al mostrador
   if (to.meta.requiresAdmin && !['SUPERADMIN', 'ADMIN'].includes(authStore.currentUser?.role)) {
     console.warn(`[Router] Acceso denegado a ${to.path} para rol ${authStore.currentUser?.role}`);
+    return next({ path: '/' });
+  }
+
+  // 4. Si la ruta requiere un módulo específico y está desactivado, redirigir al mostrador
+  if (to.meta.requiredModule && moduleStore.modules[to.meta.requiredModule] === false) {
+    console.warn(`[Router] Módulo desactivado '${to.meta.requiredModule}'. Redirigiendo a mostrador.`);
     return next({ path: '/' });
   }
 

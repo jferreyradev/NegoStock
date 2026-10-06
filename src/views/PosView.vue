@@ -186,6 +186,7 @@
               </div>
               <div class="d-flex align-center ga-1">
                 <v-btn
+                  v-if="moduleStore.modules.armadorPresupuesto !== false"
                   size="x-small"
                   variant="tonal"
                   color="white"
@@ -1777,20 +1778,31 @@ const quickCategories = [
   'MANGUERAS'
 ];
 
-const voucherTypes = [
-  { title: 'Presupuesto (Cotización) [Por defecto]', value: 'PRESUPUESTO' },
-  { title: 'Ticket X (Venta Mostrador)', value: 'TICKET_X' },
-  { title: 'Remito de Entrega', value: 'REMITO' }
-];
+const voucherTypes = computed(() => {
+  const list = [];
+  if (moduleStore.modules.preventas !== false) {
+    list.push({ title: 'Presupuesto (Cotización) [Por defecto]', value: 'PRESUPUESTO' });
+  }
+  list.push({ title: 'Ticket X (Venta Mostrador)', value: 'TICKET_X' });
+  if (moduleStore.modules.remitos !== false) {
+    list.push({ title: 'Remito de Entrega', value: 'REMITO' });
+  }
+  return list;
+});
 
-const paymentMethods = [
-  { title: 'Efectivo', value: 'EFECTIVO' },
-  { title: 'Transferencia (Alias/CBU)', value: 'TRANSFERENCIA' },
-  { title: 'Tarjeta Débito', value: 'DEBITO' },
-  { title: 'Tarjeta Crédito', value: 'CREDITO' },
-  { title: 'Mercado Pago / QR', value: 'MERCADOPAGO' },
-  { title: 'Cuenta Corriente', value: 'CTA_CTE' }
-];
+const paymentMethods = computed(() => {
+  const list = [
+    { title: 'Efectivo', value: 'EFECTIVO' },
+    { title: 'Transferencia (Alias/CBU)', value: 'TRANSFERENCIA' },
+    { title: 'Tarjeta Débito', value: 'DEBITO' },
+    { title: 'Tarjeta Crédito', value: 'CREDITO' },
+    { title: 'Mercado Pago / QR', value: 'MERCADOPAGO' }
+  ];
+  if (moduleStore.modules.clientes !== false) {
+    list.push({ title: 'Cuenta Corriente', value: 'CTA_CTE' });
+  }
+  return list;
+});
 
 function focusSearch() {
   nextTick(() => {

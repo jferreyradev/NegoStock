@@ -11,10 +11,17 @@ export const MODES = {
     description: 'La versión más simple y rápida para empleados. Solo Vender, Productos e Historial de Ventas. Sin distracciones.',
     modules: {
       preventas: false,
+      armadorPresupuesto: false,
+      remitos: false,
       mayorista: false,
       clientes: false,
+      reportesVentas: false,
+      importacionExcel: false,
+      kardex: true,
       aumentoMasivo: false,
       auditoriaCostos: false,
+      multiUsuario: false,
+      backupRestore: false,
       advancedHeader: false
     }
   },
@@ -24,13 +31,20 @@ export const MODES = {
     shortTitle: 'Comercial',
     icon: 'mdi-storefront-outline',
     color: 'indigo-darken-1',
-    description: 'Habilita Preventas/Presupuestos [F6]/[F7], Precios Mayoristas [F8] y Clientes con Cuenta Corriente.',
+    description: 'Habilita Preventas/Presupuestos [F6]/[F7], Armador de Pedidos, Remitos, Precios Mayoristas [F8] y Clientes con Cuenta Corriente.',
     modules: {
       preventas: true,
+      armadorPresupuesto: true,
+      remitos: true,
       mayorista: true,
       clientes: true,
+      reportesVentas: true,
+      importacionExcel: false,
+      kardex: true,
       aumentoMasivo: false,
       auditoriaCostos: false,
+      multiUsuario: true,
+      backupRestore: false,
       advancedHeader: false
     }
   },
@@ -40,13 +54,20 @@ export const MODES = {
     shortTitle: 'Completo',
     icon: 'mdi-cog-box',
     color: 'deep-purple-accent-4',
-    description: 'Todas las herramientas activas: Aumentos Masivos por Inflación, Auditoría de Proveedores y Ajustes Técnicos de Red.',
+    description: 'Todas las herramientas activas: Aumentos Masivos por Inflación, Importación Excel, Auditoría de Proveedores y Ajustes Técnicos de Red.',
     modules: {
       preventas: true,
+      armadorPresupuesto: true,
+      remitos: true,
       mayorista: true,
       clientes: true,
+      reportesVentas: true,
+      importacionExcel: true,
+      kardex: true,
       aumentoMasivo: true,
       auditoriaCostos: true,
+      multiUsuario: true,
+      backupRestore: true,
       advancedHeader: true
     }
   }
@@ -54,8 +75,8 @@ export const MODES = {
 
 export const useModuleStore = defineStore('modules', {
   state: () => ({
-    currentMode: 'SIMPLE',
-    modules: { ...MODES.SIMPLE.modules },
+    currentMode: 'COMPLETO',
+    modules: { ...MODES.COMPLETO.modules },
     isLoaded: false
   }),
 
@@ -79,11 +100,12 @@ export const useModuleStore = defineStore('modules', {
         const saved = await secureGet('app_metadata', 'active_modules_config');
         if (saved && saved.currentMode) {
           this.currentMode = saved.currentMode;
-          this.modules = { ...(MODES[saved.currentMode]?.modules || saved.modules) };
+          const baseDefaults = MODES[saved.currentMode]?.modules || MODES.COMPLETO.modules;
+          this.modules = { ...baseDefaults, ...(saved.modules || {}) };
         } else {
-          // Por defecto iniciamos en SIMPLE para máxima facilidad del personal
-          this.currentMode = 'SIMPLE';
-          this.modules = { ...MODES.SIMPLE.modules };
+          // Por defecto en NegoStock Pro iniciamos con todas las herramientas disponibles
+          this.currentMode = 'COMPLETO';
+          this.modules = { ...MODES.COMPLETO.modules };
         }
       } catch (e) {
         console.warn('[moduleStore] Error leyendo configuración de módulos:', e);
@@ -100,8 +122,11 @@ export const useModuleStore = defineStore('modules', {
     },
 
     async toggleModule(moduleName, forcedVal = null) {
-      if (typeof this.modules[moduleName] === 'undefined') return;
-      this.modules[moduleName] = forcedVal !== null ? forcedVal : !this.modules[moduleName];
+      if (typeof this.modules[moduleName] === 'undefined') {
+        this.modules[moduleName] = forcedVal !== null ? forcedVal : true;
+      } else {
+        this.modules[moduleName] = forcedVal !== null ? forcedVal : !this.modules[moduleName];
+      }
       this.currentMode = 'CUSTOM';
       await this.persist();
     },

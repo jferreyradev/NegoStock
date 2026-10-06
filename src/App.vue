@@ -144,6 +144,7 @@
 
       <!-- Carrito / Armador de Presupuestos -->
       <v-btn
+        v-if="moduleStore.modules.armadorPresupuesto !== false"
         icon
         size="small"
         to="/armar-presupuesto"
@@ -222,6 +223,7 @@
         />
 
         <v-list-item
+          v-if="moduleStore.modules.armadorPresupuesto !== false"
           to="/armar-presupuesto"
           prepend-icon="mdi-cart-outline"
           title="Armador de Presupuesto"
@@ -257,9 +259,9 @@
           color="primary"
         />
 
-        <!-- Resumen e Informes de Venta (Exclusivo Administrador/Dueño y Superusuario) -->
+        <!-- Resumen e Informes de Venta (Exclusivo Administrador/Dueño y Superusuario si está habilitado) -->
         <v-list-item
-          v-if="authStore.canViewSalesReports"
+          v-if="authStore.canViewSalesReports && moduleStore.modules.reportesVentas !== false"
           to="/reportes-ventas"
           prepend-icon="mdi-chart-areaspline"
           title="Resumen de Ventas"
@@ -275,7 +277,7 @@
 
         <!-- Solo accesible por Administrador si el módulo está habilitado -->
         <v-list-item
-          v-if="authStore.canMassUpdatePrices && moduleStore.modules.aumentoMasivo"
+          v-if="authStore.canMassUpdatePrices && moduleStore.modules.aumentoMasivo !== false"
           to="/actualizar-precios"
           prepend-icon="mdi-percent-box-outline"
           title="Aumento Masivo Precios"
@@ -285,7 +287,7 @@
 
         <!-- Solo visible si puede ver costos y el módulo está habilitado -->
         <v-list-item
-          v-if="authStore.canViewCosts && moduleStore.modules.auditoriaCostos"
+          v-if="authStore.canViewCosts && moduleStore.modules.auditoriaCostos !== false"
           to="/auditoria"
           prepend-icon="mdi-shield-alert-outline"
           title="Auditoría de Planilla"
@@ -299,19 +301,19 @@
 
         <v-divider class="my-2" v-if="authStore.canManageUsers" />
 
-        <!-- Habilitador de Módulos (Exclusivo Superusuario / Dueño del SaaS) -->
+        <!-- Habilitador de Módulos (Exclusivo Desarrollador / Dueño del SaaS) -->
         <v-list-item
           v-if="authStore.canManageModules"
           prepend-icon="mdi-shield-crown-outline"
           title="Módulos del Sistema"
-          :subtitle="'Plan SaaS: ' + moduleStore.activeModeInfo.title"
+          :subtitle="'Licencia SaaS: ' + moduleStore.activeModeInfo.title"
           color="deep-purple-accent-4"
           @click="moduleDialog = true"
         />
 
         <!-- Backup y Restauración de Base de Datos (Exclusivo Superusuario / SaaS Master) -->
         <v-list-item
-          v-if="authStore.canManageBackup"
+          v-if="authStore.canManageBackup && moduleStore.modules.backupRestore !== false"
           to="/inventario"
           prepend-icon="mdi-database-sync-outline"
           title="Backup y Restauración"
@@ -321,7 +323,7 @@
 
         <!-- Gestión de Personal y Roles -->
         <v-list-item
-          v-if="authStore.canManageUsers"
+          v-if="authStore.canManageUsers && moduleStore.modules.multiUsuario !== false"
           to="/usuarios"
           prepend-icon="mdi-account-cog-outline"
           title="Personal y Permisos"
@@ -627,13 +629,13 @@
       </v-card>
     </v-dialog>
 
-    <!-- MODAL DE CONFIGURACIÓN DE MÓDULOS SAAS (SUPERUSUARIO / DUEÑO SAAS) -->
-    <v-dialog v-model="moduleDialog" max-width="640">
+    <!-- MODAL DE CONFIGURACIÓN DE MÓDULOS SAAS (EXCLUSIVO DESARROLLADOR / SUPERUSUARIO) -->
+    <v-dialog v-model="moduleDialog" max-width="660">
       <v-card class="rounded-xl overflow-hidden">
         <v-card-title class="bg-deep-purple-darken-3 text-white d-flex align-center justify-space-between py-3">
           <div class="d-flex align-center">
             <v-icon icon="mdi-shield-crown" class="mr-2 text-amber-accent-2" />
-            <span class="font-weight-black">Control de Módulos SaaS (Superusuario)</span>
+            <span class="font-weight-black">Control de Módulos y Licencia SaaS (Desarrollador)</span>
           </div>
           <v-chip size="small" :color="moduleStore.activeModeInfo.color" variant="flat" class="font-weight-bold text-white">
             {{ moduleStore.activeModeInfo.shortTitle }}
@@ -647,7 +649,7 @@
             density="compact"
             class="mb-3 text-caption font-weight-medium"
           >
-            <strong>Exclusivo Superusuario / Dueño del SaaS:</strong> Vos decidís qué módulos están habilitados para este comercio. Podés dejar activo solo el Modo Esencial para los empleados del mostrador e ir desbloqueando funciones comerciales o de gestión avanzada según lo consideres.
+            <strong>Exclusivo Desarrollador / Licenciatario del SaaS:</strong> Solo el desarrollador tiene acceso a este panel para habilitar o deshabilitar módulos según el abono o las necesidades contratadas por el comercio. Los empleados, administradores y dueños no pueden modificar esta configuración.
           </v-alert>
 
           <v-radio-group :model-value="moduleStore.currentMode" @update:model-value="moduleStore.setMode" hide-details>
@@ -688,7 +690,7 @@
                     <strong class="text-subtitle-2 font-weight-black">Modo Comercial (Preventa & Clientes)</strong>
                   </div>
                   <div class="text-caption text-grey-darken-2 mt-1">
-                    Habilita Preventas/Presupuestos [F6]/[F7] (pedidos de mostrador para cobrar en caja), Precios Mayoristas [F8] y Clientes con Cuenta Corriente.
+                    Habilita Preventas/Presupuestos [F6]/[F7] (pedidos de mostrador para cobrar en caja), Armador de Pedidos, Remitos de Entrega, Precios Mayoristas [F8] y Clientes con Cuenta Corriente.
                   </div>
                 </div>
               </div>
@@ -709,7 +711,7 @@
                     <strong class="text-subtitle-2 font-weight-black">Modo Gestión Total (Avanzado)</strong>
                   </div>
                   <div class="text-caption text-grey-darken-2 mt-1">
-                    Todo activado: Aumentos Masivos por Inflación/Dólar, Auditoría de Proveedores y Opciones Técnicas de Sincronización.
+                    Todo activado: Aumentos Masivos por Inflación, Importación Masiva Excel, Auditoría de Proveedores y Opciones Técnicas de Sincronización.
                   </div>
                 </div>
               </div>
@@ -718,38 +720,94 @@
 
           <!-- INTERRUPTORES PERSONALIZADOS INDIVIDUALES (ACORDEÓN) -->
           <v-expansion-panels variant="accordion" class="mt-2">
-            <v-expansion-panel title="Personalizar módulos individuales" elevation="0" class="border rounded">
+            <v-expansion-panel title="Personalizar módulos individuales (A la carta)" elevation="0" class="border rounded">
               <v-expansion-panel-text class="pt-2">
+                <div class="text-caption font-weight-bold text-grey-darken-2 mb-2">VENTAS Y MOSTRADOR:</div>
                 <v-switch
                   :model-value="moduleStore.modules.preventas"
                   label="Preventas y Presupuestos [F6] / [F7]"
                   color="teal-darken-2"
                   density="compact"
                   hide-details
+                  class="mb-1"
                   @update:model-value="moduleStore.toggleModule('preventas', $event)"
                 />
                 <v-switch
-                  :model-value="moduleStore.modules.mayorista"
-                  label="Precios Mayoristas [F8]"
+                  :model-value="moduleStore.modules.armadorPresupuesto"
+                  label="Armador Avanzado de Presupuestos (/armar-presupuesto)"
                   color="teal-darken-2"
                   density="compact"
                   hide-details
-                  @update:model-value="moduleStore.toggleModule('mayorista', $event)"
+                  class="mb-1"
+                  @update:model-value="moduleStore.toggleModule('armadorPresupuesto', $event)"
                 />
                 <v-switch
-                  :model-value="moduleStore.modules.clientes"
-                  label="Cuentas Corrientes y Clientes"
+                  :model-value="moduleStore.modules.remitos"
+                  label="Remitos de Entrega y Logística (Flete y Chofer)"
                   color="teal-darken-2"
                   density="compact"
                   hide-details
+                  class="mb-1"
+                  @update:model-value="moduleStore.toggleModule('remitos', $event)"
+                />
+                <v-switch
+                  :model-value="moduleStore.modules.mayorista"
+                  label="Precios Mayoristas / Gremio [F8]"
+                  color="teal-darken-2"
+                  density="compact"
+                  hide-details
+                  class="mb-1"
+                  @update:model-value="moduleStore.toggleModule('mayorista', $event)"
+                />
+
+                <v-divider class="my-3" />
+                <div class="text-caption font-weight-bold text-grey-darken-2 mb-2">CLIENTES Y FINANZAS:</div>
+                <v-switch
+                  :model-value="moduleStore.modules.clientes"
+                  label="Cuentas Corrientes y Padrón de Clientes"
+                  color="teal-darken-2"
+                  density="compact"
+                  hide-details
+                  class="mb-1"
                   @update:model-value="moduleStore.toggleModule('clientes', $event)"
                 />
                 <v-switch
-                  :model-value="moduleStore.modules.aumentoMasivo"
-                  label="Aumentos Masivos de Precios por Rubro"
+                  :model-value="moduleStore.modules.reportesVentas"
+                  label="Resumen e Informes de Venta (Día, Horas Pico, Mes)"
                   color="teal-darken-2"
                   density="compact"
                   hide-details
+                  class="mb-1"
+                  @update:model-value="moduleStore.toggleModule('reportesVentas', $event)"
+                />
+
+                <v-divider class="my-3" />
+                <div class="text-caption font-weight-bold text-grey-darken-2 mb-2">STOCK Y GESTIÓN DE PRECIOS:</div>
+                <v-switch
+                  :model-value="moduleStore.modules.importacionExcel"
+                  label="Importación Masiva Excel / CSV y Plantilla Oficial"
+                  color="teal-darken-2"
+                  density="compact"
+                  hide-details
+                  class="mb-1"
+                  @update:model-value="moduleStore.toggleModule('importacionExcel', $event)"
+                />
+                <v-switch
+                  :model-value="moduleStore.modules.kardex"
+                  label="Kardex de Movimientos y Trazabilidad Histórica"
+                  color="teal-darken-2"
+                  density="compact"
+                  hide-details
+                  class="mb-1"
+                  @update:model-value="moduleStore.toggleModule('kardex', $event)"
+                />
+                <v-switch
+                  :model-value="moduleStore.modules.aumentoMasivo"
+                  label="Aumentos Masivos de Precios por Inflación (Rubro/Marca)"
+                  color="teal-darken-2"
+                  density="compact"
+                  hide-details
+                  class="mb-1"
                   @update:model-value="moduleStore.toggleModule('aumentoMasivo', $event)"
                 />
                 <v-switch
@@ -758,7 +816,29 @@
                   color="teal-darken-2"
                   density="compact"
                   hide-details
+                  class="mb-1"
                   @update:model-value="moduleStore.toggleModule('auditoriaCostos', $event)"
+                />
+
+                <v-divider class="my-3" />
+                <div class="text-caption font-weight-bold text-grey-darken-2 mb-2">SEGURIDAD Y ADMINISTRACIÓN:</div>
+                <v-switch
+                  :model-value="moduleStore.modules.multiUsuario"
+                  label="Gestión de Personal, Roles y PINs (/usuarios)"
+                  color="teal-darken-2"
+                  density="compact"
+                  hide-details
+                  class="mb-1"
+                  @update:model-value="moduleStore.toggleModule('multiUsuario', $event)"
+                />
+                <v-switch
+                  :model-value="moduleStore.modules.backupRestore"
+                  label="Copias de Seguridad y Restauración de Base de Datos"
+                  color="teal-darken-2"
+                  density="compact"
+                  hide-details
+                  class="mb-1"
+                  @update:model-value="moduleStore.toggleModule('backupRestore', $event)"
                 />
               </v-expansion-panel-text>
             </v-expansion-panel>
