@@ -568,6 +568,34 @@
                 density="compact"
               />
             </v-col>
+            <v-col cols="12" md="12">
+              <v-divider class="my-2" />
+              <div class="text-caption font-weight-bold text-indigo-darken-2 mb-2 d-flex align-center">
+                <v-icon icon="mdi-shield-lock-outline" size="18" class="mr-1" />
+                Seguridad de la Terminal y Sesiones
+              </div>
+            </v-col>
+            <v-col cols="12">
+              <v-select
+                v-model="businessForm.sessionTimeoutMinutes"
+                label="Cierre automático por inactividad (Timeout)"
+                :items="[
+                  { title: '5 minutos (Máxima seguridad en mostrador)', value: 5 },
+                  { title: '10 minutos (Seguridad estándar)', value: 10 },
+                  { title: '15 minutos (Predeterminado recomendado)', value: 15 },
+                  { title: '30 minutos (Comercios con poca rotación)', value: 30 },
+                  { title: '60 minutos (1 hora)', value: 60 },
+                  { title: 'Desactivado (Sin bloqueo automático)', value: 0 }
+                ]"
+                variant="outlined"
+                density="compact"
+                prepend-inner-icon="mdi-timer-outline"
+                messages="Bloquea la terminal si no se detecta movimiento de mouse o teclado para proteger la caja."
+              />
+            </v-col>
+            <v-col cols="12" md="12">
+              <v-divider class="my-2" />
+            </v-col>
             <v-col cols="12">
               <v-text-field
                 v-model="businessForm.pieTicket"
@@ -775,6 +803,61 @@
       </v-card>
     </v-dialog>
 
+    <!-- MODAL DE ADVERTENCIA DE CIERRE POR INACTIVIDAD (SESSION TIMEOUT) -->
+    <v-dialog v-model="idleWarningDialog" max-width="440" persistent>
+      <v-card class="rounded-xl overflow-hidden text-center pa-4">
+        <div class="d-flex justify-center my-2">
+          <v-avatar color="amber-lighten-4" size="64" class="elevation-2">
+            <v-icon icon="mdi-timer-sand" color="amber-darken-3" size="36" class="animate-pulse" />
+          </v-avatar>
+        </div>
+
+        <v-card-title class="text-h6 font-weight-black justify-center pb-1">
+          ¿Seguís en la terminal?
+        </v-card-title>
+
+        <v-card-text class="pt-1">
+          <p class="text-body-2 text-grey-darken-2 mb-2">
+            Por seguridad de la caja, tu sesión se cerrará automáticamente en:
+          </p>
+
+          <div class="d-flex align-center justify-center my-3">
+            <div class="text-h4 font-weight-black text-amber-darken-4 font-mono px-5 py-2 bg-amber-lighten-5 rounded-lg border border-amber-lighten-3 elevation-1">
+              {{ idleCountdownSeconds }}s
+            </div>
+          </div>
+
+          <div class="text-caption text-grey-darken-1">
+            <v-icon icon="mdi-shield-check-outline" size="14" class="mr-1 text-success" />
+            Tus borradores de venta o presupuestos quedan guardados de forma segura.
+          </div>
+        </v-card-text>
+
+        <v-divider class="my-2" />
+
+        <v-card-actions class="justify-center gap-2 pt-2">
+          <v-btn
+            color="grey-darken-1"
+            variant="text"
+            class="text-none font-weight-bold"
+            @click="handleAutoLogout"
+          >
+            Cerrar Ahora
+          </v-btn>
+          <v-btn
+            color="primary"
+            variant="flat"
+            size="large"
+            class="px-5 font-weight-bold text-none shadow-sm"
+            @click="keepSessionAlive"
+          >
+            <v-icon icon="mdi-play-circle" start />
+            Continuar Trabajando
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
     <!-- CONTENIDO PRINCIPAL -->
     <v-main class="bg-background">
       <router-view />
@@ -783,7 +866,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, watch, onMounted, onUnmounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useProductStore } from '@/stores/productStore';
 import { useCartStore } from '@/stores/cartStore';
@@ -804,6 +887,14 @@ const confirmLogoutDialog = ref(false);
 const moduleDialog = ref(false);
 const syncResult = ref(null);
 
+// Control de Cierre de Sesión por Inactividad (Session Timeout)
+const idleWarningDialog = ref(false);
+const idleCountdownSeconds = ref(30);
+let idleTimerInterval = null;
+let lastActivityTime = Date.now();
+let lastThrottleTime = 0;
+const IDLE_WARNING_BUFFER_SEC = 30;
+
 const productStore = useProductStore();
 const cartStore = useCartStore();
 const authStore = useAuthStore();
@@ -822,16 +913,23 @@ const businessForm = ref({
   email: '',
   puntoVenta: 1,
   tipoImpresora: '80mm',
+  sessionTimeoutMinutes: 15,
   pieTicket: 'Comprobante no válido como factura fiscal',
   mensajeAgradecimiento: '¡Gracias por su compra!'
 });
 
 function openBusinessDialog() {
-  businessForm.value = { ...businessStore.comercio };
+  businessForm.value = {
+    ...businessStore.comercio,
+    sessionTimeoutMinutes: authStore.sessionTimeoutMinutes ?? 15
+  };
   businessDialog.value = true;
 }
 
 async function saveBusinessConfig() {
+  if (businessForm.value.sessionTimeoutMinutes !== undefined) {
+    await authStore.setSessionTimeout(businessForm.value.sessionTimeoutMinutes);
+  }
   await businessStore.updateBusiness(businessForm.value);
   businessDialog.value = false;
 }
@@ -867,9 +965,97 @@ async function executeLogout() {
 }
 
 async function handleLogout() {
+  stopIdleTracker();
   await authStore.logout();
   router.push('/login');
 }
+
+// ========================================================
+// RASTREADOR DE INACTIVIDAD (SESSION IDLE TIMEOUT)
+// ========================================================
+function handleUserActivityThrottled() {
+  const now = Date.now();
+  if (now - lastThrottleTime > 1000) {
+    lastThrottleTime = now;
+    lastActivityTime = now;
+    if (idleWarningDialog.value) {
+      keepSessionAlive();
+    }
+  }
+}
+
+function keepSessionAlive() {
+  lastActivityTime = Date.now();
+  idleWarningDialog.value = false;
+  idleCountdownSeconds.value = IDLE_WARNING_BUFFER_SEC;
+}
+
+async function handleAutoLogout() {
+  idleWarningDialog.value = false;
+  stopIdleTracker();
+  await authStore.logout();
+  router.push({ path: '/login', query: { reason: 'timeout' } });
+}
+
+function checkIdleStatus() {
+  if (!authStore.isAuthenticated || route.name === 'login') return;
+  const timeoutMinutes = authStore.sessionTimeoutMinutes;
+  if (!timeoutMinutes || timeoutMinutes <= 0) return; // 0 = Desactivado por el administrador
+
+  const totalTimeoutMs = timeoutMinutes * 60 * 1000;
+  const elapsedMs = Date.now() - lastActivityTime;
+  const remainingMs = totalTimeoutMs - elapsedMs;
+
+  if (remainingMs <= 0) {
+    handleAutoLogout();
+  } else if (remainingMs <= IDLE_WARNING_BUFFER_SEC * 1000) {
+    idleCountdownSeconds.value = Math.max(1, Math.ceil(remainingMs / 1000));
+    if (!idleWarningDialog.value) {
+      idleWarningDialog.value = true;
+    }
+  } else {
+    if (idleWarningDialog.value) {
+      idleWarningDialog.value = false;
+    }
+  }
+}
+
+const activityEvents = ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll', 'click'];
+
+function startIdleTracker() {
+  stopIdleTracker();
+  lastActivityTime = Date.now();
+  activityEvents.forEach(evt => window.addEventListener(evt, handleUserActivityThrottled, { passive: true }));
+  idleTimerInterval = setInterval(checkIdleStatus, 1000);
+}
+
+function stopIdleTracker() {
+  if (idleTimerInterval) {
+    clearInterval(idleTimerInterval);
+    idleTimerInterval = null;
+  }
+  activityEvents.forEach(evt => window.removeEventListener(evt, handleUserActivityThrottled));
+}
+
+watch(() => authStore.isAuthenticated, (isAuth) => {
+  if (isAuth && route.name !== 'login') {
+    startIdleTracker();
+  } else {
+    stopIdleTracker();
+  }
+}, { immediate: true });
+
+watch(() => route.name, (routeName) => {
+  if (routeName === 'login') {
+    stopIdleTracker();
+  } else if (authStore.isAuthenticated) {
+    startIdleTracker();
+  }
+});
+
+onUnmounted(() => {
+  stopIdleTracker();
+});
 
 function getRoleColor(role) {
   const map = {

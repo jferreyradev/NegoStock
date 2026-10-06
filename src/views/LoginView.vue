@@ -42,9 +42,47 @@
       </v-tabs>
 
       <v-card-text class="pa-6">
+        <!-- AVISO DE SESIÓN EXPIRADA POR INACTIVIDAD (SESSION TIMEOUT) -->
+        <v-alert
+          v-if="isTimeoutRedirect"
+          type="warning"
+          variant="tonal"
+          density="comfortable"
+          closable
+          class="mb-4 text-caption font-weight-medium"
+        >
+          <template #prepend>
+            <v-icon icon="mdi-clock-alert-outline" color="amber-darken-3" class="mr-2" size="22" />
+          </template>
+          <div>
+            <strong>Sesión cerrada por inactividad:</strong> La terminal se bloqueó automáticamente para resguardar la caja. Por favor ingresá tu PIN de operador o credenciales para reanudar.
+          </div>
+        </v-alert>
+
+        <!-- BLOQUEO TEMPORAL POR INTENTOS FALLIDOS (RATE LIMITING) -->
+        <v-alert
+          v-if="lockoutSeconds > 0"
+          type="error"
+          variant="tonal"
+          density="comfortable"
+          class="mb-4 text-caption font-weight-bold"
+        >
+          <template #prepend>
+            <v-icon icon="mdi-shield-lock" color="error" class="mr-2 animate-pulse" size="24" />
+          </template>
+          <div class="d-flex align-center justify-space-between w-100">
+            <div>
+              <strong>Terminal Bloqueada:</strong> 5 intentos fallidos consecutivos.
+            </div>
+            <v-chip size="small" color="error" variant="flat" class="font-weight-black ml-2 font-mono">
+              {{ lockoutSeconds }}s
+            </v-chip>
+          </div>
+        </v-alert>
+
         <!-- MENSAJE DE ERROR SOBRIO -->
         <v-alert
-          v-if="errorMessage"
+          v-if="errorMessage && lockoutSeconds <= 0"
           type="error"
           variant="tonal"
           density="comfortable"
@@ -77,6 +115,7 @@
                 clearable
                 prepend-inner-icon="mdi-account-outline"
                 class="operator-select"
+                :disabled="lockoutSeconds > 0"
               >
                 <template #selection="{ item }">
                   <div class="d-flex align-center">
@@ -126,6 +165,7 @@
                   :key="num"
                   variant="outlined"
                   class="keypad-key text-h6 font-weight-bold"
+                  :disabled="lockoutSeconds > 0"
                   @click="appendPin(num)"
                 >
                   {{ num }}
@@ -135,6 +175,7 @@
                   color="blue-grey-lighten-3"
                   class="keypad-key"
                   title="Borrar dígito (Backspace)"
+                  :disabled="lockoutSeconds > 0"
                   @click="backspacePin"
                 >
                   <v-icon icon="mdi-backspace-outline" color="blue-grey-darken-2" />
@@ -142,6 +183,7 @@
                 <v-btn
                   variant="outlined"
                   class="keypad-key text-h6 font-weight-bold"
+                  :disabled="lockoutSeconds > 0"
                   @click="appendPin(0)"
                 >
                   0
@@ -150,7 +192,7 @@
                   variant="flat"
                   color="primary"
                   class="keypad-key"
-                  :disabled="pinInput.length < 4 || isLoggingIn"
+                  :disabled="pinInput.length < 4 || isLoggingIn || lockoutSeconds > 0"
                   :loading="isLoggingIn"
                   title="Ingresar (Enter)"
                   @click="submitPin"
@@ -184,6 +226,7 @@
                 density="comfortable"
                 prepend-inner-icon="mdi-email-outline"
                 class="mb-3"
+                :disabled="lockoutSeconds > 0"
                 required
               />
 
@@ -198,6 +241,7 @@
                 :append-inner-icon="showPassword ? 'mdi-eye-off' : 'mdi-eye'"
                 @click:append-inner="showPassword = !showPassword"
                 class="mb-4"
+                :disabled="lockoutSeconds > 0"
                 required
               />
 
@@ -208,6 +252,7 @@
                 block
                 size="large"
                 class="font-weight-bold text-none py-3"
+                :disabled="lockoutSeconds > 0 || authStore.loading"
                 :loading="authStore.loading"
               >
                 <v-icon icon="mdi-login" class="mr-2" />
@@ -243,6 +288,7 @@
             variant="flat"
             size="small"
             class="flex-grow-1 font-weight-bold text-none"
+            :disabled="lockoutSeconds > 0"
             :loading="isLoggingIn"
             @click="handleQuickLogin('ADMIN')"
           >
@@ -254,6 +300,7 @@
             variant="flat"
             size="small"
             class="flex-grow-1 font-weight-bold text-none"
+            :disabled="lockoutSeconds > 0"
             :loading="isLoggingIn"
             @click="handleQuickLogin('CASHIER')"
           >
@@ -345,6 +392,15 @@ const errorMessage = ref('');
 const isLoggingIn = ref(false);
 const showDemoCredentials = ref(false);
 
+// Control de intentos fallidos y bloqueo temporal (Rate Limiting)
+const failedAttempts = ref(0);
+const lockoutSeconds = ref(0);
+let lockoutTimer = null;
+
+const isTimeoutRedirect = computed(() => {
+  return route.query.reason === 'timeout';
+});
+
 const activeOperators = computed(() => {
   // El Superusuario (SaaS Master) nunca se lista como cajero/vendedor de mostrador
   return authStore.users.filter(u => u.isActive !== false && u.role !== 'SUPERADMIN');
@@ -366,9 +422,30 @@ onMounted(async () => {
 
 onUnmounted(() => {
   window.removeEventListener('keydown', handleGlobalKeydown);
+  if (lockoutTimer) {
+    clearInterval(lockoutTimer);
+    lockoutTimer = null;
+  }
 });
 
+function startLockout(seconds = 30) {
+  lockoutSeconds.value = seconds;
+  errorMessage.value = '';
+  clearPin();
+  if (lockoutTimer) clearInterval(lockoutTimer);
+  lockoutTimer = setInterval(() => {
+    lockoutSeconds.value--;
+    if (lockoutSeconds.value <= 0) {
+      clearInterval(lockoutTimer);
+      lockoutTimer = null;
+      failedAttempts.value = 0;
+    }
+  }, 1000);
+}
+
 function handleGlobalKeydown(e) {
+  if (lockoutSeconds.value > 0) return;
+
   // Solo capturar teclas si estamos en la pestaña PIN
   if (tab.value !== 'pin') return;
 
@@ -393,6 +470,7 @@ function handleGlobalKeydown(e) {
 }
 
 function appendPin(num) {
+  if (lockoutSeconds.value > 0) return;
   if (pinInput.value.length < 4) {
     pinInput.value += String(num);
     errorMessage.value = '';
@@ -403,6 +481,7 @@ function appendPin(num) {
 }
 
 function backspacePin() {
+  if (lockoutSeconds.value > 0) return;
   if (pinInput.value.length > 0) {
     pinInput.value = pinInput.value.slice(0, -1);
     errorMessage.value = '';
@@ -415,6 +494,7 @@ function clearPin() {
 }
 
 async function submitPin() {
+  if (lockoutSeconds.value > 0) return;
   if (pinInput.value.length < 4 || isLoggingIn.value) return;
 
   isLoggingIn.value = true;
@@ -436,20 +516,34 @@ async function submitPin() {
     }
 
     if (res.success) {
+      failedAttempts.value = 0;
       redirectAfterLogin();
     } else {
-      errorMessage.value = res.error || 'Código de seguridad incorrecto.';
-      clearPin();
+      failedAttempts.value++;
+      if (failedAttempts.value >= 5) {
+        startLockout(30);
+      } else {
+        const remaining = 5 - failedAttempts.value;
+        errorMessage.value = `${res.error || 'Código de seguridad incorrecto.'} (${remaining} intento${remaining === 1 ? '' : 's'} restante${remaining === 1 ? '' : 's'})`;
+        clearPin();
+      }
     }
   } catch (err) {
-    errorMessage.value = 'Error al validar credenciales.';
-    clearPin();
+    failedAttempts.value++;
+    if (failedAttempts.value >= 5) {
+      startLockout(30);
+    } else {
+      const remaining = 5 - failedAttempts.value;
+      errorMessage.value = `Error al validar credenciales. (${remaining} intento${remaining === 1 ? '' : 's'} restante${remaining === 1 ? '' : 's'})`;
+      clearPin();
+    }
   } finally {
     isLoggingIn.value = false;
   }
 }
 
 async function submitEmailLogin() {
+  if (lockoutSeconds.value > 0) return;
   errorMessage.value = '';
   if (!email.value || !password.value) {
     errorMessage.value = 'Por favor complete su correo y contraseña institucional.';
@@ -460,12 +554,25 @@ async function submitEmailLogin() {
   try {
     const res = await authStore.loginWithEmail(email.value, password.value);
     if (res.success) {
+      failedAttempts.value = 0;
       redirectAfterLogin();
     } else {
-      errorMessage.value = res.error || 'Credenciales de acceso no válidas.';
+      failedAttempts.value++;
+      if (failedAttempts.value >= 5) {
+        startLockout(30);
+      } else {
+        const remaining = 5 - failedAttempts.value;
+        errorMessage.value = `${res.error || 'Credenciales de acceso no válidas.'} (${remaining} intento${remaining === 1 ? '' : 's'} restante${remaining === 1 ? '' : 's'})`;
+      }
     }
   } catch (err) {
-    errorMessage.value = 'Error de conexión al autenticar.';
+    failedAttempts.value++;
+    if (failedAttempts.value >= 5) {
+      startLockout(30);
+    } else {
+      const remaining = 5 - failedAttempts.value;
+      errorMessage.value = `Error de conexión al autenticar. (${remaining} intento${remaining === 1 ? '' : 's'} restante${remaining === 1 ? '' : 's'})`;
+    }
   } finally {
     isLoggingIn.value = false;
   }
@@ -477,6 +584,7 @@ async function handleQuickLogin(role) {
   try {
     const res = await authStore.quickLoginDemo(role);
     if (res.success) {
+      failedAttempts.value = 0;
       redirectAfterLogin();
     } else {
       errorMessage.value = res.error || 'No se pudo iniciar sesión de prueba.';

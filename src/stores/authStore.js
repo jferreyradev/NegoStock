@@ -12,6 +12,16 @@ function generateUUID() {
   });
 }
 
+function withTimeout(promise, ms = 8000, errorMsg = 'Tiempo de espera agotado al conectar con el servidor.') {
+  let timer;
+  const timeoutPromise = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new Error(errorMsg)), ms);
+  });
+  return Promise.race([promise, timeoutPromise]).finally(() => {
+    if (timer) clearTimeout(timer);
+  });
+}
+
 export const useAuthStore = defineStore('auth', {
   state: () => ({
     // Lista de empleados registrados para el comercio
@@ -66,6 +76,7 @@ export const useAuthStore = defineStore('auth', {
       }
     ],
     currentUser: null,
+    sessionTimeoutMinutes: 15, // Cierre de sesión por inactividad (en minutos, 0 = desactivado)
     loading: false,
     error: null
   }),
@@ -141,6 +152,14 @@ export const useAuthStore = defineStore('auth', {
         const savedUsersList = await secureGet('app_metadata', 'users_list');
         if (savedUsersList && Array.isArray(savedUsersList)) {
           this.users = savedUsersList;
+        }
+
+        const savedTimeout = await secureGet('app_metadata', 'session_timeout_minutes');
+        if (savedTimeout !== null && savedTimeout !== undefined) {
+          const parsed = Number(savedTimeout);
+          if (!isNaN(parsed) && parsed >= 0) {
+            this.sessionTimeoutMinutes = parsed;
+          }
         }
 
         // Asegurar que la cuenta de Superusuario (SaaS Master) exista siempre con UUID válido
@@ -264,10 +283,20 @@ export const useAuthStore = defineStore('auth', {
 
       try {
         if (isSupabaseConfigured && supabase) {
-          const { data, error } = await supabase.auth.signInWithPassword({
-            email: cleanEmail,
-            password
-          });
+          let authResult = null;
+          try {
+            authResult = await withTimeout(
+              supabase.auth.signInWithPassword({
+                email: cleanEmail,
+                password
+              }),
+              8000,
+              'Tiempo de espera agotado al conectar con el servidor (8s).'
+            );
+          } catch (netErr) {
+            authResult = { error: netErr };
+          }
+          const { data, error } = authResult || {};
 
           if (error) {
             // Si las credenciales fallan en Supabase, verificar acceso de Superusuario, Demo o Administrador
@@ -412,6 +441,15 @@ export const useAuthStore = defineStore('auth', {
       this.currentUser = null;
       await secureRemove('app_metadata', 'current_user');
       localStorage.removeItem('negostock_current_user');
+    },
+
+    /**
+     * Configura el tiempo de cierre por inactividad (en minutos, 0 = deshabilitado)
+     */
+    async setSessionTimeout(minutes) {
+      const parsed = Math.max(0, Number(minutes) || 0);
+      this.sessionTimeoutMinutes = parsed;
+      await secureSet('app_metadata', 'session_timeout_minutes', parsed);
     },
 
     async addUser(userData) {

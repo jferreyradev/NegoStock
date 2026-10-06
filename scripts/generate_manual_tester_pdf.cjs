@@ -308,6 +308,19 @@ function generateTesterPdf() {
         '5. Probar "Pasar a Venta y Cobrar [F2]": conmuta a Ticket X y liquida la venta con descuento de stock.'
       ],
       result: 'El armador permite cotizaciones detalladas y conceptos no catalogados sin trabar el stock. La conversión de presupuesto a venta es fluida y sincronizada.'
+    },
+    {
+      id: 'CASO 14',
+      title: 'Timeout de Sesión por Inactividad y Bloqueo por Intentos Fallidos',
+      obj: 'Verificar el cierre automático de sesión por inactividad de la terminal y la protección rate-limiting ante intentos fallidos de PIN.',
+      steps: [
+        '1. En "Datos del Negocio" configurar el Cierre automático por inactividad (ej. 5 o 15 minutos).',
+        '2. Si transcurre el tiempo sin actividad, verificar la aparición del diálogo con cuenta regresiva de 30s ("¿Seguís en la terminal?").',
+        '3. Al presionar "Continuar Trabajando" (o mover el mouse/teclado), la sesión permanece activa y el temporizador se reinicia.',
+        '4. Si expira la cuenta regresiva, el sistema cierra la sesión, preserva el borrador del carrito y redirige a /login con aviso de seguridad.',
+        '5. En la pantalla de login, ingresar 5 PINs incorrectos seguidos: verificar bloqueo temporal de 30 segundos con teclado desactivado.'
+      ],
+      result: 'La terminal queda resguardada contra accesos no autorizados durante ausencias del operador y previene ataques de fuerza bruta al PIN con cooldown de 30 segundos.'
     }
   ];
 
@@ -400,7 +413,8 @@ function generateTesterPdf() {
     'El informe y resumen de ventas (día, horas pico y mes) es exclusivo de Admin/Dueño y Superusuario.',
     'Los comprobantes PDF vectoriales garantizan cero superposición de textos en descripciones y totales.',
     'Las tablas del sistema son compactas y mantienen visible la columna de acciones flotante (sticky).',
-    'El Armador de Presupuestos (/armar-presupuesto) gestiona ítems libres, bonificaciones y pase a venta.'
+    'El Armador de Presupuestos (/armar-presupuesto) gestiona ítems libres, bonificaciones y pase a venta.',
+    'El sistema protege la terminal con timeout de inactividad configurable y bloqueo temporal de 30s tras 5 intentos fallidos.'
   ];
 
   doc.setFillColor(...primary);

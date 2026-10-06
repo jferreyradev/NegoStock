@@ -263,6 +263,25 @@ El sistema dispone de cuentas preparadas para evaluar todos los niveles de privi
 
 ---
 
+#### 🔒 CASO 14: Timeout de Sesión por Inactividad y Bloqueo por Intentos Fallidos (Rate Limiting)
+* **Objetivo:** Comprobar que el sistema resguarda automáticamente la terminal bloqueando la sesión ante ausencias del operador y mitiga ataques de fuerza bruta al PIN.
+* **Pasos de Prueba:**
+  1. En el menú lateral o superior, acceder a **`Datos del Negocio`** (requiere rol Admin o Superadmin).
+  2. En el campo **`Cierre automático por inactividad (Timeout)`**, configurar el tiempo deseado (5, 10, 15, 30, 60 minutos o desactivado). Guardar cambios.
+  3. Dejar la computadora sin interacción hasta alcanzar el tiempo configurado:
+     - 30 segundos antes de expirar, se despliega el modal de aviso con cuenta regresiva: **`¿Seguís en la terminal?`**.
+     - Al presionar **`Continuar Trabajando`** o mover el mouse / teclado, el diálogo se cierra y el temporizador se reinicia.
+     - Si expira el tiempo, la sesión se cierra de forma segura, el borrador del carrito se mantiene en memoria y se redirige a `/login?reason=timeout` mostrando el aviso: *"Sesión cerrada por inactividad"*.
+  4. En la pantalla de login (`/login`), ingresar intencionalmente 5 PINs incorrectos consecutivos:
+     - En cada intento fallido se muestra el contador de intentos restantes (ej. *"PIN incorrecto (4 intentos restantes)"*).
+     - Al 5to intento fallido, la terminal se bloquea durante **30 segundos** con alerta en pantalla, teclado numérico desactivado e inputs bloqueados.
+     - Al finalizar la cuenta regresiva de 30 segundos, el teclado y los campos se habilitan automáticamente.
+* **Resultado Esperado:**
+  - La terminal no queda abierta de forma indefinida si el empleado se retira.
+  - El bloqueo por fuerza bruta previene la adivinación automatizada de claves PIN en mostrador.
+
+---
+
 ### 3. Checklist de Aprobación para Publicación (Go-Live)
 
 | Ítem | Criterio de Aceptación | Estado |
@@ -282,4 +301,5 @@ El sistema dispone de cuentas preparadas para evaluar todos los niveles de privi
 | 13 | Los comprobantes PDF vectoriales garantizan cero superposición de textos en descripciones y totales. | [ ] |
 | 14 | Las tablas del sistema son compactas y mantienen visible la columna de acciones flotante (sticky). | [ ] |
 | 15 | El Armador de Presupuestos (`/armar-presupuesto`) gestiona ítems libres, bonificaciones y pase a venta. | [ ] |
+| 16 | El sistema bloquea la terminal por inactividad tras el tiempo configurado y activa cooldown de 30s tras 5 intentos fallidos. | [ ] |
 
