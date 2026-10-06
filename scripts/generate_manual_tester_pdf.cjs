@@ -321,6 +321,20 @@ function generateTesterPdf() {
         '5. En la pantalla de login, ingresar 5 PINs incorrectos seguidos: verificar bloqueo temporal de 30 segundos con teclado desactivado.'
       ],
       result: 'La terminal queda resguardada contra accesos no autorizados durante ausencias del operador y previene ataques de fuerza bruta al PIN con cooldown de 30 segundos.'
+    },
+    {
+      id: 'CASO 15',
+      title: 'Importación Masiva de Productos y Descarga de Plantilla Oficial',
+      obj: 'Comprobar la descarga de la plantilla estructurada de carga de catálogo y la importación masiva de artículos nuevos y actualizaciones desde Excel (.xlsx) o CSV.',
+      steps: [
+        '1. Ingresar como Administrador (PIN 0000 o 1234) e ingresar a Control de Stock (/inventario).',
+        '2. Presionar el botón "Importar Excel" en la barra de herramientas superior.',
+        '3. En el paso 1, hacer clic en "Bajar Plantilla (.xlsx)" y comprobar que contiene las hojas Plantilla_Productos e Instrucciones con columnas oficiales.',
+        '4. Cargar un archivo .xlsx con productos nuevos y artículos existentes.',
+        '5. Verificar la vista previa interactiva con chips de conteo (X Nuevos, Y a Actualizar) y badges de estado.',
+        '6. Presionar "Confirmar e Importar Productos": constatar que el inventario se actualiza y los nuevos artículos quedan disponibles para la venta.'
+      ],
+      result: 'El catálogo procesa la carga masiva en bloque, crea productos nuevos con su stock inicial, actualiza precios/costos de existentes y mantiene el historial y sincronización intactos.'
     }
   ];
 
@@ -414,7 +428,8 @@ function generateTesterPdf() {
     'Los comprobantes PDF vectoriales garantizan cero superposición de textos en descripciones y totales.',
     'Las tablas del sistema son compactas y mantienen visible la columna de acciones flotante (sticky).',
     'El Armador de Presupuestos (/armar-presupuesto) gestiona ítems libres, bonificaciones y pase a venta.',
-    'El sistema protege la terminal con timeout de inactividad configurable y bloqueo temporal de 30s tras 5 intentos fallidos.'
+    'El sistema protege la terminal con timeout de inactividad configurable y bloqueo temporal de 30s tras 5 intentos fallidos.',
+    'Se puede descargar la plantilla oficial de carga e importar masivamente productos con vista previa y validación.'
   ];
 
   doc.setFillColor(...primary);

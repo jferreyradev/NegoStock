@@ -103,6 +103,31 @@
             Nuevo Artículo
           </v-btn>
 
+          <!-- Botón de Importar Catálogo Excel (Sólo Admin / Encargado) -->
+          <v-btn
+            v-if="authStore.canEditPrices"
+            color="teal-darken-2"
+            variant="tonal"
+            prepend-icon="mdi-file-excel-box"
+            class="font-weight-bold text-none mr-2"
+            title="Importar productos por lote desde Excel o CSV"
+            @click="openImportDialog"
+          >
+            Importar Excel
+          </v-btn>
+
+          <!-- Botón Exportar Catálogo a Excel -->
+          <v-btn
+            color="grey-darken-2"
+            variant="outlined"
+            prepend-icon="mdi-download"
+            class="font-weight-bold text-none mr-2"
+            title="Exportar catálogo completo a Excel (.xlsx)"
+            @click="handleExportCatalog"
+          >
+            Exportar
+          </v-btn>
+
           <!-- Filtro de Disponibilidad -->
           <v-select
             v-model="productStore.filterAvailability"
@@ -952,6 +977,226 @@
       </v-card>
     </v-dialog>
 
+    <!-- MODAL DE IMPORTACIÓN MASIVA DE PRODUCTOS (EXCEL / CSV) -->
+    <v-dialog v-model="importDialog" max-width="860" persistent>
+      <v-card class="rounded-xl overflow-hidden">
+        <v-card-title class="bg-teal-darken-2 text-white d-flex align-center justify-space-between py-3">
+          <div class="d-flex align-center">
+            <v-icon icon="mdi-file-excel-box" class="mr-2" size="26" />
+            <div>
+              <div class="text-subtitle-1 font-weight-black">Importación Masiva de Productos</div>
+              <div class="text-caption text-teal-lighten-4 font-weight-regular">
+                Carga inicial de inventario, nuevos artículos y actualización desde planillas
+              </div>
+            </div>
+          </div>
+          <v-btn icon="mdi-close" variant="text" size="small" color="white" @click="importDialog = false" />
+        </v-card-title>
+
+        <v-card-text class="pa-4">
+          <!-- PASO 1: DESCARGAR PLANTILLA -->
+          <v-card variant="outlined" class="pa-4 mb-4 bg-teal-lighten-5 border-teal-lighten-3">
+            <div class="d-flex align-start justify-space-between flex-wrap gap-2">
+              <div class="flex-grow-1" style="max-width: 520px;">
+                <div class="d-flex align-center mb-1">
+                  <v-avatar color="teal-darken-2" size="26" class="text-white text-caption font-weight-bold mr-2">1</v-avatar>
+                  <strong class="text-subtitle-2 text-teal-darken-4 font-weight-black">Descargá la Plantilla Oficial de Carga</strong>
+                </div>
+                <div class="text-caption text-grey-darken-2 mb-2">
+                  La plantilla contiene las columnas requeridas (SKU, Código de Barras, Descripción, Rubro, Marca, Precios y Stock) junto a <strong>ejemplos de referencia</strong> y notas de ayuda.
+                </div>
+                <div class="d-flex gap-2 flex-wrap">
+                  <v-chip size="x-small" color="teal-darken-3" variant="flat" class="font-weight-bold">
+                    Descripción (Obligatorio)
+                  </v-chip>
+                  <v-chip size="x-small" color="blue-grey-darken-1" variant="tonal">
+                    SKU (Si se omite, se autogenera)
+                  </v-chip>
+                  <v-chip size="x-small" color="blue-grey-darken-1" variant="tonal">
+                    Venta = Costo + Margen % (Autocálculo)
+                  </v-chip>
+                </div>
+              </div>
+
+              <div class="d-flex flex-column ga-2 justify-center">
+                <v-btn
+                  color="teal-darken-2"
+                  variant="flat"
+                  size="small"
+                  class="font-weight-bold text-none shadow-sm"
+                  prepend-icon="mdi-microsoft-excel"
+                  @click="handleDownloadTemplate('xlsx')"
+                >
+                  Bajar Plantilla (.xlsx)
+                </v-btn>
+                <v-btn
+                  color="grey-darken-2"
+                  variant="outlined"
+                  size="small"
+                  class="font-weight-bold text-none bg-white"
+                  prepend-icon="mdi-file-delimited-outline"
+                  @click="handleDownloadTemplate('csv')"
+                >
+                  Bajar Plantilla (.csv)
+                </v-btn>
+              </div>
+            </div>
+          </v-card>
+
+          <!-- PASO 2: SUBIR ARCHIVO -->
+          <v-card variant="outlined" class="pa-4 mb-4 bg-white border-grey-lighten-2">
+            <div class="d-flex align-center mb-2">
+              <v-avatar color="primary" size="26" class="text-white text-caption font-weight-bold mr-2">2</v-avatar>
+              <strong class="text-subtitle-2 text-primary font-weight-black">Subí tu Planilla Completada</strong>
+            </div>
+
+            <v-file-input
+              v-model="importFile"
+              accept=".xlsx, .xls, .csv"
+              label="Seleccionar o arrastrar archivo Excel (.xlsx, .xls) o CSV..."
+              variant="outlined"
+              density="comfortable"
+              prepend-inner-icon="mdi-paperclip"
+              prepend-icon=""
+              show-size
+              clearable
+              hide-details
+              class="mb-3"
+              @update:model-value="handleFileSelect"
+            />
+
+            <!-- Opciones de importación -->
+            <div class="d-flex align-center justify-space-between flex-wrap mt-2">
+              <v-checkbox
+                v-model="updateExistingProducts"
+                label="Actualizar datos de productos existentes si el Código SKU ya existe en el sistema"
+                color="primary"
+                density="compact"
+                hide-details
+                class="font-weight-medium text-caption"
+              />
+            </div>
+          </v-card>
+
+          <!-- ALERTA DE ERROR DE PARSEO -->
+          <v-alert
+            v-if="importError"
+            type="error"
+            variant="tonal"
+            density="comfortable"
+            closable
+            class="mb-3 text-caption font-weight-medium"
+            @click:close="importError = ''"
+          >
+            {{ importError }}
+          </v-alert>
+
+          <!-- PASO 3: VISTA PREVIA Y RESUMEN (SI HAY PRODUCTOS PARSEADOS) -->
+          <v-card v-if="parsedProducts.length > 0" variant="outlined" class="mb-2 border-grey-lighten-2 overflow-hidden">
+            <div class="pa-3 bg-grey-lighten-4 border-b d-flex align-center justify-space-between flex-wrap gap-2">
+              <div class="d-flex align-center">
+                <v-icon icon="mdi-table-check" color="teal-darken-2" class="mr-2" />
+                <span class="text-subtitle-2 font-weight-black">
+                  Vista Previa ({{ parsedProducts.length }} productos detectados)
+                </span>
+              </div>
+
+              <!-- Resumen de Nuevos vs Existentes -->
+              <div class="d-flex ga-2">
+                <v-chip size="small" color="success" variant="flat" class="font-weight-bold">
+                  <v-icon icon="mdi-plus-circle" start size="x-small" />
+                  {{ importSummary.newCount }} Nuevos
+                </v-chip>
+                <v-chip size="small" color="primary" variant="flat" class="font-weight-bold">
+                  <v-icon icon="mdi-refresh" start size="x-small" />
+                  {{ importSummary.updateCount }} a Actualizar
+                </v-chip>
+                <v-chip v-if="importSummary.ignoredCount > 0" size="small" color="grey" variant="tonal">
+                  {{ importSummary.ignoredCount }} vacíos ignorados
+                </v-chip>
+              </div>
+            </div>
+
+            <!-- Tabla de vista previa -->
+            <div class="responsive-table-wrapper" style="max-height: 260px; overflow-y: auto;">
+              <v-table density="compact" hover class="compact-update-table">
+                <thead>
+                  <tr class="bg-grey-lighten-5">
+                    <th class="font-weight-bold" style="width: 90px;">Acción</th>
+                    <th class="font-weight-bold" style="width: 110px;">SKU</th>
+                    <th class="font-weight-bold">Descripción</th>
+                    <th class="font-weight-bold" style="width: 110px;">Rubro</th>
+                    <th class="font-weight-bold" style="width: 100px;">Marca</th>
+                    <th class="font-weight-bold text-right" style="width: 95px;">Costo</th>
+                    <th class="font-weight-bold text-right" style="width: 95px;">Venta</th>
+                    <th class="font-weight-bold text-center" style="width: 70px;">Stock</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(p, idx) in parsedProducts.slice(0, 50)" :key="idx">
+                    <td>
+                      <v-chip
+                        size="x-small"
+                        :color="p.isExisting ? 'primary' : 'success'"
+                        variant="flat"
+                        class="font-weight-bold font-mono"
+                      >
+                        {{ p.isExisting ? 'ACTUALIZAR' : 'NUEVO' }}
+                      </v-chip>
+                    </td>
+                    <td>
+                      <span class="font-mono text-caption text-grey-darken-3 font-weight-bold">
+                        {{ p.sku || '(Auto-SKU)' }}
+                      </span>
+                    </td>
+                    <td>
+                      <div class="text-truncate font-weight-medium text-caption" style="max-width: 220px;" :title="p.name">
+                        {{ p.name }}
+                      </div>
+                    </td>
+                    <td class="text-caption text-truncate" style="max-width: 110px;">{{ p.dept }}</td>
+                    <td class="text-caption text-truncate" style="max-width: 100px;">{{ p.brand }}</td>
+                    <td class="text-right text-caption font-mono">${{ formatMoney(p.costPrice) }}</td>
+                    <td class="text-right text-caption font-mono font-weight-bold text-primary">${{ formatMoney(p.sellingPrice) }}</td>
+                    <td class="text-center text-caption font-mono font-weight-bold">{{ p.stock }}</td>
+                  </tr>
+                </tbody>
+              </v-table>
+            </div>
+            <div v-if="parsedProducts.length > 50" class="pa-2 bg-grey-lighten-4 text-center text-caption text-grey-darken-1 border-t">
+              Mostrando las primeras 50 filas de {{ parsedProducts.length }} productos a importar.
+            </div>
+          </v-card>
+        </v-card-text>
+
+        <v-divider />
+
+        <v-card-actions class="pa-4 bg-grey-lighten-4 d-flex justify-space-between align-center">
+          <v-btn
+            variant="text"
+            color="grey-darken-1"
+            class="text-none font-weight-medium"
+            @click="importDialog = false"
+          >
+            Cancelar
+          </v-btn>
+
+          <v-btn
+            color="teal-darken-2"
+            variant="flat"
+            size="large"
+            class="px-6 font-weight-bold text-none shadow-sm"
+            :disabled="parsedProducts.length === 0 || isImporting"
+            :loading="isImporting"
+            @click="executeImport"
+          >
+            <v-icon icon="mdi-database-import" start />
+            Confirmar e Importar {{ parsedProducts.length }} Productos
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
     <!-- SNACKBAR DE NOTIFICACIÓN -->
     <v-snackbar v-model="snackbar.show" :color="snackbar.color" timeout="3000">
       {{ snackbar.text }}
@@ -970,6 +1215,11 @@ import {
   generateProductsCsv,
   restoreDatabaseFromJson
 } from '@/services/backupService';
+import {
+  exportCatalogToExcel,
+  downloadProductImportTemplate,
+  parseProductImportFile
+} from '@/services/excelService';
 
 const productStore = useProductStore();
 const authStore = useAuthStore();
@@ -989,6 +1239,119 @@ const superadminAuthDialog = ref(false);
 const superadminAuthInput = ref('');
 const superadminAuthError = ref('');
 let pendingSuperadminAction = null;
+
+// ========================================================
+// IMPORTACIÓN Y EXPORTACIÓN MASIVA DE PRODUCTOS (EXCEL / CSV)
+// ========================================================
+const importDialog = ref(false);
+const importFile = ref(null);
+const importError = ref('');
+const isImporting = ref(false);
+const updateExistingProducts = ref(true);
+const parsedProducts = ref([]);
+const importSummary = ref({
+  totalRows: 0,
+  validCount: 0,
+  newCount: 0,
+  updateCount: 0,
+  ignoredCount: 0
+});
+
+function openImportDialog() {
+  if (!authStore.canEditPrices) {
+    snackbar.text = 'Acceso Denegado: Se requiere rol de Administrador o Encargado para importar artículos.';
+    snackbar.color = 'error';
+    snackbar.show = true;
+    return;
+  }
+  importFile.value = null;
+  importError.value = '';
+  parsedProducts.value = [];
+  importSummary.value = { totalRows: 0, validCount: 0, newCount: 0, updateCount: 0, ignoredCount: 0 };
+  importDialog.value = true;
+}
+
+function handleDownloadTemplate(format = 'xlsx') {
+  downloadProductImportTemplate(format);
+}
+
+function handleExportCatalog() {
+  exportCatalogToExcel(productStore.products, 'xlsx');
+  snackbar.text = `¡Catálogo completo exportado a Excel (${productStore.products.length} artículos)!`;
+  snackbar.color = 'success';
+  snackbar.show = true;
+}
+
+async function handleFileSelect(file) {
+  importError.value = '';
+  parsedProducts.value = [];
+  if (!file) return;
+
+  const actualFile = Array.isArray(file) ? file[0] : file;
+  if (!actualFile) return;
+
+  try {
+    const result = await parseProductImportFile(actualFile);
+    if (!result.products || result.products.length === 0) {
+      importError.value = 'El archivo no contiene filas válidas de productos con descripción.';
+      return;
+    }
+
+    let newCount = 0;
+    let updateCount = 0;
+
+    const analyzedProducts = result.products.map(p => {
+      const skuClean = p.sku?.trim().toLowerCase();
+      const exists = skuClean && productStore.products.some(
+        ep => ep.sku && ep.sku.toLowerCase().trim() === skuClean
+      );
+      if (exists) {
+        updateCount++;
+      } else {
+        newCount++;
+      }
+      return {
+        ...p,
+        isExisting: Boolean(exists)
+      };
+    });
+
+    parsedProducts.value = analyzedProducts;
+    importSummary.value = {
+      totalRows: result.totalRows,
+      validCount: result.validCount,
+      newCount,
+      updateCount,
+      ignoredCount: result.ignoredCount
+    };
+  } catch (err) {
+    importError.value = err.message || 'Error al procesar el archivo Excel / CSV.';
+  }
+}
+
+async function executeImport() {
+  if (parsedProducts.value.length === 0 || isImporting.value) return;
+
+  isImporting.value = true;
+  try {
+    const res = await productStore.importProductsBatch(parsedProducts.value, {
+      updateExisting: updateExistingProducts.value
+    });
+
+    if (res.success) {
+      importDialog.value = false;
+      snackbar.text = `¡Importación exitosa! Se procesaron ${res.total} artículos (${res.createdCount} nuevos dados de alta, ${res.updatedCount} actualizados).`;
+      snackbar.color = 'success';
+      snackbar.show = true;
+    } else {
+      importError.value = res.error || 'Error al importar los productos.';
+    }
+  } catch (err) {
+    importError.value = err.message || 'Ocurrió un error inesperado al guardar los productos.';
+  } finally {
+    isImporting.value = false;
+  }
+}
 
 function openBackupDialog() {
   if (!authStore.canManageBackup) {

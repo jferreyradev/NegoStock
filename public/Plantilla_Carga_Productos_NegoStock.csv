@@ -1,0 +1,5 @@
+﻿Codigo_SKU,Codigo_Barras,Descripcion,Rubro,Marca,Unidad,Precio_Costo,Margen_Ganancia,Precio_Venta,Precio_Mayoreo,Stock_Actual,Stock_Minimo,Alicuota_IVA
+HER-1001,779812345671,Martillo Galponero 500g Mango Fibra,HERRAMIENTAS,STANLEY,u,12500,40,17500,15000,20,5,21
+PIN-2005,779812345672,Látex Interior / Exterior Blanco 20 Lts,PINTURERÍA,ALBA,u,45000,45,65250,58000,12,3,21
+BUL-3010,779812345673,Tornillo Autoperforante T1 Punta Aguja x 100u,BULONERÍA,TEL,caja,3200,50,4800,4200,45,10,21
+ELE-4015,779812345674,Cable Unipolar Normalizado 2.5mm Rojo,ELECTRICIDAD,PRYSMIAN,mt,480,35,650,580,350,50,21

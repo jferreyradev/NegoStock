@@ -1044,6 +1044,148 @@ export const useProductStore = defineStore('products', {
       }
 
       return { updatedCount };
+    },
+
+    /**
+     * IMPORTACIÓN MASIVA DE PRODUCTOS (DESDE EXCEL / CSV)
+     */
+    async importProductsBatch(items, { updateExisting = true } = {}) {
+      if (!items || items.length === 0) {
+        return { success: false, error: 'No se recibieron productos para importar.' };
+      }
+
+      this.loading = true;
+      let createdCount = 0;
+      let updatedCount = 0;
+
+      const authStore = useAuthStore();
+      const opName = authStore.currentUser?.fullName || 'Administrador';
+      const opRole = authStore.currentUser?.role || 'ADMIN';
+      const operatorBadge = `${opName} (${authStore.roleLabel || opRole})`;
+
+      try {
+        for (let i = 0; i < items.length; i++) {
+          const item = items[i];
+          const skuClean = item.sku ? item.sku.trim() : '';
+
+          // 1. Buscar si ya existe por SKU
+          let existingIdx = -1;
+          if (skuClean) {
+            existingIdx = this.products.findIndex(
+              p => p.sku && p.sku.toLowerCase().trim() === skuClean.toLowerCase()
+            );
+          }
+
+          if (existingIdx !== -1 && updateExisting) {
+            // Actualizar producto existente
+            const prod = this.products[existingIdx];
+            const oldCost = prod.costPrice;
+            const oldSelling = prod.sellingPrice;
+
+            if (item.name) prod.name = item.name.trim();
+            if (item.barcode) prod.barcode = item.barcode.trim();
+            if (item.dept) prod.dept = item.dept.trim().toUpperCase();
+            if (item.brand) prod.brand = item.brand.trim().toUpperCase();
+            if (item.unit) prod.unit = item.unit.trim().toLowerCase();
+
+            if (item.costPrice > 0) prod.costPrice = item.costPrice;
+            if (item.margin > 0) prod.margin = item.margin;
+            if (item.sellingPrice > 0) prod.sellingPrice = item.sellingPrice;
+            if (item.wholesalePrice > 0) prod.wholesalePrice = item.wholesalePrice;
+            if (item.stock !== undefined && item.stock !== null && !isNaN(item.stock)) {
+              prod.stock = Number(item.stock);
+            }
+            if (item.minStock !== undefined && item.minStock !== null && !isNaN(item.minStock)) {
+              prod.minStock = Number(item.minStock);
+            }
+            if (item.ivaRate > 0) prod.ivaRate = item.ivaRate;
+            prod.isActive = true;
+
+            await secureSet('products_catalog', prod.id, prod);
+
+            if (oldCost !== prod.costPrice || oldSelling !== prod.sellingPrice) {
+              await this.logLocalPriceChange(
+                prod.id,
+                oldCost,
+                prod.costPrice,
+                oldSelling,
+                prod.sellingPrice,
+                'IMPORTACION_EXCEL',
+                operatorBadge
+              );
+            }
+
+            updatedCount++;
+          } else {
+            // Crear nuevo producto
+            const finalSku = skuClean || `SKU-${Date.now().toString().slice(-5)}-${Math.floor(Math.random() * 900 + 100)}`;
+            const newId = `local-${Date.now()}-${i}`;
+            const costPrice = Number(item.costPrice || 0);
+            const margin = Number(item.margin || 100);
+            const sellingPrice = Number(item.sellingPrice || (costPrice > 0 ? Math.round(costPrice * (1 + margin / 100)) : 0));
+            const wholesalePrice = Number(item.wholesalePrice || 0);
+            const stock = Number(item.stock || 0);
+            const minStock = Number(item.minStock || 0);
+            const ivaRate = Number(item.ivaRate || 21);
+
+            const newProd = {
+              id: newId,
+              sku: finalSku,
+              barcode: item.barcode?.trim() || '',
+              name: item.name.trim(),
+              description: item.description?.trim() || '',
+              costPrice,
+              margin,
+              sellingPrice,
+              wholesalePrice,
+              stock,
+              minStock,
+              ivaRate,
+              isActive: true,
+              dept: (item.dept || 'GENERAL').trim().toUpperCase(),
+              brand: (item.brand || 'GENÉRICO').trim().toUpperCase(),
+              unit: (item.unit || 'u').trim().toLowerCase(),
+              createdBy: {
+                id: authStore.currentUser?.id,
+                name: opName,
+                role: opRole,
+                at: new Date().toISOString()
+              }
+            };
+
+            this.products.unshift(newProd);
+            await secureSet('products_catalog', newId, newProd);
+
+            if (stock > 0) {
+              await this.logLocalStockMovement(
+                newId,
+                'INICIAL',
+                stock,
+                stock,
+                `Stock inicial por importación Excel [por ${operatorBadge}]`,
+                operatorBadge
+              );
+            }
+
+            createdCount++;
+          }
+        }
+
+        // Actualizar categorías y marcas dinámicas
+        this.refreshCategoriesAndBrands();
+
+        return {
+          success: true,
+          createdCount,
+          updatedCount,
+          total: items.length
+        };
+      } catch (err) {
+        console.error('[ProductStore] Error en importProductsBatch:', err);
+        return { success: false, error: err.message };
+      } finally {
+        this.loading = false;
+      }
     }
   }
 });

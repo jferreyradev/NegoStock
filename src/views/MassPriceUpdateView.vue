@@ -226,6 +226,19 @@
                   CSV
                 </v-btn>
               </div>
+
+              <div class="mt-2 text-center">
+                <v-btn
+                  variant="text"
+                  size="small"
+                  color="teal-darken-3"
+                  class="font-weight-bold text-none"
+                  @click="downloadTemplate('xlsx')"
+                >
+                  <v-icon icon="mdi-file-download-outline" start size="small" />
+                  Descargar Plantilla Oficial de Carga (.xlsx)
+                </v-btn>
+              </div>
             </v-card>
           </v-col>
 
@@ -433,7 +446,7 @@ import { ref, computed, onMounted } from 'vue';
 import { useProductStore } from '@/stores/productStore';
 import { usePriceHistoryStore } from '@/stores/priceHistoryStore';
 import { useAuthStore } from '@/stores/authStore';
-import { exportCatalogToExcel, parseUploadedFile } from '@/services/excelService';
+import { exportCatalogToExcel, parseUploadedFile, downloadProductImportTemplate } from '@/services/excelService';
 
 const productStore = useProductStore();
 const priceHistoryStore = usePriceHistoryStore();
@@ -549,6 +562,13 @@ async function executePercentageUpdate() {
 function downloadExcel(format = 'xlsx') {
   exportCatalogToExcel(productStore.products, format);
   snackbarText.value = `Descargando catálogo completo de ${productStore.products.length} productos en formato .${format}...`;
+  snackbar.value = true;
+}
+
+// 2.1 Descargar plantilla oficial de carga
+function downloadTemplate(format = 'xlsx') {
+  downloadProductImportTemplate(format);
+  snackbarText.value = `Descargando plantilla oficial de carga en formato .${format}...`;
   snackbar.value = true;
 }
 

@@ -114,9 +114,23 @@ Diseñado para aplicar aumentos de listas de proveedores en segundos:
 ---
 
 ### 6. Trabajo con Planillas Excel (.xlsx / .csv)
-Si preferís actualizar listas completas de proveedores desde Excel:
+
+#### 6.1 Carga Inicial e Importación Masiva de Productos (Inventario)
+Para dar de alta artículos nuevos por lote o migrar un catálogo existente:
+1. Dirigite a **Control de Stock e Inventario** (`/inventario`).
+2. Hacé clic en el botón superior **`Importar Excel`**.
+3. **Descargar Plantilla Oficial:**
+   - Presioná **`Bajar Plantilla (.xlsx)`** o **`Bajar Plantilla (.csv)`**.
+   - La plantilla incluye las columnas necesarias (`Codigo_SKU`, `Codigo_Barras`, `Descripcion`, `Rubro`, `Marca`, `Unidad`, `Precio_Costo`, `Margen_Ganancia`, `Precio_Venta`, `Precio_Mayoreo`, `Stock_Actual`, `Stock_Minimo`, `Alicuota_IVA`) con filas de ejemplo y hoja de instrucciones.
+   - *Regla clave:* La única columna obligatoria es **Descripción**. Si el SKU está vacío, el sistema le asigna uno correlativo automáticamente. Si ingresás Costo y Margen (%), el Precio de Venta se autocalcula.
+4. **Subir Archivo:** Arrastrá tu planilla completada al selector de archivos.
+5. **Vista Previa Inteligente:** El sistema detecta cuántos artículos son nuevos a crear (`+Nuevos`) y cuántos ya existen para actualizar (`~Actualizaciones`).
+6. Presioná **`Confirmar e Importar Productos`**. El sistema procesa los artículos, asienta los movimientos de stock iniciales y actualiza el catálogo en tiempo real.
+
+#### 6.2 Actualización Masiva de Precios desde Excel
+Si ya tenés productos cargados y querés modificar sus listas de precios:
 1. Entrá a **Aumento Masivo Precios** $\rightarrow$ Pestaña **"Importar / Exportar Excel"**.
-2. **Descargar Planilla:** Hacé clic en **"Descargar Excel (.xlsx)"**.
+2. **Descargar Planilla:** Hacé clic en **"Descargar Excel (.xlsx)"** para bajar los productos actuales con sus precios vigentes.
 3. **Modificar en Excel:** Abrí el archivo y actualizá los precios que desees *(no modificar la columna SKU)*.
 4. **Cargar Planilla:** Arrastrá el archivo modificado al recuadro de carga.
 5. **Comparador Automático:** Verás una tabla previa indicando exactamente qué artículos cambiaron, el precio anterior y el precio nuevo.

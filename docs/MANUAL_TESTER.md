@@ -282,6 +282,34 @@ El sistema dispone de cuentas preparadas para evaluar todos los niveles de privi
 
 ---
 
+#### 📥 CASO 15: Importación Masiva de Productos y Descarga de Plantilla Oficial
+* **Objetivo:** Comprobar la descarga de la plantilla estructurada de carga de catálogo y la importación masiva de artículos nuevos y actualizaciones desde Excel (.xlsx) o CSV.
+* **Pasos de Prueba:**
+  1. Ingresar como Administrador (`PIN 0000` o `1234`) y dirigirse a **Control de Stock** (`/inventario`).
+  2. Presionar el botón superior **`Importar Excel`**:
+     - Se abre el modal **"Importación Masiva de Productos"**.
+  3. **Descarga de Plantilla:**
+     - Hacer clic en **`Bajar Plantilla (.xlsx)`** (o `.csv`).
+     - Abrir el archivo descargado: verificar que contiene la hoja `Plantilla_Productos` con las columnas exactas (`Codigo_SKU`, `Codigo_Barras`, `Descripcion`, `Rubro`, `Marca`, `Unidad`, `Precio_Costo`, `Margen_Ganancia`, `Precio_Venta`, `Precio_Mayoreo`, `Stock_Actual`, `Stock_Minimo`, `Alicuota_IVA`) y 4 filas de ejemplo realistas, más la hoja `Instrucciones` con la guía de campos.
+  4. **Edición de Prueba:**
+     - En la plantilla descargada, agregar 2 artículos nuevos (ej. *"Lija al Agua Grano 120"* y *"Pegamento Epoxi 10 Minutos 50g"*).
+     - Modificar el precio de venta de uno de los artículos existentes (ej. SKU `HER-1001`).
+     - Guardar el archivo Excel.
+  5. **Carga y Vista Previa:**
+     - Arrastrar o seleccionar el archivo modificado en el campo de subida del modal.
+     - **Verificación de Vista Previa:** Comprobar que el sistema detecta correctamente:
+       - Resumen con chips: `X Nuevos` a crear y `Y a Actualizar`.
+       - Tabla interactiva con badges verdes (`NUEVO`) y azules (`ACTUALIZAR`).
+  6. **Confirmación:**
+     - Presionar **`Confirmar e Importar Productos`**.
+     - Comprobar que se muestra la notificación de éxito con la cantidad de registros procesados.
+     - En el catálogo de inventario, verificar que los artículos nuevos aparecen disponibles y con su stock inicial cargado.
+* **Resultado Esperado:**
+  - La plantilla se genera y descarga inmediatamente con todas las columnas estándar.
+  - El sistema discrimina productos nuevos de los existentes por su SKU y realiza la carga sin errores de consistencia.
+
+---
+
 ### 3. Checklist de Aprobación para Publicación (Go-Live)
 
 | Ítem | Criterio de Aceptación | Estado |
@@ -302,4 +330,5 @@ El sistema dispone de cuentas preparadas para evaluar todos los niveles de privi
 | 14 | Las tablas del sistema son compactas y mantienen visible la columna de acciones flotante (sticky). | [ ] |
 | 15 | El Armador de Presupuestos (`/armar-presupuesto`) gestiona ítems libres, bonificaciones y pase a venta. | [ ] |
 | 16 | El sistema bloquea la terminal por inactividad tras el tiempo configurado y activa cooldown de 30s tras 5 intentos fallidos. | [ ] |
+| 17 | Se puede descargar la plantilla oficial de carga e importar masivamente productos con vista previa y validación. | [ ] |
 
