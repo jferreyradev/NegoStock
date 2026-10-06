@@ -25,9 +25,17 @@ Sistema modular y multi-inquilino (*multi-tenant*) desarrollado para control int
 * **📱 Interfaz Compacta y Responsiva con Columnas Flotantes (Sticky):**
   - Tablas densas de alta productividad (`v-table--density-compact`) optimizadas para notebooks de mostrador (1024px / 1366px).
   - Columna de **Acciones** flotante fijada a la derecha con sombra y fondo opaco, permitiendo accionar cualquier registro sin perderse al scrollear horizontalmente.
-* **🔒 Seguridad de Privilegios (RBAC) y Modo Offline Cifrado:**
+* **📥 Importación Masiva, Plantilla Oficial y Vaciado Seguro de Tablas:**
+  - Descarga de plantilla oficial estructurada (`.xlsx` / `.csv`) con columnas oficiales y hoja de instrucciones.
+  - Lector inteligente y tolerante a puntuación, mayúsculas y acentos (`Inv. Minimo`, `Precio Costo`, etc.).
+  - Botón de **Vaciar Tablas** con confirmación de seguridad para arrancar desde cero sin datos de prueba.
+  - Carga inmediata en 1 clic del catálogo base original de ferretería (171 artículos reales).
+* **🧩 Arquitectura Modular SaaS (Feature Flags Exclusivo Desarrollador):**
+  - Control de licenciamiento protegido para el **Superusuario / Desarrollador (PIN `9999`)**.
+  - Presets en 1 clic (*Modo Esencial*, *Modo Comercial*, *Modo Gestión Total*) o interruptores individuales para 12 módulos desacoplados.
+* **🔒 Seguridad de Privilegios (RBAC), Timeout y Modo Offline Cifrado:**
   - Roles jerárquicos: `SUPERADMIN`, `ADMIN`, `ENCARGADO`, `CAJERO`, `VENDEDOR`.
-  - Los cajeros y vendedores no pueden ver costos, márgenes ni administrar usuarios ni copias de seguridad.
+  - Cierre automático de sesión por inactividad de la terminal y bloqueo de 30s ante 5 intentos fallidos de PIN.
   - Almacén local encriptado mediante IndexedDB y **AES-GCM 256 bits** con PBKDF2 (100.000 iteraciones).
   - Funcionamiento offline ininterrumpido con sincronización transparente bidireccional.
 
@@ -50,16 +58,18 @@ Sistema modular y multi-inquilino (*multi-tenant*) desarrollado para control int
 ## 📚 Documentación Técnica y Manuales de Usuario
 
 * **[Manual del Empleado (Cajeros y Vendedores)](file:///Users/jferreyradev/projects/ag/NegoStock/docs/MANUAL_EMPLEADO.md):**  
-  Guía operativa diaria de mostrador, atajos de teclado (`F2`, `F4`, `F6`, `F7`, `F8`), cobro con vuelto, emisión de presupuestos, remitos y reimpresión de tickets.
+  Guía operativa diaria de mostrador, atajos de teclado (`F2`, `F4`, `F6`, `F7`, `F8`), cobro con vuelto, emisión de presupuestos, remitos, timeout de terminal y consulta de Kardex.
 * **[Manual del Administrador (Dueño y Encargados)](file:///Users/jferreyradev/projects/ag/NegoStock/docs/MANUAL_ADMINISTRADOR.md):**  
-  Gestión integral de precios, aumento masivo porcentual, control de márgenes, auditoría de Kardex, Resumen de Ventas y administración de personal.
+  Gestión integral de precios, vaciado de tablas, aumento masivo porcentual, control de márgenes, auditoría de Kardex, Resumen de Ventas y administración de personal.
 * **[Manual de Pruebas y Validación (QA / Tester)](file:///Users/jferreyradev/projects/ag/NegoStock/docs/MANUAL_TESTER.md):**  
-  Matriz de 12 casos de prueba paso a paso con resultados esperados y checklist de 14 puntos para aprobación de puesta en producción (*Go-Live*).  
+  Matriz de 16 casos de prueba paso a paso con resultados esperados y checklist de 18 puntos para aprobación de puesta en producción (*Go-Live*).  
   📄 **Versión en PDF lista para descarga:** [`docs/MANUAL_TESTER.pdf`](file:///Users/jferreyradev/projects/ag/NegoStock/docs/MANUAL_TESTER.pdf) y accesible desde la web en `/MANUAL_TESTER.pdf`.
 * **[Manual Técnico del Desarrollador](file:///Users/jferreyradev/projects/ag/NegoStock/docs/MANUAL_DESARROLLADOR.md):**  
-  Arquitectura del stack Vue 3 + Pinia + Supabase, cifrado AES-GCM 256 en IndexedDB, motor de PDFs vectoriales, ciclo de vida del carrito y diseño CSS de tablas compactas flotantes.
+  Arquitectura del stack Vue 3 + Pinia + Supabase, arquitectura modular SaaS (Feature Flags), importador Excel, cifrado AES-GCM 256 en IndexedDB, motor de PDFs vectoriales y seguridad de terminal.
 * **[Diccionario de Base de Datos](file:///Users/jferreyradev/projects/ag/NegoStock/docs/DICCIONARIO_BASE_DE_DATOS.md):**  
   Estructura relacional completa en español, claves foráneas, índices y funciones almacenadas PL/pgSQL.
+* **[Manual de Puesta en Marcha y Despliegue](file:///Users/jferreyradev/projects/ag/NegoStock/docs/MANUAL_PUESTA_EN_MARCHA.md):**  
+  Configuración en Supabase, verificación de escritura RLS, carga de catálogo base y despliegue a producción.
 
 ---
 

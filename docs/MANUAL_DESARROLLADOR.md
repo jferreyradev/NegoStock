@@ -201,3 +201,43 @@ Para maximizar el espacio de trabajo en pantallas de 1024px o 1366px típicas de
 3. **Contención Horizontal:**  
    Los contenedores de tabla emplean `overflow-x: auto; width: 100%;` con barra de desplazamiento estilizada, evitando que la página entera ensanche la ventana del navegador.
 
+---
+
+### 10. Arquitectura Modular y Feature Flags (`src/stores/moduleStore.js`)
+Para comercializar NegoStock como un SaaS adaptable o por niveles de suscripción:
+
+1. **Exclusividad del Desarrollador:**  
+   El control de módulos está protegido estrictamente por `authStore.canManageModules` (`currentUser.role === 'SUPERADMIN'`, PIN `9999`). Ni los administradores/dueños ni los empleados pueden visualizar ni alterar el panel de licenciamiento.
+2. **Modos Pre-configurados:**  
+   * `SIMPLE`: Mostrador Esencial (Cobro rápido + Stock básico + Ventas).
+   * `COMERCIAL`: Suma Presupuestos [F6]/[F7], Armador de Pedidos, Remitos de Entrega, Tarifas Mayoristas y Clientes/Cta Cte.
+   * `COMPLETO`: Todas las herramientas activas (Inflación, Importación Excel, Informes Ejecutivos, Auditoría y Backups).
+3. **Catálogo de 12 Módulos Desacoplados:**  
+   `preventas`, `armadorPresupuesto`, `remitos`, `mayorista`, `clientes`, `reportesVentas`, `importacionExcel`, `kardex`, `aumentoMasivo`, `auditoriaCostos`, `multiUsuario`, `backupRestore`.
+4. **Protección en Vue Router:**  
+   Las rutas declaran en su `meta` el módulo requerido (ej. `requiredModule: 'reportesVentas'`). Si el módulo está desactivado, el guardián global redirige al operador inmediatamente al mostrador (`/`).
+
+---
+
+### 11. Motor de Importación Excel y Vaciado Seguro de Tablas
+1. **Lector Inteligente (`src/services/excelService.js`):**  
+   Función `parseProductImportFile` con algoritmo de normalización multinivel en `findKey`:
+   * Tolera espacios, guiones bajos, tildes, signos de puntuación y mayúsculas/minúsculas.
+   * Empareja encabezados heterogéneos (ej. `Inv. Minimo`, `Stock Mínimo`, `Minimo`, `Cant`).
+   * Limpieza de símbolos de moneda (`$`), separadores de miles y comas decimales.
+   * Autocalculado recíproco: si falta el precio de venta pero existe costo y margen %, se calcula automáticamente; si falta el margen %, se deduce de la diferencia entre venta y costo.
+2. **Vaciado Seguro y Prevención de Semillas (`productStore.clearProductsCatalog`):**  
+   * Ejecuta `secureClear('products_catalog')` y asienta la bandera booleana `catalog_is_cleared: true` en `app_metadata`.
+   * En `fetchProducts()`, si el catálogo está vacío pero `catalog_is_cleared` es verdadero, el sistema respeta el estado limpio y **no reinyecta** los productos semilla de prueba (`seedData.json`).
+3. **Archivo Base de Ferretería Original (`public/Catalogo_Base_Ferreteria_Original.xls`):**  
+   Integra de forma nativa los 171 artículos reales con sus SKUs numéricos y departamentos, permitiendo carga en 1 clic o drag & drop.
+
+---
+
+### 12. Seguridad de Terminal y Control de Inactividad
+1. **Timeout por Inactividad:**  
+   Temporizador reactivo en `App.vue` que escucha eventos throttled (`mousemove`, `keydown`, `touchstart`). 30 segundos antes de expirar, despliega un diálogo modal con cuenta regresiva. Si no hay interacción, invoca `authStore.logout()`, preserva el carrito en memoria y redirige a `/login?reason=timeout`.
+2. **Protección Anti-Fuerza Bruta de PIN (Rate Limiting):**  
+   En `LoginView.vue`, un contador monitoriza los intentos fallidos consecutivos de PIN. Al alcanzar 5 fallos, activa un cooldown de 30 segundos bloqueando el teclado numérico e impidiendo nuevos intentos hasta que el reloj llegue a 0.
+
+

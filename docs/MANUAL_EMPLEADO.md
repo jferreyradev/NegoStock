@@ -138,3 +138,23 @@ En ferreterías con separación física entre vendedores de salón y la caja de 
   * Podés seguir presupuestando, cobrando e imprimiendo comprobantes con normalidad.
   * Todas las operaciones se guardan en la memoria segura de la PC.
   * Al regresar la señal (o al pulsar *"Sincronizar"* en la barra superior), todos los comprobantes se subirán a la nube automáticamente sin duplicarse.
+
+---
+
+### 10. Cierre Automático por Inactividad y Bloqueo de Seguridad
+* **Protección ante Ausencias del Mostrador:**
+  * Si la terminal queda desatendida durante el tiempo fijado por el dueño (ej. 15 minutos), aparecerá en pantalla un diálogo con cuenta regresiva de 30 segundos: **`¿Seguís en la terminal?`**.
+  * Al presionar **"Continuar Trabajando"** (o mover el mouse o pulsar cualquier tecla), el aviso desaparece y seguís trabajando sin interrupción.
+  * Si no hay respuesta tras 30 segundos, el sistema **cierra la sesión de forma segura** para que nadie use tu usuario. Los artículos que tenías cargados en el changuito no se pierden: quedan guardados para cuando vuelvas a ingresar con tu PIN.
+* **Protección Anti-Intrusos (5 Intentos Fallidos):**
+  * Si alguien intenta adivinar un PIN e ingresa 5 códigos erróneos seguidos, la pantalla de acceso **se bloquea durante 30 segundos con el teclado desactivado**.
+
+---
+
+### 11. Consulta de Stock y Trazabilidad (Kardex)
+* En **Control de Stock (`/inventario`)**, junto a cada artículo disponés de un botón azul con icono de reloj/historia 🕒 (`mdi-history`).
+* Al presionarlo, la pestaña **"Kardex de Movimientos de Stock"** te muestra la historia completa del producto:
+  * Fecha y hora exacta de cada venta, ingreso de mercadería o devolución.
+  * Comprobante vinculado (Ticket X, Remito o Ajuste).
+  * Cantidad ingresada o descontada y el **stock resultante exacto** que quedó en el local tras cada movimiento.
+* Si un cliente te pide cambiar o devolver un artículo, o tenés dudas de por qué quedan pocas unidades en estantería, el Kardex te brinda la respuesta inmediata.

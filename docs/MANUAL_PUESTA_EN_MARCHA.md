@@ -110,11 +110,13 @@ Para que el personal pueda ingresar desde cualquier computadora o tablet del loc
 
 ---
 
-### 7. Comandos de Mantenimiento y Reseteo
+### 7. Comandos de Mantenimiento, Vaciado de Tablas y Reseteo
 
-| Situación | Archivo a Ejecutar | Qué hace |
+| Situación | Método / Archivo | Qué hace |
 | :--- | :--- | :--- |
-| **Limpiar datos de prueba** | [supabase/truncate_tables.sql](file:///Users/jferreyradev/projects/ag/NegoStock/supabase/truncate_tables.sql) | Vacía todas las ventas y productos de prueba en cascada, pero **mantiene la estructura, tablas y funciones intactas**. |
-| **Empezar de cero total** | [supabase/drop_all.sql](file:///Users/jferreyradev/projects/ag/NegoStock/supabase/drop_all.sql) | Destruye todo el esquema público y lo recrea virgen como si recién crearas la base. |
+| **Vaciar Tablas desde la Web** | Botón **`Vaciar Tablas`** en `/inventario` | Solicita confirmar escribiendo `VACIAR`. Limpia la memoria local IndexedDB cifrada, la tabla remota en Supabase y deja el catálogo en 0 productos listo para la carga real. |
+| **Cargar Archivo Base Original** | Botón **`Importar Excel`** $\rightarrow$ *"Cargar mi archivo base"* | Carga automáticamente los 171 artículos reales de ferretería desde `Catalogo_Base_Ferreteria_Original.xls` con sus rubros, costos y stock. |
+| **Limpiar datos de prueba (SQL)** | [supabase/truncate_tables.sql](file:///Users/jferreyradev/projects/ag/NegoStock/supabase/truncate_tables.sql) | Vacía todas las ventas y productos de prueba en cascada en Supabase, pero **mantiene la estructura, tablas y funciones intactas**. |
+| **Empezar de cero total (SQL)** | [supabase/drop_all.sql](file:///Users/jferreyradev/projects/ag/NegoStock/supabase/drop_all.sql) | Destruye todo el esquema público y lo recrea virgen como si recién crearas la base. |
 | **Re-verificar Escritura** | `node scripts/test_crud.cjs` | Ejecuta el test de ciclo completo de altas, modificaciones e historial. |
-| **Limpiar datos locales** | `localStorage.clear()` + borrar base `negostock_secure_db` en DevTools (F12) $\rightarrow$ Application. | Elimina la memoria local segura del navegador. |
+| **Limpiar datos locales (F12)** | `localStorage.clear()` + borrar base `negostock_secure_db` en DevTools (F12) $\rightarrow$ Application. | Elimina la memoria local segura del navegador. |
