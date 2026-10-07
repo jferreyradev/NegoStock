@@ -20,7 +20,7 @@ export const MODES = {
       kardex: true,
       aumentoMasivo: false,
       auditoriaCostos: false,
-      multiUsuario: false,
+      multiUsuario: true,
       backupRestore: false,
       advancedHeader: false
     }

@@ -326,10 +326,16 @@
           v-if="authStore.canManageUsers && moduleStore.modules.multiUsuario !== false"
           to="/usuarios"
           prepend-icon="mdi-account-cog-outline"
-          title="Personal y Permisos"
-          subtitle="Gestión de roles y PINs"
+          title="Usuarios y Personal"
+          subtitle="Gestión de empleados, roles y PINs"
           color="purple-darken-2"
-        />
+        >
+          <template #append>
+            <v-chip size="x-small" color="purple-lighten-4" variant="flat" class="text-purple-darken-4 font-weight-black">
+              ADMIN
+            </v-chip>
+          </template>
+        </v-list-item>
 
         <!-- Configuración del Negocio y Tickets -->
         <v-list-item
