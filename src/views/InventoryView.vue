@@ -1018,9 +1018,9 @@
     </v-dialog>
 
     <!-- MODAL DE IMPORTACIÓN MASIVA DE PRODUCTOS (EXCEL / CSV) -->
-    <v-dialog v-model="importDialog" max-width="860" persistent>
+    <v-dialog v-model="importDialog" max-width="900" scrollable persistent>
       <v-card class="rounded-xl overflow-hidden">
-        <v-card-title class="bg-teal-darken-2 text-white d-flex align-center justify-space-between py-3">
+        <v-card-title class="bg-teal-darken-2 text-white d-flex align-center justify-space-between py-3 flex-shrink-0">
           <div class="d-flex align-center">
             <v-icon icon="mdi-file-excel-box" class="mr-2" size="26" />
             <div>
@@ -1033,7 +1033,7 @@
           <v-btn icon="mdi-close" variant="text" size="small" color="white" @click="importDialog = false" />
         </v-card-title>
 
-        <v-card-text class="pa-4">
+        <v-card-text class="pa-4" style="max-height: 70vh;">
           <!-- PASO 1: DESCARGAR PLANTILLA -->
           <v-card variant="outlined" class="pa-4 mb-4 bg-teal-lighten-5 border-teal-lighten-3">
             <div class="d-flex align-start justify-space-between flex-wrap gap-2">
@@ -1163,17 +1163,17 @@
           </v-alert>
 
           <!-- PASO 3: VISTA PREVIA Y RESUMEN (SI HAY PRODUCTOS PARSEADOS) -->
-          <v-card v-if="parsedProducts.length > 0" variant="outlined" class="mb-2 border-grey-lighten-2 overflow-hidden">
-            <div class="pa-3 bg-grey-lighten-4 border-b d-flex align-center justify-space-between flex-wrap gap-2">
+          <v-card v-if="parsedProducts.length > 0" variant="outlined" class="mb-2 border-teal-lighten-2 overflow-hidden shadow-sm">
+            <div class="pa-3 bg-teal-lighten-5 border-b d-flex align-center justify-space-between flex-wrap gap-2">
               <div class="d-flex align-center">
                 <v-icon icon="mdi-table-check" color="teal-darken-2" class="mr-2" />
-                <span class="text-subtitle-2 font-weight-black">
-                  Vista Previa ({{ parsedProducts.length }} productos detectados)
+                <span class="text-subtitle-2 font-weight-black text-teal-darken-4">
+                  Paso 3: Vista Previa ({{ parsedProducts.length }} productos detectados)
                 </span>
               </div>
 
-              <!-- Resumen de Nuevos vs Existentes -->
-              <div class="d-flex ga-2">
+              <!-- Resumen y Botón Inmediato -->
+              <div class="d-flex align-center ga-2 flex-wrap">
                 <v-chip size="small" color="success" variant="flat" class="font-weight-bold">
                   <v-icon icon="mdi-plus-circle" start size="x-small" />
                   {{ importSummary.newCount }} Nuevos
@@ -1183,13 +1183,27 @@
                   {{ importSummary.updateCount }} a Actualizar
                 </v-chip>
                 <v-chip v-if="importSummary.ignoredCount > 0" size="small" color="grey" variant="tonal">
-                  {{ importSummary.ignoredCount }} vacíos ignorados
+                  {{ importSummary.ignoredCount }} ignorados
                 </v-chip>
+
+                <!-- BOTON VISIBLE DIRECTO EN EL HEADER DE LA VISTA PREVIA -->
+                <v-btn
+                  color="teal-darken-2"
+                  variant="flat"
+                  size="small"
+                  class="font-weight-black text-none shadow-sm ml-2 text-white"
+                  :disabled="parsedProducts.length === 0 || isImporting"
+                  :loading="isImporting"
+                  @click="executeImport"
+                >
+                  <v-icon icon="mdi-database-import" start />
+                  Proceder a la Carga ({{ parsedProducts.length }})
+                </v-btn>
               </div>
             </div>
 
             <!-- Tabla de vista previa -->
-            <div class="responsive-table-wrapper" style="max-height: 260px; overflow-y: auto;">
+            <div class="responsive-table-wrapper" style="max-height: 240px; overflow-y: auto;">
               <v-table density="compact" hover class="compact-update-table">
                 <thead>
                   <tr class="bg-grey-lighten-5">
@@ -1237,12 +1251,31 @@
             <div v-if="parsedProducts.length > 50" class="pa-2 bg-grey-lighten-4 text-center text-caption text-grey-darken-1 border-t">
               Mostrando las primeras 50 filas de {{ parsedProducts.length }} productos a importar.
             </div>
+
+            <!-- Botonera al pie de la tabla de vista previa -->
+            <div class="pa-3 bg-teal-lighten-5 border-t d-flex align-center justify-space-between flex-wrap gap-2">
+              <div class="d-flex align-center text-caption text-teal-darken-4 font-weight-medium">
+                <v-icon icon="mdi-check-circle" color="teal-darken-2" class="mr-1" size="small" />
+                Listo para procesar {{ parsedProducts.length }} productos
+              </div>
+              <v-btn
+                color="teal-darken-2"
+                variant="flat"
+                class="font-weight-black text-none shadow-sm text-white"
+                :disabled="parsedProducts.length === 0 || isImporting"
+                :loading="isImporting"
+                @click="executeImport"
+              >
+                <v-icon icon="mdi-database-import" start />
+                Proceder a la Carga ({{ parsedProducts.length }} Productos)
+              </v-btn>
+            </div>
           </v-card>
         </v-card-text>
 
         <v-divider />
 
-        <v-card-actions class="pa-4 bg-grey-lighten-4 d-flex justify-space-between align-center">
+        <v-card-actions class="pa-4 bg-grey-lighten-4 d-flex justify-space-between align-center flex-shrink-0">
           <v-btn
             variant="text"
             color="grey-darken-1"
