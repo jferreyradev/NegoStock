@@ -1938,6 +1938,7 @@ async function saveProductForm() {
   } else {
     res = await productStore.createProduct({ ...form });
     if (res.success) {
+      page.value = 1;
       snackbar.text = `Artículo "${form.name}" dado de alta exitosamente`;
       snackbar.color = 'success';
       productDialog.value = false;
@@ -1979,9 +1980,9 @@ function openAdjustDialog(prod) {
   adjustDialog.value = true;
 }
 
-function saveStockAdjustment() {
+async function saveStockAdjustment() {
   if (selectedProd.value) {
-    productStore.updateStock(selectedProd.value.id, newStockVal.value, movementReason.value);
+    await productStore.updateStock(selectedProd.value.id, newStockVal.value, movementReason.value);
     adjustDialog.value = false;
     snackbar.text = `Stock de "${selectedProd.value.name}" actualizado a ${newStockVal.value}`;
     snackbar.color = 'info';

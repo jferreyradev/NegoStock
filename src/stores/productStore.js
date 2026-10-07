@@ -707,7 +707,7 @@ export const useProductStore = defineStore('products', {
           }
         };
 
-        this.products[idx] = updatedProduct;
+        this.products.splice(idx, 1, updatedProduct);
         this.refreshCategoriesAndBrands();
         await secureSet('products_catalog', productId, updatedProduct);
 
