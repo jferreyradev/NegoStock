@@ -1404,7 +1404,8 @@
 </template>
 
 <script setup>
-import { ref, computed, reactive } from 'vue';
+import { ref, computed, reactive, onMounted, watch } from 'vue';
+import { useRoute } from 'vue-router';
 import { useProductStore } from '@/stores/productStore';
 import { useAuthStore } from '@/stores/authStore';
 import { useModuleStore } from '@/stores/moduleStore';
@@ -1958,6 +1959,31 @@ function openEditDialog(prod) {
   });
   productDialog.value = true;
 }
+
+const route = useRoute();
+
+function checkRouteForEdit() {
+  if (route.query.editSku) {
+    const sku = String(route.query.editSku).trim();
+    productStore.searchQuery = sku;
+    const target = productStore.products.find(p => p.sku && p.sku.toLowerCase() === sku.toLowerCase());
+    if (target && authStore.canEditPrices) {
+      openEditDialog(target);
+    }
+  } else if (route.query.search) {
+    productStore.searchQuery = String(route.query.search).trim();
+  }
+}
+
+onMounted(() => {
+  checkRouteForEdit();
+});
+
+watch(() => [route.query.editSku, productStore.products.length], () => {
+  if (route.query.editSku) {
+    checkRouteForEdit();
+  }
+});
 
 // Guardar alta o edición
 async function saveProductForm() {
