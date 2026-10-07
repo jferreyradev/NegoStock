@@ -22,10 +22,30 @@
       </v-col>
 
       <v-col cols="12" sm="6" :md="authStore.canViewCosts ? 3 : 4">
-        <v-card elevation="2" class="pa-3" :class="{ 'bg-red-lighten-5': productStore.lowStockCount > 0 }">
+        <v-card
+          elevation="2"
+          class="pa-3 cursor-pointer transition-swing"
+          :class="{
+            'bg-red-lighten-5': productStore.lowStockCount > 0,
+            'border-error border-md': productStore.filterOnlyLowStock
+          }"
+          title="Hacé clic para filtrar y ver sólo artículos con stock bajo o agotado"
+          @click="productStore.filterOnlyLowStock = !productStore.filterOnlyLowStock"
+        >
           <div class="d-flex align-center justify-space-between">
             <div>
-              <div class="text-caption text-grey font-weight-bold">STOCK CRÍTICO / MÍNIMO</div>
+              <div class="text-caption text-grey font-weight-bold d-flex align-center">
+                STOCK CRÍTICO / MÍNIMO
+                <v-chip
+                  v-if="productStore.filterOnlyLowStock"
+                  size="x-small"
+                  color="error"
+                  variant="flat"
+                  class="ml-1 text-2xs font-weight-black"
+                >
+                  FILTRADO
+                </v-chip>
+              </div>
               <div class="text-h5 font-weight-black text-error">{{ productStore.lowStockCount }}</div>
             </div>
             <v-avatar color="error" variant="tonal" size="44">
@@ -1055,6 +1075,9 @@
                   <v-chip size="x-small" color="blue-grey-darken-1" variant="tonal">
                     Venta = Costo + Margen % (Autocálculo)
                   </v-chip>
+                  <v-chip size="x-small" color="blue-grey-darken-1" variant="tonal">
+                    Stock Mínimo (Alerta de reposición)
+                  </v-chip>
                 </div>
               </div>
 
@@ -1215,6 +1238,7 @@
                     <th class="font-weight-bold text-right" style="width: 95px;">Costo</th>
                     <th class="font-weight-bold text-right" style="width: 95px;">Venta</th>
                     <th class="font-weight-bold text-center" style="width: 70px;">Stock</th>
+                    <th class="font-weight-bold text-center" style="width: 75px;">Mínimo</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1244,6 +1268,7 @@
                     <td class="text-right text-caption font-mono">${{ formatMoney(p.costPrice) }}</td>
                     <td class="text-right text-caption font-mono font-weight-bold text-primary">${{ formatMoney(p.sellingPrice) }}</td>
                     <td class="text-center text-caption font-mono font-weight-bold">{{ p.stock }}</td>
+                    <td class="text-center text-caption font-mono text-grey-darken-1">{{ p.minStock }}</td>
                   </tr>
                 </tbody>
               </v-table>

@@ -13,6 +13,7 @@ export function exportCatalogToExcel(products, format = 'xlsx') {
     'Precio Venta': Number(p.sellingPrice || 0),
     'Precio Mayoreo': Number(p.wholesalePrice || 0),
     'Stock Actual': Number(p.stock || 0),
+    'Stock Minimo': Number(p.minStock || 0),
     'Unidad': p.unit || 'u'
   }));
 
@@ -27,7 +28,8 @@ export function exportCatalogToExcel(products, format = 'xlsx') {
     { wch: 16 }, // Costo
     { wch: 16 }, // Venta
     { wch: 16 }, // Mayoreo
-    { wch: 12 }, // Stock
+    { wch: 12 }, // Stock Actual
+    { wch: 12 }, // Stock Minimo
     { wch: 10 }  // Unidad
   ];
 

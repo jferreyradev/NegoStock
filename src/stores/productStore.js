@@ -10,6 +10,7 @@ import {
 } from '@/services/secureStorage';
 import { useSyncModeStore } from './syncModeStore';
 import { useAuthStore } from './authStore';
+import { syncState } from '@/services/syncQueue';
 
 async function getOrCreateCategory(comercioId, catName) {
   if (!catName || !isSupabaseConfigured || !supabase) return null;
