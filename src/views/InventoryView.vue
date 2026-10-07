@@ -1591,8 +1591,17 @@ async function executeImport() {
     });
 
     if (res.success) {
+      page.value = 1;
+      productStore.searchQuery = '';
+      productStore.selectedCategory = 'TODOS';
+      productStore.filterOnlyLowStock = false;
+      productStore.filterAvailability = 'TODOS';
+      productStore.refreshCategoriesAndBrands();
+
       importDialog.value = false;
-      snackbar.text = `¡Importación exitosa! Se procesaron ${res.total} artículos (${res.createdCount} nuevos dados de alta, ${res.updatedCount} actualizados).`;
+      snackbar.text = res.cloudSynced
+        ? `¡Importación exitosa! Se procesaron ${res.total} artículos y se guardaron en la base de datos (${res.createdCount} nuevos, ${res.updatedCount} actualizados).`
+        : `¡Importación exitosa! Se procesaron ${res.total} artículos (${res.createdCount} nuevos, ${res.updatedCount} actualizados).`;
       snackbar.color = 'success';
       snackbar.show = true;
     } else {

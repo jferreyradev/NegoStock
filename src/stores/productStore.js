@@ -182,31 +182,39 @@ export const useProductStore = defineStore('products', {
                 marcas ( nombre ),
                 unidades_medida ( abreviatura )
               `)
+              .eq('comercio_id', 1)
               .order('nombre');
 
-            if (!error && data && data.length > 0) {
-              this.products = data.map(p => ({
-                id: p.id,
-                sku: p.codigo_sku,
-                barcode: p.codigo_barras || '',
-                name: p.nombre,
-                description: p.descripcion || '',
-                costPrice: Number(p.precio_costo || 0),
-                margin: Number(p.margen_ganancia || 100),
-                sellingPrice: Number(p.precio_venta || 0),
-                wholesalePrice: Number(p.precio_mayoreo || 0),
-                ivaRate: Number(p.alicuota_iva || 21),
-                stock: Number(p.stock_actual || 0),
-                minStock: Number(p.stock_minimo || 0),
-                isActive: p.esta_activo !== false,
-                dept: p.categorias?.nombre || 'GENERAL',
-                brand: p.marcas?.nombre || 'GENÉRICO',
-                unit: p.unidades_medida?.abreviatura || 'u'
-              }));
-              loadedFromSupabase = true;
-
-              // Guardar réplica cifrada en IndexedDB para disponibilidad offline
-              await this.cacheAllProductsToSecureStorage();
+            if (!error && data) {
+              if (data.length > 0) {
+                this.products = data.map(p => ({
+                  id: p.id,
+                  sku: p.codigo_sku,
+                  barcode: p.codigo_barras || '',
+                  name: p.nombre,
+                  description: p.descripcion || '',
+                  costPrice: Number(p.precio_costo || 0),
+                  margin: Number(p.margen_ganancia || 100),
+                  sellingPrice: Number(p.precio_venta || 0),
+                  wholesalePrice: Number(p.precio_mayoreo || 0),
+                  ivaRate: Number(p.alicuota_iva || 21),
+                  stock: Number(p.stock_actual || 0),
+                  minStock: Number(p.stock_minimo || 0),
+                  isActive: p.esta_activo !== false,
+                  dept: p.categorias?.nombre || 'GENERAL',
+                  brand: p.marcas?.nombre || 'GENÉRICO',
+                  unit: p.unidades_medida?.abreviatura || 'u'
+                }));
+                loadedFromSupabase = true;
+                await secureSet('app_metadata', 'catalog_is_cleared', false);
+                await this.cacheAllProductsToSecureStorage();
+              } else {
+                const isCleared = await secureGet('app_metadata', 'catalog_is_cleared');
+                if (isCleared) {
+                  this.products = [];
+                  loadedFromSupabase = true;
+                }
+              }
             }
           } catch (supErr) {
             console.warn('[ProductStore] Falla conectando a Supabase. Cargando caché cifrada local:', supErr);
@@ -1072,7 +1080,7 @@ export const useProductStore = defineStore('products', {
         // Si Supabase está conectado, eliminar de la tabla remota
         if (isSupabaseConfigured && supabase) {
           try {
-            await supabase.from('productos').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+            await supabase.from('productos').delete().eq('comercio_id', 1);
           } catch (supErr) {
             console.warn('[ProductStore] Aviso eliminando productos en Supabase:', supErr);
           }
@@ -1109,6 +1117,53 @@ export const useProductStore = defineStore('products', {
       const operatorBadge = `${opName} (${authStore.roleLabel || opRole})`;
 
       try {
+        // Pre-cargar y mapear categorías, marcas y unidades en memoria para rendimiento óptimo
+        const catMap = new Map();
+        const brandMap = new Map();
+        const unitMap = new Map();
+
+        if (isSupabaseConfigured && supabase) {
+          try {
+            const { data: cData } = await supabase.from('categorias').select('id, nombre').eq('comercio_id', 1);
+            cData?.forEach(c => catMap.set(c.nombre.toUpperCase(), c.id));
+
+            const { data: bData } = await supabase.from('marcas').select('id, nombre').eq('comercio_id', 1);
+            bData?.forEach(b => brandMap.set(b.nombre.toUpperCase(), b.id));
+
+            const { data: uData } = await supabase.from('unidades_medida').select('id, abreviatura').eq('comercio_id', 1);
+            uData?.forEach(u => unitMap.set(u.abreviatura.toLowerCase(), u.id));
+
+            // Asegurar creación de categorías necesarias en Supabase
+            const distinctCats = [...new Set(items.map(it => (it.dept || 'GENERAL').trim().toUpperCase()))];
+            for (const catName of distinctCats) {
+              if (catName && !catMap.has(catName)) {
+                const id = await getOrCreateCategory(1, catName);
+                if (id) catMap.set(catName, id);
+              }
+            }
+
+            // Asegurar creación de marcas necesarias en Supabase
+            const distinctBrands = [...new Set(items.map(it => (it.brand || 'GENÉRICO').trim().toUpperCase()))];
+            for (const brandName of distinctBrands) {
+              if (brandName && !brandMap.has(brandName)) {
+                const id = await getOrCreateBrand(1, brandName);
+                if (id) brandMap.set(brandName, id);
+              }
+            }
+
+            // Asegurar creación de unidades necesarias en Supabase
+            const distinctUnits = [...new Set(items.map(it => (it.unit || 'u').trim().toLowerCase()))];
+            for (const unitAbbr of distinctUnits) {
+              if (unitAbbr && !unitMap.has(unitAbbr)) {
+                const id = await getOrCreateUnit(1, unitAbbr);
+                if (id) unitMap.set(unitAbbr, id);
+              }
+            }
+          } catch (metaErr) {
+            console.warn('[ProductStore] Falla precargando metadatos para importación:', metaErr);
+          }
+        }
+
         for (let i = 0; i < items.length; i++) {
           const item = items[i];
           const skuClean = item.sku ? item.sku.trim() : '';
@@ -1222,7 +1277,7 @@ export const useProductStore = defineStore('products', {
         // Actualizar categorías y marcas dinámicas
         this.refreshCategoriesAndBrands();
 
-        // Si Supabase está disponible, sincronizar lote importado en la nube
+        // Si Supabase está disponible, sincronizar lote importado en la nube con las FKs resueltas
         let cloudSynced = false;
         if (isSupabaseConfigured && supabase && syncState.isOnline) {
           try {
@@ -1232,6 +1287,9 @@ export const useProductStore = defineStore('products', {
               codigo_barras: p.barcode || null,
               nombre: p.name,
               descripcion: p.description || null,
+              categoria_id: catMap.get(p.dept) || null,
+              marca_id: brandMap.get(p.brand) || null,
+              unidad_id: unitMap.get(p.unit) || null,
               precio_costo: p.costPrice || 0,
               margen_ganancia: p.margin || 100,
               precio_venta: p.sellingPrice || 0,
@@ -1244,12 +1302,24 @@ export const useProductStore = defineStore('products', {
 
             for (let chunkIdx = 0; chunkIdx < supabaseBatch.length; chunkIdx += 50) {
               const chunk = supabaseBatch.slice(chunkIdx, chunkIdx + 50);
-              const { error: upsertErr } = await supabase
+              const { data: upsertedRows, error: upsertErr } = await supabase
                 .from('productos')
-                .upsert(chunk, { onConflict: 'codigo_sku' });
+                .upsert(chunk, { onConflict: 'comercio_id,codigo_sku' })
+                .select('id, codigo_sku');
+
               if (upsertErr) {
-                console.warn('[ProductStore] Aviso subiendo lote a Supabase:', upsertErr.message);
+                console.error('[ProductStore] Error subiendo lote a Supabase:', upsertErr.message);
                 break;
+              }
+
+              // Mapear los IDs generados por Supabase de vuelta a this.products
+              if (upsertedRows && upsertedRows.length > 0) {
+                for (const row of upsertedRows) {
+                  const target = this.products.find(p => p.sku === row.codigo_sku);
+                  if (target) {
+                    target.id = row.id;
+                  }
+                }
               }
             }
             cloudSynced = true;
@@ -1257,6 +1327,9 @@ export const useProductStore = defineStore('products', {
             console.warn('[ProductStore] Falla sincronizando lote con Supabase:', supBatchErr);
           }
         }
+
+        // Re-guardar réplica en IndexedDB con los IDs definitivos
+        await this.cacheAllProductsToSecureStorage();
 
         return {
           success: true,
