@@ -3,6 +3,10 @@
 
 Este manual está diseñado para el propietario o administrador general del comercio (ferretería, corralón, pinturería). El rol **`ADMIN`** cuenta con acceso irrestricto a costos de reposición, márgenes de ganancia, reportes ejecutivos de facturación, actualización masiva de precios, gestión de empleados y auditoría de inventario.
 
+> 📚 **Guías Complementarias Directas:**
+> - Para el paso a paso de parametrización comercial, ticketera y catálogo inicial, consultá: [MANUAL_CONFIGURACION_SISTEMA.md](file:///Users/jferreyradev/projects/ag/NegoStock/docs/MANUAL_CONFIGURACION_SISTEMA.md).
+> - Para el desglose exhaustivo de los 5 roles y su matriz de funciones, consultá: [MATRIZ_DE_PERFILES_Y_PERMISOS.md](file:///Users/jferreyradev/projects/ag/NegoStock/docs/MATRIZ_DE_PERFILES_Y_PERMISOS.md).
+
 ---
 
 ### 1. Acceso al Sistema, Cuentas y Seguridad de Sesión
