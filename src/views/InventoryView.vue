@@ -106,10 +106,10 @@
           <!-- Botón de Importar Catálogo Excel (Sólo Admin / Encargado y Módulo Habilitado) -->
           <v-btn
             v-if="authStore.canEditPrices && moduleStore.modules.importacionExcel !== false"
-            color="teal-darken-2"
-            variant="tonal"
+            color="teal-darken-1"
+            variant="flat"
             prepend-icon="mdi-file-excel-box"
-            class="font-weight-bold text-none mr-2"
+            class="font-weight-bold text-none text-white shadow-sm mr-2"
             title="Importar productos por lote desde Excel o CSV"
             @click="openImportDialog"
           >
@@ -334,8 +334,34 @@
             </tr>
 
             <tr v-if="productStore.filteredProducts.length === 0">
-              <td colspan="11" class="text-center py-6 text-grey">
-                No se encontraron artículos con los criterios seleccionados
+              <td colspan="11" class="text-center py-8">
+                <v-icon icon="mdi-package-variant-closed" size="48" color="grey-lighten-1" class="mb-2" />
+                <div class="text-h6 font-weight-bold text-grey-darken-2 mb-1">
+                  {{ productStore.products.length === 0 ? 'El catálogo está completamente vacío' : 'No se encontraron artículos con los criterios seleccionados' }}
+                </div>
+                <div v-if="productStore.products.length === 0" class="text-body-2 text-grey mb-4">
+                  Las tablas fueron vaciadas para arrancar de cero. Podés cargar tu archivo original o importar una planilla.
+                </div>
+                <div v-if="productStore.products.length === 0 && authStore.canEditPrices" class="d-flex justify-center flex-wrap gap-2">
+                  <v-btn
+                    color="teal-darken-1"
+                    variant="flat"
+                    prepend-icon="mdi-file-excel-box"
+                    class="font-weight-bold text-none text-white shadow-sm mr-2 mb-2"
+                    @click="openImportDialog"
+                  >
+                    Importar Planilla Excel / CSV
+                  </v-btn>
+                  <v-btn
+                    color="primary"
+                    variant="tonal"
+                    prepend-icon="mdi-database-plus"
+                    class="font-weight-bold text-none mb-2"
+                    @click="loadOriginalBaseFile"
+                  >
+                    Cargar mi archivo base (171 productos)
+                  </v-btn>
+                </div>
               </td>
             </tr>
           </tbody>
