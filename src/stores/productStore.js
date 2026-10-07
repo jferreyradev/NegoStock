@@ -1279,7 +1279,7 @@ export const useProductStore = defineStore('products', {
 
         // Si Supabase está disponible, sincronizar lote importado en la nube con las FKs resueltas
         let cloudSynced = false;
-        if (isSupabaseConfigured && supabase && syncState.isOnline) {
+        if (isSupabaseConfigured && supabase) {
           try {
             const supabaseBatch = this.products.map(p => ({
               comercio_id: 1,
@@ -1287,25 +1287,27 @@ export const useProductStore = defineStore('products', {
               codigo_barras: p.barcode || null,
               nombre: p.name,
               descripcion: p.description || null,
-              categoria_id: catMap.get(p.dept) || null,
-              marca_id: brandMap.get(p.brand) || null,
-              unidad_id: unitMap.get(p.unit) || null,
-              precio_costo: p.costPrice || 0,
-              margen_ganancia: p.margin || 100,
-              precio_venta: p.sellingPrice || 0,
-              precio_mayoreo: p.wholesalePrice || 0,
-              stock_actual: p.stock || 0,
-              stock_minimo: p.minStock || 0,
-              alicuota_iva: p.ivaRate || 21,
+              categoria_id: catMap.get((p.dept || 'GENERAL').trim().toUpperCase()) || null,
+              marca_id: brandMap.get((p.brand || 'GENÉRICO').trim().toUpperCase()) || null,
+              unidad_id: unitMap.get((p.unit || 'u').trim().toLowerCase()) || null,
+              precio_costo: Number(p.costPrice || 0),
+              margen_ganancia: Number(p.margin || 100),
+              precio_venta: Number(p.sellingPrice || 0),
+              precio_mayoreo: Number(p.wholesalePrice || 0),
+              stock_actual: Number(p.stock || 0),
+              stock_minimo: Number(p.minStock || 0),
+              alicuota_iva: Number(p.ivaRate || 21),
               esta_activo: p.isActive !== false
             }));
+
+            const initialMovements = [];
 
             for (let chunkIdx = 0; chunkIdx < supabaseBatch.length; chunkIdx += 50) {
               const chunk = supabaseBatch.slice(chunkIdx, chunkIdx + 50);
               const { data: upsertedRows, error: upsertErr } = await supabase
                 .from('productos')
                 .upsert(chunk, { onConflict: 'comercio_id,codigo_sku' })
-                .select('id, codigo_sku');
+                .select('id, codigo_sku, stock_actual, precio_costo');
 
               if (upsertErr) {
                 console.error('[ProductStore] Error subiendo lote a Supabase:', upsertErr.message);
@@ -1319,9 +1321,29 @@ export const useProductStore = defineStore('products', {
                   if (target) {
                     target.id = row.id;
                   }
+                  if (Number(row.stock_actual) > 0) {
+                    initialMovements.push({
+                      comercio_id: 1,
+                      producto_id: row.id,
+                      tipo_movimiento: 'INICIAL',
+                      cantidad: Number(row.stock_actual),
+                      saldo_posterior: Number(row.stock_actual),
+                      costo_unitario: Number(row.precio_costo || 0),
+                      notas: `Stock inicial por importación [por ${operatorBadge}]`
+                    });
+                  }
                 }
               }
             }
+
+            // Registrar movimientos de stock inicial en Supabase
+            if (initialMovements.length > 0) {
+              for (let sIdx = 0; sIdx < initialMovements.length; sIdx += 50) {
+                const sChunk = initialMovements.slice(sIdx, sIdx + 50);
+                await supabase.from('stock_movimientos').insert(sChunk);
+              }
+            }
+
             cloudSynced = true;
           } catch (supBatchErr) {
             console.warn('[ProductStore] Falla sincronizando lote con Supabase:', supBatchErr);
@@ -1340,6 +1362,161 @@ export const useProductStore = defineStore('products', {
         };
       } catch (err) {
         console.error('[ProductStore] Error en importProductsBatch:', err);
+        return { success: false, error: err.message };
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    /**
+     * SUBIR / SINCRONIZAR CATÁLOGO LOCAL COMPLETO HACIA SUPABASE
+     * Toma todos los productos actualmente cargados en memoria o IndexedDB,
+     * resuelve y crea las categorías, marcas y unidades en Supabase,
+     * e inserta/actualiza todos los productos en public.productos con sus relaciones.
+     * Al terminar, actualiza los IDs de Supabase en IndexedDB.
+     */
+    async syncCatalogToCloud() {
+      if (!isSupabaseConfigured || !supabase) {
+        return { success: false, error: 'Supabase no está configurado o no hay credenciales.' };
+      }
+
+      // Asegurar tener los productos cargados
+      if (!this.products || this.products.length === 0) {
+        const cached = await secureGetAll('products_catalog');
+        if (cached && cached.length > 0) {
+          this.products = cached;
+        } else {
+          return { success: false, error: 'No hay productos en el catálogo local para sincronizar.' };
+        }
+      }
+
+      this.loading = true;
+      try {
+        const authStore = useAuthStore();
+        const opName = authStore.currentUser?.fullName || 'Administrador';
+        const opRole = authStore.currentUser?.role || 'ADMIN';
+        const operatorBadge = `${opName} (${authStore.roleLabel || opRole})`;
+
+        const catMap = new Map();
+        const brandMap = new Map();
+        const unitMap = new Map();
+
+        const { data: cData } = await supabase.from('categorias').select('id, nombre').eq('comercio_id', 1);
+        cData?.forEach(c => catMap.set(c.nombre.toUpperCase(), c.id));
+
+        const { data: bData } = await supabase.from('marcas').select('id, nombre').eq('comercio_id', 1);
+        bData?.forEach(b => brandMap.set(b.nombre.toUpperCase(), b.id));
+
+        const { data: uData } = await supabase.from('unidades_medida').select('id, abreviatura').eq('comercio_id', 1);
+        uData?.forEach(u => unitMap.set(u.abreviatura.toLowerCase(), u.id));
+
+        // 1. Asegurar categorías en Supabase
+        const distinctCats = [...new Set(this.products.map(it => (it.dept || 'GENERAL').trim().toUpperCase()))];
+        for (const catName of distinctCats) {
+          if (catName && !catMap.has(catName)) {
+            const id = await getOrCreateCategory(1, catName);
+            if (id) catMap.set(catName, id);
+          }
+        }
+
+        // 2. Asegurar marcas en Supabase
+        const distinctBrands = [...new Set(this.products.map(it => (it.brand || 'GENÉRICO').trim().toUpperCase()))];
+        for (const brandName of distinctBrands) {
+          if (brandName && !brandMap.has(brandName)) {
+            const id = await getOrCreateBrand(1, brandName);
+            if (id) brandMap.set(brandName, id);
+          }
+        }
+
+        // 3. Asegurar unidades en Supabase
+        const distinctUnits = [...new Set(this.products.map(it => (it.unit || 'u').trim().toLowerCase()))];
+        for (const unitAbbr of distinctUnits) {
+          if (unitAbbr && !unitMap.has(unitAbbr)) {
+            const id = await getOrCreateUnit(1, unitAbbr);
+            if (id) unitMap.set(unitAbbr, id);
+          }
+        }
+
+        // 4. Preparar payload para Supabase
+        const supabaseBatch = this.products.map(p => ({
+          comercio_id: 1,
+          codigo_sku: p.sku,
+          codigo_barras: p.barcode || null,
+          nombre: p.name,
+          descripcion: p.description || null,
+          categoria_id: catMap.get((p.dept || 'GENERAL').trim().toUpperCase()) || null,
+          marca_id: brandMap.get((p.brand || 'GENÉRICO').trim().toUpperCase()) || null,
+          unidad_id: unitMap.get((p.unit || 'u').trim().toLowerCase()) || null,
+          precio_costo: Number(p.costPrice || 0),
+          margen_ganancia: Number(p.margin || 100),
+          precio_venta: Number(p.sellingPrice || 0),
+          precio_mayoreo: Number(p.wholesalePrice || 0),
+          stock_actual: Number(p.stock || 0),
+          stock_minimo: Number(p.minStock || 0),
+          alicuota_iva: Number(p.ivaRate || 21),
+          esta_activo: p.isActive !== false
+        }));
+
+        let syncedRowsCount = 0;
+        const initialMovements = [];
+
+        for (let chunkIdx = 0; chunkIdx < supabaseBatch.length; chunkIdx += 50) {
+          const chunk = supabaseBatch.slice(chunkIdx, chunkIdx + 50);
+          const { data: upsertedRows, error: upsertErr } = await supabase
+            .from('productos')
+            .upsert(chunk, { onConflict: 'comercio_id,codigo_sku' })
+            .select('id, codigo_sku, stock_actual, precio_costo');
+
+          if (upsertErr) {
+            console.error('[ProductStore] Error subiendo lote a Supabase:', upsertErr.message);
+            throw new Error(`Error en lote: ${upsertErr.message}`);
+          }
+
+          if (upsertedRows && upsertedRows.length > 0) {
+            syncedRowsCount += upsertedRows.length;
+            for (const row of upsertedRows) {
+              const target = this.products.find(p => p.sku === row.codigo_sku);
+              if (target) {
+                target.id = row.id;
+              }
+              if (Number(row.stock_actual) > 0) {
+                initialMovements.push({
+                  comercio_id: 1,
+                  producto_id: row.id,
+                  tipo_movimiento: 'INICIAL',
+                  cantidad: Number(row.stock_actual),
+                  saldo_posterior: Number(row.stock_actual),
+                  costo_unitario: Number(row.precio_costo || 0),
+                  notas: `Stock inicial por sincronización con la nube [por ${operatorBadge}]`
+                });
+              }
+            }
+          }
+        }
+
+        // 5. Registrar movimientos de stock inicial si no existen
+        if (initialMovements.length > 0) {
+          try {
+            for (let sIdx = 0; sIdx < initialMovements.length; sIdx += 50) {
+              const sChunk = initialMovements.slice(sIdx, sIdx + 50);
+              await supabase.from('stock_movimientos').insert(sChunk);
+            }
+          } catch (smErr) {
+            console.warn('[ProductStore] Aviso insertando stock_movimientos iniciales:', smErr);
+          }
+        }
+
+        // 6. Re-guardar réplica en IndexedDB con los IDs definitivos
+        await this.cacheAllProductsToSecureStorage();
+        await secureSet('app_metadata', 'catalog_is_cleared', false);
+
+        return {
+          success: true,
+          syncedCount: syncedRowsCount,
+          total: this.products.length
+        };
+      } catch (err) {
+        console.error('[ProductStore] Error en syncCatalogToCloud:', err);
         return { success: false, error: err.message };
       } finally {
         this.loading = false;

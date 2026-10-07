@@ -136,6 +136,20 @@
             Importar Excel
           </v-btn>
 
+          <!-- Botón Sincronizar / Subir Catálogo a Supabase -->
+          <v-btn
+            v-if="authStore.isAdmin"
+            color="primary"
+            variant="tonal"
+            prepend-icon="mdi-cloud-upload"
+            class="font-weight-bold text-none mr-2"
+            title="Sincronizar y subir catálogo local a Supabase (tablas remotas y relaciones)"
+            :loading="isSyncingCloud"
+            @click="handleSyncCatalogToCloud"
+          >
+            Subir a Supabase
+          </v-btn>
+
           <!-- Botón Exportar Catálogo a Excel -->
           <v-btn
             color="grey-darken-2"
@@ -1531,6 +1545,36 @@ function handleExportCatalog() {
   snackbar.text = `¡Catálogo completo exportado a Excel (${productStore.products.length} artículos)!`;
   snackbar.color = 'success';
   snackbar.show = true;
+}
+
+const isSyncingCloud = ref(false);
+
+async function handleSyncCatalogToCloud() {
+  if (!authStore.isAdmin) {
+    snackbar.text = 'Acceso Denegado: Solo el Administrador puede sincronizar con la nube.';
+    snackbar.color = 'error';
+    snackbar.show = true;
+    return;
+  }
+  isSyncingCloud.value = true;
+  try {
+    const res = await productStore.syncCatalogToCloud();
+    if (res.success) {
+      snackbar.text = `☁️ ¡Sincronización exitosa! ${res.syncedCount} artículos guardados en las tablas de Supabase con sus relaciones (Categorías, Marcas, Unidades y Stock).`;
+      snackbar.color = 'success';
+      snackbar.show = true;
+    } else {
+      snackbar.text = `Error al sincronizar con Supabase: ${res.error || 'Verifique la conexión'}`;
+      snackbar.color = 'error';
+      snackbar.show = true;
+    }
+  } catch (err) {
+    snackbar.text = `Error inesperado al sincronizar: ${err.message}`;
+    snackbar.color = 'error';
+    snackbar.show = true;
+  } finally {
+    isSyncingCloud.value = false;
+  }
 }
 
 async function handleFileSelect(file) {
