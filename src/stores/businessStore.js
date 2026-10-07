@@ -52,8 +52,26 @@ export const useBusinessStore = defineStore('business', {
     async initBusiness() {
       this.isLoading = true;
       try {
-        // 1. Cargar desde almacenamiento cifrado local
-        const cached = await secureGet('app_metadata', 'business_config');
+        // 1. Cargar desde almacenamiento cifrado local IndexedDB
+        let cached = await secureGet('app_metadata', 'business_config');
+
+        // 1b. Fallback de contingencia: si el salt cambió o IndexedDB falló, recuperar de localStorage
+        if (!cached || typeof cached !== 'object') {
+          try {
+            const rawBackup = localStorage.getItem('negostock_business_config_backup');
+            if (rawBackup) {
+              const parsedBackup = JSON.parse(rawBackup);
+              if (parsedBackup && typeof parsedBackup === 'object') {
+                cached = parsedBackup;
+                // Re-sincronizar en IndexedDB con la clave actual
+                await secureSet('app_metadata', 'business_config', cached);
+              }
+            }
+          } catch (e) {
+            console.warn('[businessStore] Advertencia leyendo backup local de comercio:', e);
+          }
+        }
+
         if (cached && typeof cached === 'object') {
           this.comercio = { ...this.comercio, ...cached };
         }
@@ -81,6 +99,9 @@ export const useBusinessStore = defineStore('business', {
               logoUrl: data.logo_url || this.comercio.logoUrl
             };
             await secureSet('app_metadata', 'business_config', this.comercio);
+            try {
+              localStorage.setItem('negostock_business_config_backup', JSON.stringify(this.comercio));
+            } catch (_) {}
           }
         }
       } catch (err) {
@@ -92,12 +113,23 @@ export const useBusinessStore = defineStore('business', {
 
     async updateBusiness(nuevosDatos) {
       this.isLoading = true;
+      let cloudSynced = false;
+      let cloudError = null;
+
       try {
         this.comercio = { ...this.comercio, ...nuevosDatos };
-        // Guardar local seguro
+
+        // 1. Guardar local seguro en IndexedDB cifrado
         await secureSet('app_metadata', 'business_config', this.comercio);
 
-        // Si hay Supabase, actualizar en la nube
+        // 2. Guardar copia de seguridad redundante en localStorage
+        try {
+          localStorage.setItem('negostock_business_config_backup', JSON.stringify(this.comercio));
+        } catch (storageErr) {
+          console.warn('[businessStore] No se pudo escribir copia espejo en localStorage:', storageErr);
+        }
+
+        // 3. Si hay Supabase, actualizar en la base de datos en la nube
         if (isSupabaseConfigured && supabase && syncState.isOnline) {
           const dbPayload = {
             id: this.comercio.id || 1,
@@ -118,12 +150,16 @@ export const useBusinessStore = defineStore('business', {
             .upsert(dbPayload, { onConflict: 'id' });
 
           if (error) {
-            console.error('[businessStore] Error al guardar en Supabase:', error);
+            console.warn('[businessStore] Aviso al guardar en Supabase (verificar RLS):', error);
+            cloudError = error.message;
+          } else {
+            cloudSynced = true;
           }
         }
-        return { success: true };
+
+        return { success: true, cloudSynced, cloudError };
       } catch (error) {
-        console.error('[businessStore] Error actualizando negocio:', error);
+        console.error('[businessStore] Error crítico actualizando negocio:', error);
         return { success: false, error: error.message };
       } finally {
         this.isLoading = false;

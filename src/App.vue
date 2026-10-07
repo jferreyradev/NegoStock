@@ -938,6 +938,23 @@
       </v-card>
     </v-dialog>
 
+    <!-- SNACKBAR DE NOTIFICACIONES GLOBALES -->
+    <v-snackbar
+      v-model="appSnackbar.show"
+      :color="appSnackbar.color"
+      :timeout="appSnackbar.timeout"
+      location="top right"
+      elevation="4"
+    >
+      <div class="d-flex align-center">
+        <v-icon :icon="appSnackbar.icon" class="mr-2" />
+        <span class="font-weight-medium">{{ appSnackbar.text }}</span>
+      </div>
+      <template #actions>
+        <v-btn variant="text" icon="mdi-close" size="small" @click="appSnackbar.show = false" />
+      </template>
+    </v-snackbar>
+
     <!-- CONTENIDO PRINCIPAL -->
     <v-main class="bg-background">
       <router-view />
@@ -998,6 +1015,24 @@ const businessForm = ref({
   mensajeAgradecimiento: '¡Gracias por su compra!'
 });
 
+const appSnackbar = ref({
+  show: false,
+  text: '',
+  color: 'success',
+  icon: 'mdi-check-circle',
+  timeout: 4000
+});
+
+function triggerAppSnackbar(text, color = 'success', icon = 'mdi-check-circle', timeout = 4000) {
+  appSnackbar.value = {
+    show: true,
+    text,
+    color,
+    icon,
+    timeout
+  };
+}
+
 function openBusinessDialog() {
   businessForm.value = {
     ...businessStore.comercio,
@@ -1010,8 +1045,18 @@ async function saveBusinessConfig() {
   if (businessForm.value.sessionTimeoutMinutes !== undefined) {
     await authStore.setSessionTimeout(businessForm.value.sessionTimeoutMinutes);
   }
-  await businessStore.updateBusiness(businessForm.value);
+  const result = await businessStore.updateBusiness(businessForm.value);
   businessDialog.value = false;
+
+  if (result.success) {
+    if (result.cloudSynced) {
+      triggerAppSnackbar('✅ Configuración comercial guardada y sincronizada en Supabase.', 'success', 'mdi-cloud-check');
+    } else {
+      triggerAppSnackbar('💾 Configuración comercial guardada en la terminal.', 'indigo-darken-2', 'mdi-content-save-check');
+    }
+  } else {
+    triggerAppSnackbar('❌ Error al guardar la configuración: ' + (result.error || 'Desconocido'), 'error', 'mdi-alert-circle');
+  }
 }
 
 onMounted(async () => {
