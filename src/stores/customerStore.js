@@ -23,58 +23,7 @@ export const DEFAULT_CUSTOMER = {
 export const useCustomerStore = defineStore('customer', {
   state: () => ({
     customers: [
-      {
-        id: 'cf-default',
-        nombre: 'Consumidor Final',
-        name: 'Consumidor Final',
-        tipo_documento: 'CF',
-        documentNumber: '',
-        condicion_iva: 'CONSUMIDOR_FINAL',
-        taxCondition: 'CONSUMIDOR_FINAL',
-        telefono: '',
-        email: '',
-        direccion: '',
-        isDefault: true
-      },
-      {
-        id: 'cli-sample-1',
-        nombre: 'Taller Mecánico El Cruce',
-        name: 'Taller Mecánico El Cruce',
-        tipo_documento: 'CUIT',
-        numero_documento: '30-70891234-5',
-        documentNumber: '30-70891234-5',
-        condicion_iva: 'RESPONSABLE_INSCRIPTO',
-        taxCondition: 'RESPONSABLE_INSCRIPTO',
-        telefono: '11-4567-8901',
-        email: 'tallerelcruce@gmail.com',
-        direccion: 'Av. Vergara 2340, Hurlingham'
-      },
-      {
-        id: 'cli-sample-2',
-        nombre: 'Construcciones & Reformas San Martín',
-        name: 'Construcciones & Reformas San Martín',
-        tipo_documento: 'CUIT',
-        numero_documento: '30-65432198-7',
-        documentNumber: '30-65432198-7',
-        condicion_iva: 'MONOTRIBUTO',
-        taxCondition: 'MONOTRIBUTO',
-        telefono: '11-6789-1234',
-        email: 'obras@reformas-sm.com.ar',
-        direccion: 'Calle Mitre 450, San Martín'
-      },
-      {
-        id: 'cli-sample-3',
-        nombre: 'Carlos Gómez (Instalador Electricista)',
-        name: 'Carlos Gómez (Instalador Electricista)',
-        tipo_documento: 'DNI',
-        numero_documento: '28.456.789',
-        documentNumber: '28.456.789',
-        condicion_iva: 'CONSUMIDOR_FINAL',
-        taxCondition: 'CONSUMIDOR_FINAL',
-        telefono: '11-5544-3322',
-        email: 'carlos.electricidad@gmail.com',
-        direccion: 'Independencia 1120, Morón'
-      }
+      { ...DEFAULT_CUSTOMER }
     ],
     selectedCustomer: { ...DEFAULT_CUSTOMER },
     isLoading: false,
@@ -98,7 +47,22 @@ export const useCustomerStore = defineStore('customer', {
       this.isLoading = true;
       try {
         // 1. Cargar desde almacenamiento cifrado local
-        const cached = await secureGet('app_metadata', 'customers_list');
+        let cached = await secureGet('app_metadata', 'customers_list');
+
+        // 1b. Fallback desde localStorage
+        if (!cached || !Array.isArray(cached) || cached.length === 0) {
+          try {
+            const rawBackup = localStorage.getItem('negostock_customers_backup');
+            if (rawBackup) {
+              const parsed = JSON.parse(rawBackup);
+              if (Array.isArray(parsed) && parsed.length > 0) {
+                cached = parsed;
+                await secureSet('app_metadata', 'customers_list', cached);
+              }
+            }
+          } catch (_) {}
+        }
+
         if (cached && Array.isArray(cached) && cached.length > 0) {
           this.customers = cached;
         }
@@ -137,6 +101,9 @@ export const useCustomerStore = defineStore('customer', {
               ...mapped.filter(m => m.nombre.toLowerCase() !== 'consumidor final')
             ];
             await secureSet('app_metadata', 'customers_list', this.customers);
+            try {
+              localStorage.setItem('negostock_customers_backup', JSON.stringify(this.customers));
+            } catch (_) {}
           }
         }
       } catch (err) {
@@ -148,6 +115,7 @@ export const useCustomerStore = defineStore('customer', {
 
     async addCustomer(customerData) {
       this.isLoading = true;
+      let cloudSynced = false;
       try {
         const localId = 'cli-' + Date.now();
         const newCustomer = {
@@ -189,13 +157,20 @@ export const useCustomerStore = defineStore('customer', {
 
           if (!error && data) {
             newCustomer.id = data.id;
+            cloudSynced = true;
+          } else if (error) {
+            console.warn('[customerStore] Aviso al guardar cliente en Supabase (verificar RLS):', error.message);
           }
         }
 
         this.customers.unshift(newCustomer);
         await secureSet('app_metadata', 'customers_list', this.customers);
+        try {
+          localStorage.setItem('negostock_customers_backup', JSON.stringify(this.customers));
+        } catch (_) {}
+
         this.selectedCustomer = { ...newCustomer };
-        return { success: true, customer: newCustomer };
+        return { success: true, customer: newCustomer, cloudSynced };
       } catch (err) {
         console.error('[customerStore] Error agregando cliente:', err);
         return { success: false, error: err.message };

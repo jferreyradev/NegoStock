@@ -470,18 +470,40 @@ export const useCartStore = defineStore('cart', {
         // Guarda la cotización en Supabase de forma segura si hay conexión
         if (isSupabaseConfigured && supabase && syncState.isOnline) {
           try {
-            await supabase.from('pedidos_preventa').insert({
+            const { data: presData, error: presErr } = await supabase.from('pedidos_preventa').insert({
               comercio_id: 1,
               numero_pedido: localVoucherNum,
-              tipo: 'PRESUPUESTO',
-              cliente_id: null,
+              cliente_id: isUUID(this.customer?.id) ? this.customer.id : null,
+              modalidad_precio: this.priceMode || 'selling',
               subtotal: this.subtotal,
+              descuento: this.discountAmount || 0,
               total: this.total,
-              items: this.items,
               estado: 'PENDIENTE',
-              notas: `Presupuesto emitido para ${this.customer.name} [por ${opName}]`
-            });
-            localSaleRecord.isSynced = true;
+              notas: `Presupuesto para ${this.customer.name || 'Consumidor Final'} [por ${opName}]`
+            }).select('id').single();
+
+            if (!presErr && presData) {
+              localSaleRecord.isSynced = true;
+              const validDetails = this.items
+                .filter(it => isUUID(it.id))
+                .map(it => {
+                  const unitP = it.customUnitPrice !== null && it.customUnitPrice !== undefined
+                    ? Number(it.customUnitPrice)
+                    : (this.priceMode === 'wholesale' && it.wholesalePrice > 0 ? it.wholesalePrice : it.sellingPrice);
+                  return {
+                    pedido_id: presData.id,
+                    producto_id: it.id,
+                    cantidad: it.quantity,
+                    precio_unitario: unitP,
+                    subtotal: Math.round(unitP * it.quantity * 100) / 100
+                  };
+                });
+              if (validDetails.length > 0) {
+                await supabase.from('pedidos_preventa_detalles').insert(validDetails);
+              }
+            } else if (presErr) {
+              console.warn('[CartStore] Error guardando presupuesto en Supabase:', presErr.message);
+            }
           } catch (e) {
             console.warn('[CartStore] Error guardando presupuesto en Supabase:', e);
           }

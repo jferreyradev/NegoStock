@@ -183,7 +183,7 @@ export const useProductStore = defineStore('products', {
               `)
               .order('nombre');
 
-            if (!error && data) {
+            if (!error && data && data.length > 0) {
               this.products = data.map(p => ({
                 id: p.id,
                 sku: p.codigo_sku,
@@ -1221,11 +1221,48 @@ export const useProductStore = defineStore('products', {
         // Actualizar categorías y marcas dinámicas
         this.refreshCategoriesAndBrands();
 
+        // Si Supabase está disponible, sincronizar lote importado en la nube
+        let cloudSynced = false;
+        if (isSupabaseConfigured && supabase && syncState.isOnline) {
+          try {
+            const supabaseBatch = this.products.map(p => ({
+              comercio_id: 1,
+              codigo_sku: p.sku,
+              codigo_barras: p.barcode || null,
+              nombre: p.name,
+              descripcion: p.description || null,
+              precio_costo: p.costPrice || 0,
+              margen_ganancia: p.margin || 100,
+              precio_venta: p.sellingPrice || 0,
+              precio_mayoreo: p.wholesalePrice || 0,
+              stock_actual: p.stock || 0,
+              stock_minimo: p.minStock || 0,
+              alicuota_iva: p.ivaRate || 21,
+              esta_activo: p.isActive !== false
+            }));
+
+            for (let chunkIdx = 0; chunkIdx < supabaseBatch.length; chunkIdx += 50) {
+              const chunk = supabaseBatch.slice(chunkIdx, chunkIdx + 50);
+              const { error: upsertErr } = await supabase
+                .from('productos')
+                .upsert(chunk, { onConflict: 'codigo_sku' });
+              if (upsertErr) {
+                console.warn('[ProductStore] Aviso subiendo lote a Supabase:', upsertErr.message);
+                break;
+              }
+            }
+            cloudSynced = true;
+          } catch (supBatchErr) {
+            console.warn('[ProductStore] Falla sincronizando lote con Supabase:', supBatchErr);
+          }
+        }
+
         return {
           success: true,
           createdCount,
           updatedCount,
-          total: items.length
+          total: items.length,
+          cloudSynced
         };
       } catch (err) {
         console.error('[ProductStore] Error en importProductsBatch:', err);

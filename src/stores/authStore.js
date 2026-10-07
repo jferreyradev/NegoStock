@@ -379,13 +379,13 @@ export const useAuthStore = defineStore('auth', {
     async loginWithPin(pin) {
       this.error = null;
       let found = this.users.find(u => u.pin === pin && u.isActive);
-      // Fallback para PIN de demostración / tester
+      // Fallback para PIN de demostración / tester y compatibilidad con seed
       if (!found) {
         if (pin === '0000') {
           found = this.users.find(u => u.email === 'demo@negostock.com');
-        } else if (pin === '1234') {
+        } else if (pin === '1234' || pin === '6969') {
           found = this.users.find(u => u.role === 'ADMIN');
-        } else if (pin === '9999') {
+        } else if (pin === '9999' || pin === '6579') {
           found = this.users.find(u => u.role === 'SUPERADMIN');
         }
       }
@@ -428,7 +428,7 @@ export const useAuthStore = defineStore('auth', {
     verifySuperadminCode(inputCode) {
       if (!inputCode) return false;
       const superUser = this.users.find(u => u.role === 'SUPERADMIN');
-      const validPins = [superUser?.pin, '9999', 'superadmin123', 'admin123'].filter(Boolean);
+      const validPins = [superUser?.pin, '9999', '6579', 'superadmin123', 'admin123'].filter(Boolean);
       return validPins.includes(String(inputCode).trim());
     },
 

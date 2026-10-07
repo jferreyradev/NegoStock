@@ -86,12 +86,19 @@ const isUUID = (str) => typeof str === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-
         p_tipo_comprobante: sale.voucherType,
         p_medio_pago: sale.paymentMethod,
         p_modalidad_precio: sale.priceMode || 'selling',
-        p_items: sale.items.map(it => ({
-          id: isUUID(it.id) ? it.id : null,
-          sku: it.sku,
-          quantity: it.quantity,
-          price: it.price
-        })),
+        p_items: sale.items.map(it => {
+          const basePrice = (it.customUnitPrice !== undefined && it.customUnitPrice !== null)
+            ? Number(it.customUnitPrice)
+            : (sale.priceMode === 'wholesale' && it.wholesalePrice > 0 ? it.wholesalePrice : (it.sellingPrice || it.price || 0));
+          const lineDisc = Number(it.discountPercent || 0);
+          const effectivePrice = lineDisc > 0 ? Math.max(0, basePrice * (1 - lineDisc / 100)) : basePrice;
+          return {
+            id: isUUID(it.id) ? it.id : null,
+            sku: it.sku,
+            quantity: it.quantity,
+            price: it.price !== undefined && it.price !== null ? Number(it.price) : effectivePrice
+          };
+        }),
         p_descuento: sale.discount || 0,
         p_cliente_id: isUUID(sale.customer?.id) ? sale.customer.id : null,
         p_offline_id: sale.id,

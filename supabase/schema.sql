@@ -371,7 +371,18 @@ BEGIN
     v_numero_comprobante := LPAD(p_punto_venta::TEXT, 4, '0') || '-' || LPAD(v_secuencia::TEXT, 8, '0');
     v_venta_id := uuid_generate_v4();
 
-    -- Procesar cada ítem del payload
+    -- 1. Insertar primero el encabezado de venta (Requerido por la FK de ventas_detalles)
+    INSERT INTO ventas (
+        id, comercio_id, cliente_id, tipo_comprobante, punto_venta, numero_secuencia,
+        numero_comprobante, estado, medio_pago, modalidad_precio, subtotal, descuento, total_iva,
+        total, id_offline_cliente, notas
+    ) VALUES (
+        v_venta_id, p_comercio_id, p_cliente_id, p_tipo_comprobante, p_punto_venta, v_secuencia,
+        v_numero_comprobante, 'PAGADA', p_medio_pago, p_modalidad_precio, 0.00,
+        COALESCE(p_descuento, 0.00), 0.00, 0.00, p_offline_id, p_notas
+    );
+
+    -- 2. Procesar cada ítem del payload
     FOR v_item IN SELECT * FROM jsonb_to_recordset(p_items) AS x(
         id UUID,
         sku TEXT,
@@ -422,15 +433,13 @@ BEGIN
     v_calc_total := GREATEST(0.00, v_calc_subtotal - COALESCE(p_descuento, 0.00));
     v_calc_iva := ROUND(v_calc_total - (v_calc_total / 1.21), 2);
 
-    INSERT INTO ventas (
-        id, comercio_id, cliente_id, tipo_comprobante, punto_venta, numero_secuencia,
-        numero_comprobante, estado, medio_pago, modalidad_precio, subtotal, descuento, total_iva,
-        total, id_offline_cliente, notas
-    ) VALUES (
-        v_venta_id, p_comercio_id, p_cliente_id, p_tipo_comprobante, p_punto_venta, v_secuencia,
-        v_numero_comprobante, 'PAGADA', p_medio_pago, p_modalidad_precio, v_calc_subtotal,
-        COALESCE(p_descuento, 0.00), v_calc_iva, v_calc_total, p_offline_id, p_notas
-    );
+    -- 3. Actualizar totales calculados finales en ventas
+    UPDATE ventas 
+    SET subtotal = v_calc_subtotal,
+        total_iva = v_calc_iva,
+        total = v_calc_total,
+        actualizado_en = NOW()
+    WHERE id = v_venta_id;
 
     IF p_medio_pago = 'CTA_CTE' AND p_cliente_id IS NOT NULL THEN
         UPDATE clientes 
