@@ -142,6 +142,18 @@
         <span class="d-none d-md-inline">{{ syncState.isOnline ? 'Conectado' : 'Sin Red' }}</span>
       </v-chip>
 
+      <!-- Badge de Entorno Backend (DEV / PROD) -->
+      <v-chip
+        size="small"
+        :color="isProductionBackend ? 'indigo-darken-2' : 'amber-darken-3'"
+        variant="flat"
+        class="mr-1 mr-sm-2 font-weight-bold"
+        :title="'Backend Supabase: ' + supabaseHost"
+      >
+        <v-icon :icon="isProductionBackend ? 'mdi-server-network' : 'mdi-flask'" start size="small" />
+        <span>{{ environmentLabel }}</span>
+      </v-chip>
+
       <!-- Carrito / Armador de Presupuestos -->
       <v-btn
         v-if="moduleStore.modules.armadorPresupuesto !== false"
@@ -361,10 +373,21 @@
             Cerrar Sesión / Salir
           </v-btn>
         </div>
-        <div class="pa-3 bg-grey-lighten-4 text-caption text-grey">
-          <div class="font-weight-bold text-grey-darken-2">NegoStock SaaS v1.3</div>
-          <div>Multi-tenant + RBAC Roles</div>
-          <div>Supabase Auth Ready</div>
+        <div class="pa-3 bg-grey-lighten-4 text-caption text-grey border-t">
+          <div class="d-flex align-center justify-space-between mb-1">
+            <span class="font-weight-bold text-grey-darken-2">NegoStock SaaS v1.3</span>
+            <v-chip
+              size="x-small"
+              :color="isProductionBackend ? 'indigo-darken-2' : 'amber-darken-3'"
+              variant="flat"
+              class="font-weight-bold"
+            >
+              {{ environmentLabel }}
+            </v-chip>
+          </div>
+          <div class="text-truncate text-2xs" :title="supabaseHost">
+            Backend: {{ supabaseHost }}
+          </div>
         </div>
       </template>
     </v-navigation-drawer>
@@ -977,7 +1000,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { useSyncModeStore } from '@/stores/syncModeStore';
 import { useBusinessStore } from '@/stores/businessStore';
 import { useModuleStore } from '@/stores/moduleStore';
-import { isSupabaseConfigured } from '@/services/supabase';
+import { isSupabaseConfigured, supabaseHost, isProductionBackend, environmentLabel } from '@/services/supabase';
 import { syncState, initSyncManager } from '@/services/syncQueue';
 
 const route = useRoute();
