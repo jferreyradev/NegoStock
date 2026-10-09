@@ -209,11 +209,11 @@ export const useProductStore = defineStore('products', {
                 await secureSet('app_metadata', 'catalog_is_cleared', false);
                 await this.cacheAllProductsToSecureStorage();
               } else {
-                const isCleared = await secureGet('app_metadata', 'catalog_is_cleared');
-                if (isCleared) {
-                  this.products = [];
-                  loadedFromSupabase = true;
-                }
+                // Supabase respondió con 0 filas: el ambiente remoto está vacío o recién creado
+                this.products = [];
+                loadedFromSupabase = true;
+                await secureClear('products_catalog');
+                await secureSet('app_metadata', 'catalog_is_cleared', true);
               }
             }
           } catch (supErr) {
