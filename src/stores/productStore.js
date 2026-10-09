@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import { supabase, isSupabaseConfigured } from '@/services/supabase';
+import { supabase, isSupabaseConfigured, supabaseHost } from '@/services/supabase';
 import initialSeed from '@/data/seedData.json';
 import {
   secureSet,
@@ -169,6 +169,28 @@ export const useProductStore = defineStore('products', {
       this.error = null;
 
       try {
+        // 0. Purgado inteligente si cambió el backend o si se especifica ?clean=true
+        try {
+          const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+          const forceClean = urlParams && (urlParams.has('clean') || urlParams.has('clearCache') || urlParams.has('reset'));
+
+          const lastBackend = await secureGet('app_metadata', 'active_backend_host');
+          const currentBackend = supabaseHost || 'Offline';
+
+          if (forceClean || (lastBackend && lastBackend !== currentBackend)) {
+            console.warn(`[ProductStore] ${forceClean ? 'Limpieza forzada por URL' : 'Cambio de entorno detectado (' + lastBackend + ' -> ' + currentBackend + ')'}. Purgando caché local...`);
+            await secureClear('products_catalog');
+            this.products = [];
+            if (forceClean && window.history?.replaceState) {
+              const cleanUrl = window.location.pathname;
+              window.history.replaceState({}, document.title, cleanUrl);
+            }
+          }
+          await secureSet('app_metadata', 'active_backend_host', currentBackend);
+        } catch (e) {
+          console.warn('[ProductStore] Error verificando cambio de backend:', e);
+        }
+
         let loadedFromSupabase = false;
 
         if (isSupabaseConfigured && supabase) {
@@ -1517,6 +1539,25 @@ export const useProductStore = defineStore('products', {
         };
       } catch (err) {
         console.error('[ProductStore] Error en syncCatalogToCloud:', err);
+        return { success: false, error: err.message };
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    /**
+     * PURGAR CACHÉ LOCAL INDEXEDDB Y RECARGAR DESDE SUPABASE
+     */
+    async purgeLocalCache() {
+      this.loading = true;
+      try {
+        await secureClear('products_catalog');
+        await secureSet('app_metadata', 'catalog_is_cleared', false);
+        this.products = [];
+        await this.fetchProducts();
+        return { success: true };
+      } catch (err) {
+        console.error('[ProductStore] Error purgando caché:', err);
         return { success: false, error: err.message };
       } finally {
         this.loading = false;

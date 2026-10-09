@@ -385,9 +385,21 @@
               {{ environmentLabel }}
             </v-chip>
           </div>
-          <div class="text-truncate text-2xs" :title="supabaseHost">
+          <div class="text-truncate text-2xs mb-2" :title="supabaseHost">
             Backend: {{ supabaseHost }}
           </div>
+          <v-btn
+            size="x-small"
+            variant="outlined"
+            color="grey-darken-2"
+            prepend-icon="mdi-broom"
+            block
+            class="text-none font-weight-bold"
+            :loading="isPurgingCache"
+            @click="handlePurgeCache"
+          >
+            Limpiar Caché Local
+          </v-btn>
         </div>
       </template>
     </v-navigation-drawer>
@@ -1012,6 +1024,24 @@ const businessDialog = ref(false);
 const confirmLogoutDialog = ref(false);
 const moduleDialog = ref(false);
 const syncResult = ref(null);
+const isPurgingCache = ref(false);
+
+async function handlePurgeCache() {
+  isPurgingCache.value = true;
+  try {
+    const res = await productStore.purgeLocalCache();
+    if (res.success) {
+      syncResult.value = {
+        success: true,
+        title: 'Caché Purgada',
+        message: 'Se limpió la memoria local del navegador y se cargaron los datos frescos desde Supabase.'
+      };
+      syncDialog.value = true;
+    }
+  } finally {
+    isPurgingCache.value = false;
+  }
+}
 
 // Control de Cierre de Sesión por Inactividad (Session Timeout)
 const idleWarningDialog = ref(false);
