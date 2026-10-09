@@ -145,13 +145,16 @@
       <!-- Badge de Entorno Backend (DEV / PROD) -->
       <v-chip
         size="small"
-        :color="isProductionBackend ? 'indigo-darken-2' : 'amber-darken-3'"
+        :color="envStore.modeBadgeColor"
         variant="flat"
         class="mr-1 mr-sm-2 font-weight-bold"
-        :title="'Backend Supabase: ' + supabaseHost"
+        :class="{ 'cursor-pointer': authStore.isSuperAdmin }"
+        :title="authStore.isSuperAdmin ? 'Entorno: ' + envStore.label + ' (Clic para cambiar)' : 'Entorno: ' + envStore.label"
+        @click="authStore.isSuperAdmin ? openSwitchEnvModal() : null"
       >
-        <v-icon :icon="isProductionBackend ? 'mdi-server-network' : 'mdi-flask'" start size="small" />
-        <span>{{ environmentLabel }}</span>
+        <v-icon :icon="envStore.modeIcon" start size="small" />
+        <span>{{ envStore.label }}</span>
+        <v-icon v-if="authStore.isSuperAdmin" icon="mdi-chevron-down" end size="x-small" class="ml-1" />
       </v-chip>
 
       <!-- Carrito / Armador de Presupuestos -->
@@ -378,16 +381,31 @@
             <span class="font-weight-bold text-grey-darken-2">NegoStock SaaS v1.3</span>
             <v-chip
               size="x-small"
-              :color="isProductionBackend ? 'indigo-darken-2' : 'amber-darken-3'"
+              :color="envStore.modeBadgeColor"
               variant="flat"
               class="font-weight-bold"
+              :class="{ 'cursor-pointer': authStore.isSuperAdmin }"
+              :title="authStore.isSuperAdmin ? 'Clic para cambiar de entorno' : ''"
+              @click="authStore.isSuperAdmin ? openSwitchEnvModal() : null"
             >
-              {{ environmentLabel }}
+              {{ envStore.label }}
             </v-chip>
           </div>
-          <div class="text-truncate text-2xs mb-2" :title="supabaseHost">
-            Backend: {{ supabaseHost }}
+          <div class="text-truncate text-2xs mb-2" :title="envStore.activeHost">
+            Backend: {{ envStore.activeHost }}
           </div>
+          <v-btn
+            v-if="authStore.isSuperAdmin"
+            size="x-small"
+            variant="tonal"
+            :color="envStore.isSandbox ? 'indigo-darken-2' : 'amber-darken-4'"
+            prepend-icon="mdi-swap-horizontal"
+            block
+            class="text-none font-weight-bold mb-1"
+            @click="openSwitchEnvModal()"
+          >
+            Cambiar a {{ envStore.isSandbox ? 'Producción' : 'Sandbox' }}
+          </v-btn>
           <v-btn
             size="x-small"
             variant="outlined"
@@ -403,6 +421,39 @@
         </div>
       </template>
     </v-navigation-drawer>
+
+    <!-- BANNER DE MODO SANDBOX (PRUEBAS) -->
+    <v-banner
+      v-if="envStore.isSandbox && authStore.isAuthenticated && route.name !== 'login'"
+      color="amber-darken-4"
+      lines="one"
+      density="compact"
+      class="border-b text-white font-weight-medium bg-amber-darken-4 elevation-1"
+    >
+      <template #prepend>
+        <v-avatar color="amber-lighten-4" size="24" class="mr-1">
+          <v-icon icon="mdi-flask" color="amber-darken-4" size="16" />
+        </v-avatar>
+      </template>
+      <template #text>
+        <span class="text-caption font-weight-bold">
+          MODO SANDBOX ACTIVO: Operando en la base de datos de pruebas ({{ envStore.activeHost }}). Las transacciones no afectan producción.
+        </span>
+      </template>
+      <template #actions>
+        <v-btn
+          v-if="authStore.isSuperAdmin"
+          size="x-small"
+          variant="elevated"
+          color="white"
+          class="text-amber-darken-4 font-weight-black text-none"
+          @click="openSwitchEnvModal('PROD')"
+        >
+          <v-icon icon="mdi-arrow-right-bold" start size="x-small" />
+          Pasar a Producción
+        </v-btn>
+      </template>
+    </v-banner>
 
     <!-- BANNER DE AVISO CUANDO SE CAE INTERNET -->
     <v-banner
@@ -895,6 +946,115 @@
       </v-card>
     </v-dialog>
 
+    <!-- MODAL DE CAMBIO DE ENTORNO (EXCLUSIVO SUPERADMINISTRADOR) -->
+    <v-dialog v-model="envDialog" max-width="560">
+      <v-card class="rounded-xl overflow-hidden">
+        <v-card-title class="bg-indigo-darken-3 text-white d-flex align-center justify-space-between py-3">
+          <div class="d-flex align-center">
+            <v-icon icon="mdi-database-cog" class="mr-2 text-amber-accent-2" />
+            <span class="font-weight-black">Selector de Entorno de Base de Datos</span>
+          </div>
+          <v-chip size="small" :color="envStore.modeBadgeColor" variant="flat" class="font-weight-bold text-white">
+            {{ envStore.label }}
+          </v-chip>
+        </v-card-title>
+
+        <v-card-text class="pa-4">
+          <v-alert
+            type="info"
+            variant="tonal"
+            density="compact"
+            class="mb-3 text-caption"
+          >
+            <strong>Control Maestro de Entornos (Superusuario):</strong> Alterná en caliente entre la base de datos real de producción y el entorno de pruebas (Sandbox). Al cambiar, la aplicación limpiará el catálogo local de IndexedDB y se conectará al backend seleccionado.
+          </v-alert>
+
+          <div class="mb-3">
+            <!-- OPCIÓN 1: PRODUCCIÓN -->
+            <v-card
+              variant="outlined"
+              class="pa-3 mb-3 cursor-pointer transition-all"
+              :class="{ 'border-primary bg-indigo-lighten-5 elevation-1': pendingEnvChoice === 'PROD' }"
+              @click="pendingEnvChoice = 'PROD'"
+            >
+              <div class="d-flex align-start justify-space-between">
+                <div class="d-flex align-start">
+                  <v-radio :model-value="pendingEnvChoice === 'PROD'" color="indigo-darken-2" class="mt-0" />
+                  <div class="ml-2">
+                    <div class="d-flex align-center">
+                      <v-icon icon="mdi-server-network" color="indigo-darken-2" size="small" class="mr-1" />
+                      <strong class="text-subtitle-2 font-weight-black text-indigo-darken-4">🌐 Modo Producción (Ferretería Real)</strong>
+                    </div>
+                    <div class="text-caption text-grey-darken-3 mt-1">
+                      Base de datos oficial de ventas, stock físico y cuentas corrientes de clientes.
+                    </div>
+                    <div class="text-2xs font-mono text-grey-darken-1 mt-1">
+                      Host: {{ envStore.prodConfig.host }}
+                    </div>
+                  </div>
+                </div>
+                <v-chip v-if="envStore.isProduction" size="x-small" color="indigo-darken-2" variant="flat" class="text-white font-weight-bold">
+                  ACTIVO
+                </v-chip>
+              </div>
+            </v-card>
+
+            <!-- OPCIÓN 2: SANDBOX / DEV -->
+            <v-card
+              variant="outlined"
+              class="pa-3 cursor-pointer transition-all"
+              :class="{ 'border-amber bg-amber-lighten-5 elevation-1': pendingEnvChoice === 'DEV' }"
+              @click="pendingEnvChoice = 'DEV'"
+            >
+              <div class="d-flex align-start justify-space-between">
+                <div class="d-flex align-start">
+                  <v-radio :model-value="pendingEnvChoice === 'DEV'" color="amber-darken-4" class="mt-0" />
+                  <div class="ml-2">
+                    <div class="d-flex align-center">
+                      <v-icon icon="mdi-flask" color="amber-darken-4" size="small" class="mr-1" />
+                      <strong class="text-subtitle-2 font-weight-black text-amber-darken-4">🧪 Modo Sandbox (Pruebas / DEV)</strong>
+                    </div>
+                    <div class="text-caption text-grey-darken-3 mt-1">
+                      Entorno aislado para probar nuevas funciones, importar planillas de prueba y capacitar personal sin alterar datos reales.
+                    </div>
+                    <div class="text-2xs font-mono text-grey-darken-1 mt-1">
+                      Host: {{ envStore.devConfig.host }}
+                    </div>
+                  </div>
+                </div>
+                <v-chip v-if="envStore.isSandbox" size="x-small" color="amber-darken-3" variant="flat" class="text-white font-weight-bold">
+                  ACTIVO
+                </v-chip>
+              </div>
+            </v-card>
+          </div>
+
+          <div v-if="pendingEnvChoice !== envStore.currentMode" class="text-caption text-error font-weight-bold d-flex align-center pa-2 bg-red-lighten-5 rounded border border-red-lighten-3">
+            <v-icon icon="mdi-alert-circle-outline" size="small" class="mr-1" />
+            Al aplicar el cambio, se purgará el catálogo local y se reiniciará la sesión en el entorno seleccionado.
+          </div>
+        </v-card-text>
+
+        <v-divider />
+        <v-card-actions class="pa-3 bg-grey-lighten-4">
+          <v-spacer />
+          <v-btn variant="text" color="grey-darken-1" @click="envDialog = false">
+            Cancelar
+          </v-btn>
+          <v-btn
+            color="primary"
+            variant="flat"
+            class="px-4 font-weight-bold text-none"
+            :disabled="pendingEnvChoice === envStore.currentMode"
+            @click="executeEnvironmentSwitch"
+          >
+            <v-icon icon="mdi-swap-horizontal" start size="small" />
+            Aplicar y Cambiar
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
     <!-- MODAL DE CONFIRMACIÓN DE CIERRE DE SESIÓN -->
     <v-dialog v-model="confirmLogoutDialog" max-width="400">
       <v-card class="rounded-xl overflow-hidden">
@@ -1012,6 +1172,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { useSyncModeStore } from '@/stores/syncModeStore';
 import { useBusinessStore } from '@/stores/businessStore';
 import { useModuleStore } from '@/stores/moduleStore';
+import { useEnvironmentStore } from '@/stores/environmentStore';
 import { isSupabaseConfigured, supabaseHost, isProductionBackend, environmentLabel } from '@/services/supabase';
 import { syncState, initSyncManager } from '@/services/syncQueue';
 
@@ -1057,6 +1218,21 @@ const authStore = useAuthStore();
 const syncModeStore = useSyncModeStore();
 const businessStore = useBusinessStore();
 const moduleStore = useModuleStore();
+const envStore = useEnvironmentStore();
+
+const envDialog = ref(false);
+const pendingEnvChoice = ref(envStore.currentMode);
+
+function openSwitchEnvModal(target = null) {
+  pendingEnvChoice.value = target || (envStore.isSandbox ? 'PROD' : 'DEV');
+  envDialog.value = true;
+}
+
+async function executeEnvironmentSwitch() {
+  const target = pendingEnvChoice.value;
+  envDialog.value = false;
+  await envStore.switchEnvironment(target);
+}
 
 const businessForm = ref({
   nombre: '',
