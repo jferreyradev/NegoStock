@@ -1109,6 +1109,10 @@ END $$;
 -- ------------------------------------------------------------------------------
 CREATE INDEX IF NOT EXISTS idx_usuarios_comercio_id ON public.usuarios(comercio_id);
 CREATE INDEX IF NOT EXISTS idx_categorias_padre_id ON public.categorias(categoria_padre_id);
+CREATE INDEX IF NOT EXISTS idx_categorias_comercio_id ON public.categorias(comercio_id);
+CREATE INDEX IF NOT EXISTS idx_marcas_comercio_id ON public.marcas(comercio_id);
+CREATE INDEX IF NOT EXISTS idx_unidades_medida_comercio_id ON public.unidades_medida(comercio_id);
+CREATE INDEX IF NOT EXISTS idx_productos_comercio_id ON public.productos(comercio_id);
 CREATE INDEX IF NOT EXISTS idx_productos_categoria_id ON public.productos(categoria_id);
 CREATE INDEX IF NOT EXISTS idx_productos_marca_id ON public.productos(marca_id);
 CREATE INDEX IF NOT EXISTS idx_productos_unidad_id ON public.productos(unidad_id);
@@ -1118,14 +1122,19 @@ CREATE INDEX IF NOT EXISTS idx_compras_comercio_id ON public.compras(comercio_id
 CREATE INDEX IF NOT EXISTS idx_compras_proveedor_id ON public.compras(proveedor_id);
 CREATE INDEX IF NOT EXISTS idx_compras_detalles_compra ON public.compras_detalles(compra_id);
 CREATE INDEX IF NOT EXISTS idx_compras_detalles_prod ON public.compras_detalles(producto_id);
+CREATE INDEX IF NOT EXISTS idx_ventas_comercio_id ON public.ventas(comercio_id);
 CREATE INDEX IF NOT EXISTS idx_ventas_cliente_id ON public.ventas(cliente_id);
 CREATE INDEX IF NOT EXISTS idx_ventas_detalles_venta ON public.ventas_detalles(venta_id);
 CREATE INDEX IF NOT EXISTS idx_ventas_detalles_prod ON public.ventas_detalles(producto_id);
 CREATE INDEX IF NOT EXISTS idx_stock_movimientos_comercio ON public.stock_movimientos(comercio_id);
+CREATE INDEX IF NOT EXISTS idx_stock_movimientos_prod ON public.stock_movimientos(producto_id);
 CREATE INDEX IF NOT EXISTS idx_pedidos_preventa_comercio ON public.pedidos_preventa(comercio_id);
 CREATE INDEX IF NOT EXISTS idx_pedidos_preventa_cliente ON public.pedidos_preventa(cliente_id);
 CREATE INDEX IF NOT EXISTS idx_pedidos_detalles_pedido ON public.pedidos_preventa_detalles(pedido_id);
 CREATE INDEX IF NOT EXISTS idx_pedidos_detalles_prod ON public.pedidos_preventa_detalles(producto_id);
 CREATE INDEX IF NOT EXISTS idx_cajas_turnos_comercio ON public.cajas_turnos(comercio_id);
+CREATE INDEX IF NOT EXISTS idx_precios_historial_comercio ON public.precios_historial(comercio_id);
+CREATE INDEX IF NOT EXISTS idx_precios_historial_prod ON public.precios_historial(producto_id);
+
 
 SELECT '✅ INICIALIZACIÓN COMPLETA Y SEGURA EN SUPABASE' AS resultado;
