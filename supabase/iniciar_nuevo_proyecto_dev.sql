@@ -211,6 +211,7 @@ CREATE TABLE IF NOT EXISTS ventas (
     id_offline_cliente TEXT,
     notas TEXT,
     creado_en TIMESTAMPTZ DEFAULT NOW(),
+    actualizado_en TIMESTAMPTZ DEFAULT NOW(),
     CONSTRAINT uk_comercio_comprobante UNIQUE (comercio_id, punto_venta, tipo_comprobante, numero_secuencia)
 );
 
@@ -379,11 +380,31 @@ BEGIN
         END IF;
     END IF;
 
-    -- Incrementar secuencia correlativa con bloqueo de fila
+    -- Incrementar secuencia correlativa con bloqueo de fila y prevención de colisión
     INSERT INTO comprobantes_secuencias (comercio_id, punto_venta, tipo_comprobante, ultimo_numero)
-    VALUES (p_comercio_id, p_punto_venta, p_tipo_comprobante, 1)
+    VALUES (
+        p_comercio_id,
+        p_punto_venta,
+        p_tipo_comprobante,
+        COALESCE((
+            SELECT MAX(numero_secuencia)
+            FROM ventas
+            WHERE comercio_id = p_comercio_id
+              AND punto_venta = p_punto_venta
+              AND tipo_comprobante = p_tipo_comprobante
+        ), 0) + 1
+    )
     ON CONFLICT (comercio_id, punto_venta, tipo_comprobante)
-    DO UPDATE SET ultimo_numero = comprobantes_secuencias.ultimo_numero + 1
+    DO UPDATE SET ultimo_numero = GREATEST(
+        comprobantes_secuencias.ultimo_numero + 1,
+        COALESCE((
+            SELECT MAX(numero_secuencia)
+            FROM ventas
+            WHERE comercio_id = EXCLUDED.comercio_id
+              AND punto_venta = EXCLUDED.punto_venta
+              AND tipo_comprobante = EXCLUDED.tipo_comprobante
+        ), 0) + 1
+    )
     RETURNING ultimo_numero INTO v_secuencia;
 
     v_numero_comprobante := LPAD(p_punto_venta::TEXT, 4, '0') || '-' || LPAD(v_secuencia::TEXT, 8, '0');
@@ -816,11 +837,31 @@ BEGIN
         END IF;
     END IF;
 
-    -- Incrementar secuencia correlativa con bloqueo de fila
+    -- Incrementar secuencia correlativa con bloqueo de fila y prevención de colisión
     INSERT INTO comprobantes_secuencias (comercio_id, punto_venta, tipo_comprobante, ultimo_numero)
-    VALUES (p_comercio_id, p_punto_venta, p_tipo_comprobante, 1)
+    VALUES (
+        p_comercio_id,
+        p_punto_venta,
+        p_tipo_comprobante,
+        COALESCE((
+            SELECT MAX(numero_secuencia)
+            FROM ventas
+            WHERE comercio_id = p_comercio_id
+              AND punto_venta = p_punto_venta
+              AND tipo_comprobante = p_tipo_comprobante
+        ), 0) + 1
+    )
     ON CONFLICT (comercio_id, punto_venta, tipo_comprobante)
-    DO UPDATE SET ultimo_numero = comprobantes_secuencias.ultimo_numero + 1
+    DO UPDATE SET ultimo_numero = GREATEST(
+        comprobantes_secuencias.ultimo_numero + 1,
+        COALESCE((
+            SELECT MAX(numero_secuencia)
+            FROM ventas
+            WHERE comercio_id = EXCLUDED.comercio_id
+              AND punto_venta = EXCLUDED.punto_venta
+              AND tipo_comprobante = EXCLUDED.tipo_comprobante
+        ), 0) + 1
+    )
     RETURNING ultimo_numero INTO v_secuencia;
 
     v_numero_comprobante := LPAD(p_punto_venta::TEXT, 4, '0') || '-' || LPAD(v_secuencia::TEXT, 8, '0');
