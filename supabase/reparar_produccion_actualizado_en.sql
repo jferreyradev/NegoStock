@@ -195,4 +195,25 @@ BEGIN
 END;
 $$;
 
-SELECT '✅ REPARACIÓN DE PRODUCCIÓN EXITOSA' AS resultado;
+-- 4. Habilitar RLS en las tablas que muestran la advertencia "RLS Disabled in Public"
+ALTER TABLE public.cajas_turnos ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "cajas_turnos_politica_general" ON public.cajas_turnos;
+CREATE POLICY "cajas_turnos_politica_general" ON public.cajas_turnos
+    FOR ALL TO anon, authenticated USING (comercio_id = 1) WITH CHECK (comercio_id = 1);
+
+ALTER TABLE public.compras ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "compras_politica_general" ON public.compras;
+CREATE POLICY "compras_politica_general" ON public.compras
+    FOR ALL TO anon, authenticated USING (comercio_id = 1) WITH CHECK (comercio_id = 1);
+
+ALTER TABLE public.compras_detalles ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "compras_detalles_politica_general" ON public.compras_detalles;
+CREATE POLICY "compras_detalles_politica_general" ON public.compras_detalles
+    FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
+
+ALTER TABLE public.comprobantes_secuencias ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "comprobantes_secuencias_politica_general" ON public.comprobantes_secuencias;
+CREATE POLICY "comprobantes_secuencias_politica_general" ON public.comprobantes_secuencias
+    FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
+
+SELECT '✅ REPARACIÓN DE PRODUCCIÓN Y RLS EXITOSA' AS resultado;
