@@ -1059,4 +1059,73 @@ CREATE POLICY "precios_historial_politica_general" ON public.precios_historial
     USING (comercio_id = 1)
     WITH CHECK (comercio_id = 1);
 
-SELECT '✅ REPARACIÓN DE PERSISTENCIA COMPLETADA CON ÉXITO EN SUPABASE' AS resultado;
+-- ------------------------------------------------------------------------------
+-- 8. POLÍTICAS RLS EN CAJAS, COMPRAS Y SECUENCIAS
+-- ------------------------------------------------------------------------------
+ALTER TABLE public.cajas_turnos ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "cajas_turnos_politica_general" ON public.cajas_turnos;
+CREATE POLICY "cajas_turnos_politica_general" ON public.cajas_turnos
+    FOR ALL TO anon, authenticated USING (comercio_id = 1) WITH CHECK (comercio_id = 1);
+
+ALTER TABLE public.compras ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "compras_politica_general" ON public.compras;
+CREATE POLICY "compras_politica_general" ON public.compras
+    FOR ALL TO anon, authenticated USING (comercio_id = 1) WITH CHECK (comercio_id = 1);
+
+ALTER TABLE public.compras_detalles ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "compras_detalles_politica_general" ON public.compras_detalles;
+CREATE POLICY "compras_detalles_politica_general" ON public.compras_detalles
+    FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
+
+ALTER TABLE public.comprobantes_secuencias ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "comprobantes_secuencias_politica_general" ON public.comprobantes_secuencias;
+CREATE POLICY "comprobantes_secuencias_politica_general" ON public.comprobantes_secuencias
+    FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
+
+-- ------------------------------------------------------------------------------
+-- 9. RESOLVER SECURITY ADVISOR (Function Search Path Mutable)
+-- ------------------------------------------------------------------------------
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM pg_proc WHERE proname = 'trg_registrar_historial_precio') THEN
+        ALTER FUNCTION public.trg_registrar_historial_precio() SET search_path = public;
+    END IF;
+    IF EXISTS (SELECT 1 FROM pg_proc WHERE proname = 'obtener_comercio_id_autenticado') THEN
+        ALTER FUNCTION public.obtener_comercio_id_autenticado() SET search_path = public;
+    END IF;
+    IF EXISTS (SELECT 1 FROM pg_proc WHERE proname = 'obtener_rol_autenticado') THEN
+        ALTER FUNCTION public.obtener_rol_autenticado() SET search_path = public;
+    END IF;
+    IF EXISTS (SELECT 1 FROM pg_proc WHERE proname = 'actualizar_precios_masivo') THEN
+        ALTER FUNCTION public.actualizar_precios_masivo(INT, TEXT, TEXT, NUMERIC, TEXT, NUMERIC) SET search_path = public;
+    END IF;
+    IF EXISTS (SELECT 1 FROM pg_proc WHERE proname = 'manejar_nuevo_usuario') THEN
+        ALTER FUNCTION public.manejar_nuevo_usuario() SET search_path = public;
+    END IF;
+END $$;
+
+-- ------------------------------------------------------------------------------
+-- 10. RESOLVER PERFORMANCE ADVISOR (Índices en Claves Foráneas)
+-- ------------------------------------------------------------------------------
+CREATE INDEX IF NOT EXISTS idx_usuarios_comercio_id ON public.usuarios(comercio_id);
+CREATE INDEX IF NOT EXISTS idx_categorias_padre_id ON public.categorias(categoria_padre_id);
+CREATE INDEX IF NOT EXISTS idx_productos_categoria_id ON public.productos(categoria_id);
+CREATE INDEX IF NOT EXISTS idx_productos_marca_id ON public.productos(marca_id);
+CREATE INDEX IF NOT EXISTS idx_productos_unidad_id ON public.productos(unidad_id);
+CREATE INDEX IF NOT EXISTS idx_clientes_comercio_id ON public.clientes(comercio_id);
+CREATE INDEX IF NOT EXISTS idx_proveedores_comercio_id ON public.proveedores(comercio_id);
+CREATE INDEX IF NOT EXISTS idx_compras_comercio_id ON public.compras(comercio_id);
+CREATE INDEX IF NOT EXISTS idx_compras_proveedor_id ON public.compras(proveedor_id);
+CREATE INDEX IF NOT EXISTS idx_compras_detalles_compra ON public.compras_detalles(compra_id);
+CREATE INDEX IF NOT EXISTS idx_compras_detalles_prod ON public.compras_detalles(producto_id);
+CREATE INDEX IF NOT EXISTS idx_ventas_cliente_id ON public.ventas(cliente_id);
+CREATE INDEX IF NOT EXISTS idx_ventas_detalles_venta ON public.ventas_detalles(venta_id);
+CREATE INDEX IF NOT EXISTS idx_ventas_detalles_prod ON public.ventas_detalles(producto_id);
+CREATE INDEX IF NOT EXISTS idx_stock_movimientos_comercio ON public.stock_movimientos(comercio_id);
+CREATE INDEX IF NOT EXISTS idx_pedidos_preventa_comercio ON public.pedidos_preventa(comercio_id);
+CREATE INDEX IF NOT EXISTS idx_pedidos_preventa_cliente ON public.pedidos_preventa(cliente_id);
+CREATE INDEX IF NOT EXISTS idx_pedidos_detalles_pedido ON public.pedidos_preventa_detalles(pedido_id);
+CREATE INDEX IF NOT EXISTS idx_pedidos_detalles_prod ON public.pedidos_preventa_detalles(producto_id);
+CREATE INDEX IF NOT EXISTS idx_cajas_turnos_comercio ON public.cajas_turnos(comercio_id);
+
+SELECT '✅ INICIALIZACIÓN COMPLETA Y SEGURA EN SUPABASE' AS resultado;

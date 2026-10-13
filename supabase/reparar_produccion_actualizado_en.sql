@@ -1,21 +1,96 @@
 -- ==============================================================================
--- NEGOTOCK: REPARACIÓN RÁPIDA DE COMPROBANTES Y VENTAS EN PRODUCCIÓN
+-- NEGOTOCK: REPARACIÓN TOTAL, RLS, ADVISORS Y PERFORMANCE EN PRODUCCIÓN
 -- ==============================================================================
--- Este script soluciona dos advertencias críticas encontradas en Producción:
--- 1. Agrega la columna 'actualizado_en' a la tabla 'ventas' (evita error 42703).
--- 2. Actualiza la función 'procesar_venta_mostrador' para sincronizar secuencias
---    y evitar error de clave duplicada en 'uk_comercio_comprobante'.
+-- Este script soluciona TODAS las advertencias del Dashboard de Supabase:
+-- 1. Agrega la columna 'actualizado_en' a 'ventas' (resuelve error 42703 al vender).
+-- 2. Habilita RLS y políticas en las 4 tablas que mostraban "RLS Disabled in Public".
+-- 3. Resuelve el aviso "Function Search Path Mutable" fijando search_path = public.
+-- 4. Crea los índices en claves foráneas para resolver el "Performance Advisor".
+-- 5. Sincroniza la secuencia de tickets para evitar errores de comprobante duplicado.
 --
 -- INSTRUCCIONES:
 -- 1. Abrí el SQL Editor de tu proyecto de Producción (aphqdlmgggglvahbhksu):
 --    https://supabase.com/dashboard/project/aphqdlmgggglvahbhksu/sql
--- 2. Creá una "New Query", pegá este script y hacé clic en "Run".
+-- 2. Creá una "New Query", pegá TODO este script y hacé clic en "Run".
 -- ==============================================================================
 
--- 1. Agregar columna faltante actualizado_en en ventas
+-- ------------------------------------------------------------------------------
+-- 1. COLUMNA ACTUALIZADO_EN EN VENTAS
+-- ------------------------------------------------------------------------------
 ALTER TABLE public.ventas ADD COLUMN IF NOT EXISTS actualizado_en TIMESTAMPTZ DEFAULT NOW();
 
--- 2. Sincronizar el puntero de secuencias con el último comprobante emitido
+-- ------------------------------------------------------------------------------
+-- 2. HABILITAR RLS EN TODAS LAS TABLAS QUE TENÍAN "RLS Disabled in Public"
+-- ------------------------------------------------------------------------------
+ALTER TABLE public.cajas_turnos ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "cajas_turnos_politica_general" ON public.cajas_turnos;
+CREATE POLICY "cajas_turnos_politica_general" ON public.cajas_turnos
+    FOR ALL TO anon, authenticated USING (comercio_id = 1) WITH CHECK (comercio_id = 1);
+
+ALTER TABLE public.compras ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "compras_politica_general" ON public.compras;
+CREATE POLICY "compras_politica_general" ON public.compras
+    FOR ALL TO anon, authenticated USING (comercio_id = 1) WITH CHECK (comercio_id = 1);
+
+ALTER TABLE public.compras_detalles ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "compras_detalles_politica_general" ON public.compras_detalles;
+CREATE POLICY "compras_detalles_politica_general" ON public.compras_detalles
+    FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
+
+ALTER TABLE public.comprobantes_secuencias ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "comprobantes_secuencias_politica_general" ON public.comprobantes_secuencias;
+CREATE POLICY "comprobantes_secuencias_politica_general" ON public.comprobantes_secuencias
+    FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
+
+-- ------------------------------------------------------------------------------
+-- 3. RESOLVER SECURITY ADVISOR (Function Search Path Mutable)
+-- ------------------------------------------------------------------------------
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM pg_proc WHERE proname = 'trg_registrar_historial_precio') THEN
+        ALTER FUNCTION public.trg_registrar_historial_precio() SET search_path = public;
+    END IF;
+    IF EXISTS (SELECT 1 FROM pg_proc WHERE proname = 'obtener_comercio_id_autenticado') THEN
+        ALTER FUNCTION public.obtener_comercio_id_autenticado() SET search_path = public;
+    END IF;
+    IF EXISTS (SELECT 1 FROM pg_proc WHERE proname = 'obtener_rol_autenticado') THEN
+        ALTER FUNCTION public.obtener_rol_autenticado() SET search_path = public;
+    END IF;
+    IF EXISTS (SELECT 1 FROM pg_proc WHERE proname = 'actualizar_precios_masivo') THEN
+        ALTER FUNCTION public.actualizar_precios_masivo(INT, TEXT, TEXT, NUMERIC, TEXT, NUMERIC) SET search_path = public;
+    END IF;
+    IF EXISTS (SELECT 1 FROM pg_proc WHERE proname = 'manejar_nuevo_usuario') THEN
+        ALTER FUNCTION public.manejar_nuevo_usuario() SET search_path = public;
+    END IF;
+END $$;
+
+-- ------------------------------------------------------------------------------
+-- 4. RESOLVER PERFORMANCE ADVISOR (Índices en Claves Foráneas)
+-- ------------------------------------------------------------------------------
+CREATE INDEX IF NOT EXISTS idx_usuarios_comercio_id ON public.usuarios(comercio_id);
+CREATE INDEX IF NOT EXISTS idx_categorias_padre_id ON public.categorias(categoria_padre_id);
+CREATE INDEX IF NOT EXISTS idx_productos_categoria_id ON public.productos(categoria_id);
+CREATE INDEX IF NOT EXISTS idx_productos_marca_id ON public.productos(marca_id);
+CREATE INDEX IF NOT EXISTS idx_productos_unidad_id ON public.productos(unidad_id);
+CREATE INDEX IF NOT EXISTS idx_clientes_comercio_id ON public.clientes(comercio_id);
+CREATE INDEX IF NOT EXISTS idx_proveedores_comercio_id ON public.proveedores(comercio_id);
+CREATE INDEX IF NOT EXISTS idx_compras_comercio_id ON public.compras(comercio_id);
+CREATE INDEX IF NOT EXISTS idx_compras_proveedor_id ON public.compras(proveedor_id);
+CREATE INDEX IF NOT EXISTS idx_compras_detalles_compra ON public.compras_detalles(compra_id);
+CREATE INDEX IF NOT EXISTS idx_compras_detalles_prod ON public.compras_detalles(producto_id);
+CREATE INDEX IF NOT EXISTS idx_ventas_cliente_id ON public.ventas(cliente_id);
+CREATE INDEX IF NOT EXISTS idx_ventas_detalles_venta ON public.ventas_detalles(venta_id);
+CREATE INDEX IF NOT EXISTS idx_ventas_detalles_prod ON public.ventas_detalles(producto_id);
+CREATE INDEX IF NOT EXISTS idx_stock_movimientos_comercio ON public.stock_movimientos(comercio_id);
+CREATE INDEX IF NOT EXISTS idx_pedidos_preventa_comercio ON public.pedidos_preventa(comercio_id);
+CREATE INDEX IF NOT EXISTS idx_pedidos_preventa_cliente ON public.pedidos_preventa(cliente_id);
+CREATE INDEX IF NOT EXISTS idx_pedidos_detalles_pedido ON public.pedidos_preventa_detalles(pedido_id);
+CREATE INDEX IF NOT EXISTS idx_pedidos_detalles_prod ON public.pedidos_preventa_detalles(producto_id);
+CREATE INDEX IF NOT EXISTS idx_cajas_turnos_comercio ON public.cajas_turnos(comercio_id);
+
+-- ------------------------------------------------------------------------------
+-- 5. SINCRONIZAR SECUENCIA DE COMPROBANTES CON ÚLTIMO COMPROBANTE EMITIDO
+-- ------------------------------------------------------------------------------
 INSERT INTO public.comprobantes_secuencias (comercio_id, punto_venta, tipo_comprobante, ultimo_numero)
 VALUES (
     1,
@@ -29,7 +104,9 @@ DO UPDATE SET ultimo_numero = GREATEST(
     COALESCE((SELECT MAX(numero_secuencia) FROM public.ventas WHERE comercio_id = EXCLUDED.comercio_id AND punto_venta = EXCLUDED.punto_venta AND tipo_comprobante = EXCLUDED.tipo_comprobante), 0)
 );
 
--- 3. Actualizar la función procesar_venta_mostrador con prevención de colisiones
+-- ------------------------------------------------------------------------------
+-- 6. ACTUALIZAR FUNCIÓN ATÓMICA DE VENTA (PREVIENE DUPLICADOS Y ERROR DE COLUMNA)
+-- ------------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION procesar_venta_mostrador(
     p_comercio_id INT,
     p_tipo_comprobante TEXT,
@@ -45,6 +122,7 @@ CREATE OR REPLACE FUNCTION procesar_venta_mostrador(
 RETURNS JSONB
 LANGUAGE plpgsql
 SECURITY DEFINER
+SET search_path = public
 AS $$
 DECLARE
     v_secuencia INTEGER;
@@ -195,25 +273,4 @@ BEGIN
 END;
 $$;
 
--- 4. Habilitar RLS en las tablas que muestran la advertencia "RLS Disabled in Public"
-ALTER TABLE public.cajas_turnos ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "cajas_turnos_politica_general" ON public.cajas_turnos;
-CREATE POLICY "cajas_turnos_politica_general" ON public.cajas_turnos
-    FOR ALL TO anon, authenticated USING (comercio_id = 1) WITH CHECK (comercio_id = 1);
-
-ALTER TABLE public.compras ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "compras_politica_general" ON public.compras;
-CREATE POLICY "compras_politica_general" ON public.compras
-    FOR ALL TO anon, authenticated USING (comercio_id = 1) WITH CHECK (comercio_id = 1);
-
-ALTER TABLE public.compras_detalles ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "compras_detalles_politica_general" ON public.compras_detalles;
-CREATE POLICY "compras_detalles_politica_general" ON public.compras_detalles
-    FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
-
-ALTER TABLE public.comprobantes_secuencias ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "comprobantes_secuencias_politica_general" ON public.comprobantes_secuencias;
-CREATE POLICY "comprobantes_secuencias_politica_general" ON public.comprobantes_secuencias
-    FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
-
-SELECT '✅ REPARACIÓN DE PRODUCCIÓN Y RLS EXITOSA' AS resultado;
+SELECT '✅ REPARACIÓN INTEGRAL: RLS, ÍNDICES Y VENTAS APLICADOS CON ÉXITO' AS resultado;
