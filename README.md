@@ -55,8 +55,14 @@ Sistema modular y multi-inquilino (*multi-tenant*) desarrollado para control int
 
 ---
 
-## 📚 Documentación Técnica y Manuales de Usuario
+## 📚 Documentación Técnica, Informes y Manuales
 
+Toda la documentación oficial del proyecto está centralizada en la carpeta [`docs/`](file:///Users/jferreyradev/projects/ag/NegoStock/docs/README.md):
+
+* **[Informe Técnico de Incidencia y Auditoría de Datos](file:///Users/jferreyradev/projects/ag/NegoStock/docs/INFORME_TECNICO_INCIDENCIA_PERSISTENCIA.md):**  
+  Auditoría forense en Supabase Producción, verificación de integridad de las 48 ventas reales, diagnóstico de la persistencia de presupuestos y soluciones aplicadas.
+* **[Diagramas de Flujo y Manual Operativo](file:///Users/jferreyradev/projects/ag/NegoStock/docs/DIAGRAMA_FLUJO_USO_NEGOTOCK.md):**  
+  Diagramas interactivos de flujo comercial en mostrador, ciclo de vida de presupuestos/preventas y tabla completa de atajos de teclado.
 * **[Manual del Empleado (Cajeros y Vendedores)](file:///Users/jferreyradev/projects/ag/NegoStock/docs/MANUAL_EMPLEADO.md):**  
   Guía operativa diaria de mostrador, atajos de teclado (`F2`, `F4`, `F6`, `F7`, `F8`), cobro con vuelto, emisión de presupuestos, remitos, timeout de terminal y consulta de Kardex.
 * **[Manual del Administrador (Dueño y Encargados)](file:///Users/jferreyradev/projects/ag/NegoStock/docs/MANUAL_ADMINISTRADOR.md):**  
