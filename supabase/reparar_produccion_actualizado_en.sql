@@ -218,7 +218,15 @@ BEGIN
         FOR UPDATE;
 
         IF NOT FOUND THEN
-            RAISE EXCEPTION 'Producto no encontrado: SKU %', v_item.sku;
+            -- Fallback a ítem comodín genérico VAR (para artículos varios, fletes, servicios)
+            SELECT * INTO v_prod 
+            FROM productos 
+            WHERE codigo_sku = 'VAR' AND comercio_id = p_comercio_id
+            FOR UPDATE;
+
+            IF NOT FOUND THEN
+                RAISE EXCEPTION 'Producto no encontrado: SKU %', v_item.sku;
+            END IF;
         END IF;
 
         IF v_item.price IS NOT NULL AND v_item.price > 0 THEN
@@ -231,11 +239,15 @@ BEGIN
 
         v_item_subtotal := ROUND(v_precio_unitario * v_item.quantity, 2);
         v_calc_subtotal := v_calc_subtotal + v_item_subtotal;
-        v_nuevo_stock := v_prod.stock_actual - v_item.quantity;
 
-        UPDATE productos 
-        SET stock_actual = v_nuevo_stock, actualizado_en = NOW() 
-        WHERE id = v_prod.id;
+        IF v_prod.codigo_sku = 'VAR' THEN
+            v_nuevo_stock := v_prod.stock_actual;
+        ELSE
+            v_nuevo_stock := v_prod.stock_actual - v_item.quantity;
+            UPDATE productos 
+            SET stock_actual = v_nuevo_stock, actualizado_en = NOW() 
+            WHERE id = v_prod.id;
+        END IF;
 
         INSERT INTO ventas_detalles (
             venta_id, producto_id, cantidad, precio_unitario, precio_costo, alicuota_iva, subtotal

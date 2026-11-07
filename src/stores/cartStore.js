@@ -6,6 +6,9 @@ import { secureSet, secureGet } from '@/services/secureStorage';
 import { useSyncModeStore } from './syncModeStore';
 import { useAuthStore } from './authStore';
 
+export const GENERIC_VAR_PRODUCT_ID = 'a87426ee-729c-474a-a60b-109ceb259fe2';
+const isUUID = (str) => typeof str === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
+
 export const useCartStore = defineStore('cart', {
   state: () => ({
     items: [],
@@ -237,7 +240,7 @@ export const useCartStore = defineStore('cart', {
         discount: this.discountAmount,
         discountPercent: this.discountPercent,
         total: this.total,
-        priceMode: this.priceMode,
+        priceMode: this.priceMode === 'wholesale' ? 'wholesale' : 'selling',
         notes: notes || 'Presupuesto de mostrador',
         estado: 'PENDIENTE',
         createdBy: {
@@ -246,11 +249,77 @@ export const useCartStore = defineStore('cart', {
           role: opRole
         },
         userName: opName,
-        userRole: opRole
+        userRole: opRole,
+        isSynced: false
       };
 
       this.pendingOrders.unshift(presupuesto);
       this.savePendingOrders();
+
+      // Guardar de inmediato en Supabase pedidos_preventa si hay conexión
+      if (isSupabaseConfigured && supabase && syncState.isOnline) {
+        (async () => {
+          try {
+            const notasPayload = JSON.stringify({
+              type: 'PRESUPUESTO',
+              notes: notes || 'Presupuesto de mostrador',
+              validUntil,
+              discountPercent: this.discountPercent,
+              customer: this.customer,
+              items: this.items,
+              createdBy: {
+                id: authStore.currentUser?.id,
+                name: opName,
+                role: opRole
+              }
+            });
+
+            const { data: cloudOrder, error: orderErr } = await supabase
+              .from('pedidos_preventa')
+              .insert({
+                comercio_id: 1,
+                numero_pedido: orderNumber,
+                cliente_id: isUUID(this.customer?.id) ? this.customer.id : null,
+                modalidad_precio: this.priceMode === 'wholesale' ? 'wholesale' : 'selling',
+                subtotal: this.subtotal,
+                descuento: this.discountAmount || 0,
+                total: this.total,
+                estado: 'PENDIENTE',
+                notas: notasPayload
+              })
+              .select('id')
+              .single();
+
+            if (!orderErr && cloudOrder) {
+              presupuesto.cloudId = cloudOrder.id;
+              presupuesto.isSynced = true;
+
+              const validDetails = this.items.map(it => {
+                const unitP = it.customUnitPrice !== null && it.customUnitPrice !== undefined
+                  ? Number(it.customUnitPrice)
+                  : (this.priceMode === 'wholesale' && it.wholesalePrice > 0 ? it.wholesalePrice : it.sellingPrice);
+                return {
+                  pedido_id: cloudOrder.id,
+                  producto_id: isUUID(it.id) ? it.id : GENERIC_VAR_PRODUCT_ID,
+                  cantidad: it.quantity,
+                  precio_unitario: unitP,
+                  subtotal: Math.round(unitP * it.quantity * 100) / 100
+                };
+              });
+
+              if (validDetails.length > 0) {
+                await supabase.from('pedidos_preventa_detalles').insert(validDetails);
+              }
+              await this.savePendingOrders();
+            } else if (orderErr) {
+              console.warn('[CartStore] Error guardando presupuesto en Supabase:', orderErr.message);
+            }
+          } catch (e) {
+            console.warn('[CartStore] Excepción al guardar presupuesto en Supabase:', e);
+          }
+        })();
+      }
+
       this.clearCart();
       return presupuesto;
     },
@@ -262,7 +331,7 @@ export const useCartStore = defineStore('cart', {
     updateActivePresupuesto(notes = '', validDays = undefined) {
       if (!this.activeOrderId) return null;
 
-      const idx = this.pendingOrders.findIndex(o => o.id === this.activeOrderId);
+      const idx = this.pendingOrders.findIndex(o => o.id === this.activeOrderId || o.cloudId === this.activeOrderId);
       if (idx === -1) return null;
 
       const authStore = useAuthStore();
@@ -284,7 +353,7 @@ export const useCartStore = defineStore('cart', {
         discount: this.discountAmount,
         discountPercent: this.discountPercent,
         total: this.total,
-        priceMode: this.priceMode,
+        priceMode: this.priceMode === 'wholesale' ? 'wholesale' : 'selling',
         customer: { ...this.customer },
         validUntil,
         notes: notes || existing.notes,
@@ -299,6 +368,39 @@ export const useCartStore = defineStore('cart', {
 
       this.pendingOrders[idx] = updated;
       this.savePendingOrders();
+
+      // Si Supabase está disponible, actualizar también en la nube
+      if (isSupabaseConfigured && supabase && syncState.isOnline) {
+        (async () => {
+          try {
+            const notasPayload = JSON.stringify({
+              type: updated.type || 'PRESUPUESTO',
+              notes: notes || existing.notes,
+              validUntil,
+              discountPercent: this.discountPercent,
+              customer: this.customer,
+              items: this.items,
+              updatedBy: {
+                id: authStore.currentUser?.id,
+                name: opName,
+                role: opRole,
+                at: new Date().toISOString()
+              }
+            });
+
+            await supabase.from('pedidos_preventa').update({
+              subtotal: this.subtotal,
+              descuento: this.discountAmount || 0,
+              total: this.total,
+              notas: notasPayload,
+              actualizado_en: new Date().toISOString()
+            }).eq('comercio_id', 1).eq('numero_pedido', existing.orderNumber);
+          } catch (e) {
+            console.warn('[CartStore] Error actualizando presupuesto en Supabase:', e);
+          }
+        })();
+      }
+
       return updated;
     },
 
@@ -326,25 +428,87 @@ export const useCartStore = defineStore('cart', {
         discount: this.discountAmount,
         discountPercent: this.discountPercent,
         total: this.total,
-        priceMode: this.priceMode,
+        priceMode: this.priceMode === 'wholesale' ? 'wholesale' : 'selling',
         notes: notes || 'Preventa de mostrador',
         estado: 'PENDIENTE',
         createdBy: {
           id: authStore.currentUser?.id,
           name: opName,
           role: opRole
-        }
+        },
+        isSynced: false
       };
 
       this.pendingOrders.unshift(pendingOrder);
       this.savePendingOrders();
-      this.clearCart();
 
+      // Guardar de inmediato en Supabase pedidos_preventa si hay conexión
+      if (isSupabaseConfigured && supabase && syncState.isOnline) {
+        (async () => {
+          try {
+            const notasPayload = JSON.stringify({
+              type: 'PREVENTA',
+              notes: notes || 'Preventa de mostrador',
+              discountPercent: this.discountPercent,
+              customer: this.customer,
+              items: this.items,
+              createdBy: {
+                id: authStore.currentUser?.id,
+                name: opName,
+                role: opRole
+              }
+            });
+
+            const { data: cloudOrder, error: orderErr } = await supabase
+              .from('pedidos_preventa')
+              .insert({
+                comercio_id: 1,
+                numero_pedido: orderNumber,
+                cliente_id: isUUID(this.customer?.id) ? this.customer.id : null,
+                modalidad_precio: this.priceMode === 'wholesale' ? 'wholesale' : 'selling',
+                subtotal: this.subtotal,
+                descuento: this.discountAmount || 0,
+                total: this.total,
+                estado: 'PENDIENTE',
+                notas: notasPayload
+              })
+              .select('id')
+              .single();
+
+            if (!orderErr && cloudOrder) {
+              pendingOrder.cloudId = cloudOrder.id;
+              pendingOrder.isSynced = true;
+
+              const validDetails = this.items.map(it => {
+                const unitP = it.customUnitPrice !== null && it.customUnitPrice !== undefined
+                  ? Number(it.customUnitPrice)
+                  : (this.priceMode === 'wholesale' && it.wholesalePrice > 0 ? it.wholesalePrice : it.sellingPrice);
+                return {
+                  pedido_id: cloudOrder.id,
+                  producto_id: isUUID(it.id) ? it.id : GENERIC_VAR_PRODUCT_ID,
+                  cantidad: it.quantity,
+                  precio_unitario: unitP,
+                  subtotal: Math.round(unitP * it.quantity * 100) / 100
+                };
+              });
+
+              if (validDetails.length > 0) {
+                await supabase.from('pedidos_preventa_detalles').insert(validDetails);
+              }
+              await this.savePendingOrders();
+            }
+          } catch (e) {
+            console.warn('[CartStore] Error guardando preventa en Supabase:', e);
+          }
+        })();
+      }
+
+      this.clearCart();
       return pendingOrder;
     },
 
     loadPendingOrder(orderId, removeFromList = false) {
-      const idx = this.pendingOrders.findIndex(o => o.id === orderId);
+      const idx = this.pendingOrders.findIndex(o => o.id === orderId || o.cloudId === orderId);
       if (idx === -1) return false;
 
       const order = this.pendingOrders[idx];
@@ -362,21 +526,34 @@ export const useCartStore = defineStore('cart', {
       this.voucherType = order.type === 'PRESUPUESTO' ? 'PRESUPUESTO' : 'TICKET_X';
 
       if (removeFromList) {
-        this.pendingOrders.splice(idx, 1);
-        this.savePendingOrders();
+        this.deletePendingOrder(order.id);
       }
 
       return true;
     },
 
     deletePendingOrder(orderId) {
-      this.pendingOrders = this.pendingOrders.filter(o => o.id !== orderId);
-      if (this.activeOrderId === orderId) {
+      const targetOrder = this.pendingOrders.find(o => o.id === orderId || o.cloudId === orderId);
+      this.pendingOrders = this.pendingOrders.filter(o => o.id !== orderId && o.cloudId !== orderId);
+      if (this.activeOrderId === orderId || (targetOrder && this.activeOrderId === targetOrder.id)) {
         this.activeOrderId = null;
         this.activeOrderType = null;
         this.activeOrderNumber = null;
       }
       this.savePendingOrders();
+
+      if (targetOrder?.orderNumber && isSupabaseConfigured && supabase && syncState.isOnline) {
+        (async () => {
+          try {
+            await supabase.from('pedidos_preventa').update({
+              estado: 'CANCELADO',
+              actualizado_en: new Date().toISOString()
+            }).eq('comercio_id', 1).eq('numero_pedido', targetOrder.orderNumber);
+          } catch (e) {
+            console.warn('[CartStore] Error cancelando pedido en Supabase:', e);
+          }
+        })();
+      }
     },
 
     async savePendingOrders() {
@@ -388,6 +565,7 @@ export const useCartStore = defineStore('cart', {
     },
 
     async loadPendingOrders() {
+      // 1. Cargar primero de IndexedDB local para respuesta inmediata
       const saved = await secureGet('app_metadata', 'pending_orders');
       if (saved && Array.isArray(saved)) {
         this.pendingOrders = saved;
@@ -402,13 +580,136 @@ export const useCartStore = defineStore('cart', {
           }
         }
       }
+
+      // 2. Si Supabase está disponible, sincronizar presupuestos y preventas de la nube
+      if (isSupabaseConfigured && supabase && syncState.isOnline) {
+        try {
+          const { data: cloudOrders, error } = await supabase
+            .from('pedidos_preventa')
+            .select(`
+              id,
+              numero_pedido,
+              cliente_id,
+              modalidad_precio,
+              subtotal,
+              descuento,
+              total,
+              estado,
+              notas,
+              creado_en,
+              actualizado_en,
+              cliente:clientes(id, nombre, numero_documento, telefono, direccion, condicion_iva),
+              detalles:pedidos_preventa_detalles(
+                id,
+                producto_id,
+                cantidad,
+                precio_unitario,
+                subtotal,
+                producto:productos(id, codigo_sku, nombre, unidad_id)
+              )
+            `)
+            .eq('comercio_id', 1)
+            .eq('estado', 'PENDIENTE')
+            .order('creado_en', { ascending: false });
+
+          if (!error && cloudOrders) {
+            const parsedCloudOrders = cloudOrders.map(row => {
+              let meta = {};
+              try {
+                if (row.notas && row.notas.startsWith('{')) {
+                  meta = JSON.parse(row.notas);
+                }
+              } catch (_) {}
+
+              const type = meta.type || (row.numero_pedido?.startsWith('PRES') ? 'PRESUPUESTO' : 'PREVENTA');
+              const customer = meta.customer || (row.cliente ? {
+                id: row.cliente.id,
+                name: row.cliente.nombre,
+                docType: row.cliente.tipo_documento || 'DNI',
+                docNumber: row.cliente.numero_documento || '',
+                taxCondition: row.cliente.condicion_iva || 'CONSUMIDOR_FINAL',
+                phone: row.cliente.telefono || '',
+                address: row.cliente.direccion || ''
+              } : { id: 'cf-default', name: 'Consumidor Final', docType: 'DNI', docNumber: '', taxCondition: 'CONSUMIDOR_FINAL', phone: '' });
+
+              const items = meta.items || (row.detalles || []).map(d => ({
+                id: d.producto_id,
+                sku: d.producto?.codigo_sku || 'VAR',
+                name: d.producto?.nombre || 'Artículo',
+                unit: 'u',
+                quantity: Number(d.cantidad),
+                sellingPrice: Number(d.precio_unitario),
+                customUnitPrice: Number(d.precio_unitario),
+                subtotal: Number(d.subtotal)
+              }));
+
+              return {
+                id: 'cloud-' + row.id,
+                cloudId: row.id,
+                orderNumber: row.numero_pedido,
+                type,
+                voucherType: type,
+                voucherNumber: row.numero_pedido,
+                createdAt: row.creado_en,
+                validUntil: meta.validUntil || null,
+                customer,
+                items,
+                subtotal: Number(row.subtotal),
+                discount: Number(row.descuento),
+                discountPercent: meta.discountPercent || (row.subtotal > 0 && row.descuento > 0 ? Math.round((row.descuento / row.subtotal) * 100) : 0),
+                total: Number(row.total),
+                priceMode: row.modalidad_precio || 'selling',
+                notes: meta.notes || (row.notas && !row.notas.startsWith('{') ? row.notas : ''),
+                estado: row.estado,
+                createdBy: meta.createdBy || { name: 'Vendedor', role: 'SELLER' },
+                userName: meta.createdBy?.name || 'Vendedor',
+                userRole: meta.createdBy?.role || 'SELLER',
+                isSynced: true
+              };
+            });
+
+            // Reconciliar con órdenes locales offline no sincronizadas
+            const unsyncedLocal = this.pendingOrders.filter(local =>
+              local.isSynced === false &&
+              !parsedCloudOrders.some(c => c.orderNumber === local.orderNumber)
+            );
+
+            this.pendingOrders = [...unsyncedLocal, ...parsedCloudOrders];
+            await this.savePendingOrders();
+
+            // Sincronizar secuencias
+            const maxPresSeq = Math.max(
+              0,
+              ...cloudOrders
+                .filter(o => o.numero_pedido?.startsWith('PRES-'))
+                .map(o => parseInt(o.numero_pedido.replace('PRES-', ''), 10) || 0)
+            );
+            if (maxPresSeq >= this.nextPresupuestoSeq) {
+              this.nextPresupuestoSeq = maxPresSeq + 1;
+            }
+
+            const maxOrderSeq = Math.max(
+              0,
+              ...cloudOrders
+                .filter(o => o.numero_pedido?.startsWith('PED-'))
+                .map(o => parseInt(o.numero_pedido.replace('PED-', ''), 10) || 0)
+            );
+            if (maxOrderSeq >= this.nextOrderSeq) {
+              this.nextOrderSeq = maxOrderSeq + 1;
+            }
+          }
+        } catch (err) {
+          console.warn('[CartStore] Error sincronizando pedidos pendientes con Supabase:', err);
+        }
+      }
+
       const seq = await secureGet('app_metadata', 'next_order_seq');
-      if (seq) {
-        this.nextOrderSeq = parseInt(seq, 10) || 1;
+      if (seq && Number(seq) > this.nextOrderSeq) {
+        this.nextOrderSeq = parseInt(seq, 10);
       }
       const pSeq = await secureGet('app_metadata', 'next_presupuesto_seq');
-      if (pSeq) {
-        this.nextPresupuestoSeq = parseInt(pSeq, 10) || 1;
+      if (pSeq && Number(pSeq) > this.nextPresupuestoSeq) {
+        this.nextPresupuestoSeq = parseInt(pSeq, 10);
       }
     },
 
@@ -513,7 +814,7 @@ export const useCartStore = defineStore('cart', {
           p_comercio_id: 1,
           p_tipo_comprobante: this.voucherType,
           p_medio_pago: this.paymentMethod,
-          p_modalidad_precio: this.priceMode,
+          p_modalidad_precio: this.priceMode === 'wholesale' ? 'wholesale' : 'selling',
           p_items: this.items.map(item => {
             const basePrice = item.customUnitPrice !== undefined && item.customUnitPrice !== null
               ? Number(item.customUnitPrice)
@@ -521,8 +822,8 @@ export const useCartStore = defineStore('cart', {
             const lineDisc = Number(item.discountPercent || 0);
             const effectivePrice = lineDisc > 0 ? Math.max(0, basePrice * (1 - lineDisc / 100)) : basePrice;
             return {
-              id: isUUID(item.id) ? item.id : null,
-              sku: item.sku,
+              id: isUUID(item.id) ? item.id : GENERIC_VAR_PRODUCT_ID,
+              sku: item.sku || 'VAR',
               quantity: item.quantity,
               price: effectivePrice
             };
@@ -586,31 +887,169 @@ export const useCartStore = defineStore('cart', {
       await secureSet('app_metadata', 'sales_history', this.salesHistory);
       localStorage.removeItem('negostock_sales');
 
-      // Si la venta provenía de un presupuesto o preventa cargada, removerla de pendientes
+      // Si la venta provenía de un presupuesto o preventa cargada, removerla de pendientes y marcarla cobrada en la nube
       if (this.activeOrderId) {
+        const orderNum = this.activeOrderNumber;
         this.deletePendingOrder(this.activeOrderId);
+        if (orderNum && isSupabaseConfigured && supabase && syncState.isOnline) {
+          (async () => {
+            try {
+              await supabase.from('pedidos_preventa').update({
+                estado: 'COBRADO',
+                actualizado_en: new Date().toISOString()
+              }).eq('comercio_id', 1).eq('numero_pedido', orderNum);
+            } catch (_) {}
+          })();
+        }
       }
 
       this.clearCart();
       return localSaleRecord;
     },
 
+    async saveSalesHistoryLocally() {
+      await secureSet('app_metadata', 'sales_history', this.salesHistory);
+    },
+
     async loadSalesHistory() {
+      // 1. Cargar primero de IndexedDB local (respuesta instantánea)
       const saved = await secureGet('app_metadata', 'sales_history');
       if (saved && Array.isArray(saved)) {
         this.salesHistory = saved;
-        this.nextVoucherSeq = this.salesHistory.length + 1;
       } else {
         const legacy = localStorage.getItem('negostock_sales');
         if (legacy) {
           try {
             this.salesHistory = JSON.parse(legacy);
-            this.nextVoucherSeq = this.salesHistory.length + 1;
             await secureSet('app_metadata', 'sales_history', this.salesHistory);
             localStorage.removeItem('negostock_sales');
           } catch {}
         }
       }
+
+      // 2. Si Supabase está disponible, sincronizar ventas reales de la nube
+      if (isSupabaseConfigured && supabase && syncState.isOnline) {
+        try {
+          const { data: cloudSales, error } = await supabase
+            .from('ventas')
+            .select(`
+              id,
+              comercio_id,
+              numero_comprobante,
+              numero_secuencia,
+              tipo_comprobante,
+              creado_en,
+              total,
+              subtotal,
+              descuento,
+              estado,
+              medio_pago,
+              modalidad_precio,
+              notas,
+              id_offline_cliente,
+              cliente:clientes(id, nombre, numero_documento, telefono, direccion, condicion_iva),
+              items:ventas_detalles(
+                id,
+                producto_id,
+                cantidad,
+                precio_unitario,
+                precio_costo,
+                subtotal,
+                producto:productos(id, codigo_sku, nombre, unidad_id)
+              )
+            `)
+            .eq('comercio_id', 1)
+            .order('creado_en', { ascending: false })
+            .limit(300);
+
+          if (!error && cloudSales) {
+            const parsedCloudSales = cloudSales.map(row => {
+              let userName = 'Mostrador';
+              let userRole = 'CASHIER';
+              if (row.notas) {
+                const matchOp = row.notas.match(/Atendido por:\s*([^|\(\n]+)(?:\(([^)]+)\))?/i);
+                if (matchOp) {
+                  userName = matchOp[1].trim();
+                  if (matchOp[2]) userRole = matchOp[2].trim();
+                }
+              }
+
+              const customer = row.cliente ? {
+                id: row.cliente.id,
+                name: row.cliente.nombre,
+                docType: row.cliente.tipo_documento || 'DNI',
+                docNumber: row.cliente.numero_documento || '',
+                taxCondition: row.cliente.condicion_iva || 'CONSUMIDOR_FINAL',
+                phone: row.cliente.telefono || '',
+                address: row.cliente.direccion || ''
+              } : {
+                id: 'cf-default',
+                name: 'Consumidor Final',
+                docType: 'DNI',
+                docNumber: '',
+                taxCondition: 'CONSUMIDOR_FINAL'
+              };
+
+              const items = (row.items || []).map(it => ({
+                id: it.producto_id,
+                sku: it.producto?.codigo_sku || 'VAR',
+                name: it.producto?.nombre || 'Artículo',
+                unit: 'u',
+                quantity: Number(it.cantidad),
+                costPrice: Number(it.precio_costo || 0),
+                sellingPrice: Number(it.precio_unitario),
+                customUnitPrice: Number(it.precio_unitario),
+                subtotal: Number(it.subtotal)
+              }));
+
+              return {
+                id: row.id,
+                cloudId: row.id,
+                voucherType: row.tipo_comprobante,
+                voucherNumber: row.numero_comprobante,
+                sequence: row.numero_secuencia,
+                createdAt: row.creado_en,
+                customer,
+                items,
+                subtotal: Number(row.subtotal),
+                discount: Number(row.descuento),
+                total: Number(row.total),
+                paymentMethod: row.medio_pago,
+                priceMode: row.modalidad_precio,
+                estado: row.estado || 'PAGADA',
+                isSynced: true,
+                userName,
+                userRole,
+                notes: row.notas || ''
+              };
+            });
+
+            // Preservar ventas offline pendientes que aún no impactaron en la nube
+            const offlinePending = (this.salesHistory || []).filter(s =>
+              s.isSynced === false &&
+              !parsedCloudSales.some(c => c.voucherNumber === s.voucherNumber || (s.id && c.id === s.id))
+            );
+
+            this.salesHistory = [...offlinePending, ...parsedCloudSales];
+            await secureSet('app_metadata', 'sales_history', this.salesHistory);
+          }
+        } catch (err) {
+          console.warn('[CartStore] Error cargando ventas desde Supabase:', err);
+        }
+      }
+
+      // 3. Ajustar secuencia para nuevos comprobantes locales
+      const maxSeq = Math.max(
+        0,
+        ...this.salesHistory.map(s => {
+          if (s.sequence) return Number(s.sequence);
+          const parts = (s.voucherNumber || '').split('-');
+          return parts.length === 2 ? parseInt(parts[1], 10) || 0 : 0;
+        })
+      );
+      this.nextVoucherSeq = maxSeq + 1;
+
+      // 4. Cargar pedidos y presupuestos pendientes
       await this.loadPendingOrders();
     },
 
@@ -650,7 +1089,8 @@ export const useCartStore = defineStore('cart', {
         try {
           await supabase.from('ventas').update({
             estado: 'ANULADA',
-            notas: (sale.notas || '') + ` | ANULADA por devolución: ${reason} [Operador: ${opName}]`
+            actualizado_en: new Date().toISOString(),
+            notas: (sale.notes || sale.notas || '') + ` | ANULADA por devolución: ${reason} [Operador: ${opName}]`
           }).eq('numero_comprobante', sale.voucherNumber);
         } catch (e) {
           console.warn('[CartStore] Error anulando venta en Supabase:', e);

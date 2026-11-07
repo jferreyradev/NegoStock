@@ -30,8 +30,8 @@ export const PROD_CONFIG = {
 
 // Configuración de Desarrollo (Sandbox / Pruebas)
 export const DEV_CONFIG = {
-  url: rawDevUrl || (isDevDomain ? rawDefaultUrl : '') || 'https://ogphgokhqfodgbisuqxt.supabase.co',
-  key: rawDevKey || (isDevDomain ? rawDefaultKey : '') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9ncGhnb2tocWZvZGdiaXN1cXh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE1NDgzNTAsImV4cCI6MjEwNzEyNDM1MH0.NP5sbK47jbBNVUEkLMbYWSYvmhQxgbswO18iDM6w-EQ'
+  url: rawDevUrl || (rawDefaultUrl && !rawDefaultUrl.includes('ogphgokhqfodgbisuqxt') ? rawDefaultUrl : '') || 'https://aphqdlmgggglvahbhksu.supabase.co',
+  key: rawDevKey || (rawDefaultKey && !rawDefaultKey.includes('ogphgokhqfodgbisuqxt') ? rawDefaultKey : '') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFwaHFkbG1nZ2dnbHZhaGJoa3N1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA5NzIxMTYsImV4cCI6MjEwNjU0ODExNn0.b5qOleVKPTxQr4NHe4G4-ANCE_CYw3RCTtRruseDbKs'
 };
 
 function safeCreateClient(url, key) {
@@ -61,9 +61,8 @@ export function getActiveMode() {
   if (saved === 'DEV' || saved === 'PROD') {
     return saved;
   }
-  // Si no se configuró explícitamente en este navegador:
-  // en localhost o dominios de preview usa DEV; en dominios de producción usa PROD.
-  return isDevDomain ? 'DEV' : 'PROD';
+  // Por defecto siempre conectar a PRODUCCIÓN para asegurar persistencia y acceso a datos reales
+  return 'PROD';
 }
 
 let currentMode = getActiveMode();

@@ -85,7 +85,7 @@ const isUUID = (str) => typeof str === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-
         p_comercio_id: 1,
         p_tipo_comprobante: sale.voucherType,
         p_medio_pago: sale.paymentMethod,
-        p_modalidad_precio: sale.priceMode || 'selling',
+        p_modalidad_precio: sale.priceMode === 'wholesale' ? 'wholesale' : 'selling',
         p_items: sale.items.map(it => {
           const basePrice = (it.customUnitPrice !== undefined && it.customUnitPrice !== null)
             ? Number(it.customUnitPrice)
@@ -93,8 +93,8 @@ const isUUID = (str) => typeof str === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-
           const lineDisc = Number(it.discountPercent || 0);
           const effectivePrice = lineDisc > 0 ? Math.max(0, basePrice * (1 - lineDisc / 100)) : basePrice;
           return {
-            id: isUUID(it.id) ? it.id : null,
-            sku: it.sku,
+            id: isUUID(it.id) ? it.id : 'a87426ee-729c-474a-a60b-109ceb259fe2',
+            sku: it.sku || 'VAR',
             quantity: it.quantity,
             price: it.price !== undefined && it.price !== null ? Number(it.price) : effectivePrice
           };

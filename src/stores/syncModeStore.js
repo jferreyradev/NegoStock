@@ -219,6 +219,10 @@ export const useSyncModeStore = defineStore('syncMode', {
         salesFailed = salesAfter;
         this.pendingSalesCount = salesAfter;
 
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('negostock:synced'));
+        }
+
         this.lastSyncTime = new Date().toISOString();
         await secureSet('app_metadata', 'last_sync_timestamp', this.lastSyncTime);
 

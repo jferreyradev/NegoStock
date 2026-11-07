@@ -1300,9 +1300,22 @@ onMounted(async () => {
   await syncModeStore.initSyncMode();
   await businessStore.initBusiness();
   await productStore.fetchProducts();
+  await cartStore.loadSalesHistory();
+  await cartStore.loadPendingOrders();
   await initSyncManager((sale, result) => {
     console.log('[NegoStock] Venta sincronizada:', sale.voucherNumber);
     syncModeStore.refreshPendingCounts();
+    const local = cartStore.salesHistory.find(s => s.id === sale.id || s.voucherNumber === sale.voucherNumber);
+    if (local) {
+      local.isSynced = true;
+      if (result?.voucher_number) local.voucherNumber = result.voucher_number;
+      cartStore.saveSalesHistoryLocally();
+    }
+  });
+
+  window.addEventListener('negostock:synced', async () => {
+    await cartStore.loadSalesHistory();
+    await cartStore.loadPendingOrders();
   });
 });
 
